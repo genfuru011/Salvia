@@ -119,12 +119,6 @@ Salvia.rb は「Rails は重すぎる、Sinatra は軽すぎる」という隙�
 
 v1.0 以降の拡張機能。
 
-### Islands Architecture (Salvia Islands)
-- [ ] `<%= island "ComponentName", props %>` ヘルパー
-- [ ] React/Preact コンポーネントのマウント
-- [ ] `salvia island:build` コマンド
-- [ ] HTMX `afterSwap` での自動再マウント
-
 ### HTMX Helpers
 - [ ] `htmx_link_to` ヘルパー
 - [ ] `htmx_form_for` ヘルパー
@@ -139,6 +133,124 @@ v1.0 以降の拡張機能。
 - [ ] WebSocket サポート（ActionCable 的な）
 - [ ] バックグラウンドジョブ統合ガイド
 - [ ] マルチテナント対応
+
+---
+
+## 🏝️ Salvia Islands (v2.x - 長期目標)
+
+> **"HTML ファーストを維持しながら、必要な部分だけリッチに"**
+>
+> Node.js 不要で Island Architecture を実現する革命的アプローチ
+
+### コンセプト
+
+```
+┌─────────────────────────────────────────────────────────┐
+│              Salvia (HTML + HTMX)                       │
+│  ┌─────────────────────────────────────────────────┐   │
+│  │  90% サーバーレンダリング（従来通り）           │   │
+│  │  ┌─────────┐  ┌─────────┐  ┌─────────────────┐ │   │
+│  │  │ Island  │  │ Island  │  │     HTML        │ │   │
+│  │  │ (Chart) │  │(Editor) │  │   (HTMX で十分) │ │   │
+│  │  └─────────┘  └─────────┘  └─────────────────┘ │   │
+│  │  10% クライアントサイド（複雑なUIのみ）        │   │
+│  └─────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────┘
+```
+
+### 技術スタック
+
+**Node.js 不要** を維持するため、以下の2つのアプローチを採用：
+
+#### Option B: Web Components (Lit / Vanilla)
+```erb
+<!-- ブラウザネイティブ、軽量 -->
+<%= island "chart-component", { data: @sales_data } %>
+```
+- **Lit** (5KB) または Vanilla Web Components
+- Shadow DOM でスタイル分離
+- ブラウザ標準技術
+
+#### Option C: Import Maps + ESM (ビルドレス)
+```html
+<!-- config.ru または layout で設定 -->
+<script type="importmap">
+{
+  "imports": {
+    "lit": "https://esm.sh/lit@3",
+    "chart.js": "https://esm.sh/chart.js@4"
+  }
+}
+</script>
+```
+- CDN から直接 import（esm.sh, unpkg）
+- 開発時ビルド不要
+- Deno Fresh / Astro に近いアプローチ
+
+### 実装計画
+
+#### Phase A: 基盤 (v2.0)
+- [ ] `island` ビューヘルパー
+- [ ] Import Maps の自動生成
+- [ ] Props の JSON シリアライズ
+- [ ] 基本的な Web Component テンプレート
+
+#### Phase B: 統合 (v2.1)
+- [ ] HTMX `afterSwap` での Island 自動再マウント
+- [ ] Lazy Loading（Intersection Observer）
+- [ ] SSR フォールバック（SEO 対策）
+
+#### Phase C: エコシステム (v2.2)
+- [ ] 公式 Island コンポーネント集
+  - `<salvia-chart>` - Chart.js ラッパー
+  - `<salvia-editor>` - リッチテキストエディタ
+  - `<salvia-calendar>` - カレンダー
+  - `<salvia-autocomplete>` - オートコンプリート
+- [ ] Island Component Generator (`salvia g island NAME`)
+
+### 使用イメージ
+
+```erb
+<!-- app/views/dashboard/index.html.erb -->
+<div class="dashboard">
+  <h1>ダッシュボード</h1>
+  
+  <!-- 普通の HTMX（これで十分な部分） -->
+  <div hx-get="/notifications" hx-trigger="every 30s">
+    <%= render "notifications/_list" %>
+  </div>
+
+  <!-- 複雑なインタラクションが必要な部分だけ Island -->
+  <%= island "salvia-chart", { 
+    data: @sales_data, 
+    type: "line",
+    title: "月間売上" 
+  } %>
+  
+  <!-- 遅延読み込み（スクロールで表示時に初期化） -->
+  <%= island "salvia-calendar", { events: @events }, lazy: true %>
+  
+  <!-- カスタム Island -->
+  <%= island "my-rich-editor", { content: @draft.body } %>
+</div>
+```
+
+### なぜ革命的か
+
+| 従来 | Salvia Islands |
+|------|----------------|
+| SPA vs SSR の二択 | 両方のいいとこ取り |
+| React なら全部 React | 必要な所だけ JS |
+| npm/webpack 必須 | **Node.js 不要** |
+| 複雑なビルド設定 | Import Maps でシンプル |
+| Ruby と JS の分断 | ERB から自然に統合 |
+
+### 参考にする既存技術
+
+- **Astro** - Island Architecture の先駆者
+- **Deno Fresh** - Import Maps + Preact
+- **Hotwire (Turbo/Stimulus)** - Rails の部分的 JS
+- **htmx** - HTML ファーストの思想
 
 ---
 
@@ -157,5 +269,5 @@ Issue や Pull Request でのコントリビューションを歓迎します。
 
 ---
 
-*Last updated: 2024-12*
+*最終更新: 2025-01*
 
