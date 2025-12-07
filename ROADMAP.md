@@ -160,32 +160,81 @@ v1.0 以降の拡張機能。
 
 ### 技術スタック
 
-**Node.js 不要** を維持するため、以下の2つのアプローチを採用：
+**Node.js 不要** を維持するため、以下のアプローチを採用：
 
-#### Option B: Web Components (Lit / Vanilla)
-```erb
-<!-- ブラウザネイティブ、軽量 -->
-<%= island "chart-component", { data: @sales_data } %>
-```
-- **Lit** (5KB) または Vanilla Web Components
-- Shadow DOM でスタイル分離
-- ブラウザ標準技術
-
-#### Option C: Import Maps + ESM (ビルドレス)
+#### 基盤: Import Maps + ESM (ビルドレス)
 ```html
-<!-- config.ru または layout で設定 -->
+<!-- layouts/application.html.erb で設定 -->
 <script type="importmap">
 {
   "imports": {
+    "preact": "https://esm.sh/preact@10",
+    "preact/hooks": "https://esm.sh/preact@10/hooks",
+    "htm/preact": "https://esm.sh/htm@3/preact",
     "lit": "https://esm.sh/lit@3",
     "chart.js": "https://esm.sh/chart.js@4"
   }
 }
 </script>
 ```
-- CDN から直接 import（esm.sh, unpkg）
+- CDN から直接 import（esm.sh）
 - 開発時ビルド不要
 - Deno Fresh / Astro に近いアプローチ
+
+#### Option A: Preact + HTM（推奨）
+```javascript
+// app/islands/Counter.js
+import { useState } from 'preact/hooks';
+import { html } from 'htm/preact';
+
+export function Counter({ initial = 0 }) {
+  const [count, setCount] = useState(initial);
+  
+  return html`
+    <div class="counter">
+      <span class="text-2xl font-bold">${count}</span>
+      <button 
+        class="bg-salvia-500 text-white px-4 py-2 rounded"
+        onClick=${() => setCount(c => c + 1)}
+      >
+        +1
+      </button>
+    </div>
+  `;
+}
+```
+- **Preact** (3KB) - React 互換、超軽量
+- **HTM** - JSX なしで React ライクな記法（タグ付きテンプレートリテラル）
+- React エコシステムの多くが使える
+- Hooks（useState, useEffect 等）完全サポート
+
+#### Option B: Web Components (Lit)
+```javascript
+// app/islands/MyChart.js
+import { LitElement, html, css } from 'lit';
+
+class MyChart extends LitElement {
+  static properties = { data: { type: Array } };
+  
+  render() {
+    return html`<canvas id="chart"></canvas>`;
+  }
+}
+customElements.define('my-chart', MyChart);
+```
+- **Lit** (5KB) - Web Components を簡単に
+- Shadow DOM でスタイル分離
+- ブラウザ標準技術
+
+#### 選択ガイド
+
+| ユースケース | 推奨 |
+|--------------|------|
+| React に慣れている | **Preact + HTM** |
+| 状態管理が複雑 | **Preact + HTM** |
+| 完全にカプセル化したい | **Lit (Web Components)** |
+| 既存の React ライブラリを使いたい | **Preact + HTM** |
+| 最小限の学習コスト | **Preact + HTM** |
 
 ### 実装計画
 
@@ -220,19 +269,37 @@ v1.0 以降の拡張機能。
     <%= render "notifications/_list" %>
   </div>
 
-  <!-- 複雑なインタラクションが必要な部分だけ Island -->
-  <%= island "salvia-chart", { 
+  <!-- Preact Island: 複雑なインタラクションが必要な部分だけ -->
+  <%= island "Counter", { initial: 10 } %>
+  
+  <%= island "SalesChart", { 
     data: @sales_data, 
     type: "line",
     title: "月間売上" 
   } %>
   
   <!-- 遅延読み込み（スクロールで表示時に初期化） -->
-  <%= island "salvia-calendar", { events: @events }, lazy: true %>
+  <%= island "Calendar", { events: @events }, lazy: true %>
   
-  <!-- カスタム Island -->
-  <%= island "my-rich-editor", { content: @draft.body } %>
+  <!-- Lit Web Component も混在可能 -->
+  <%= island "my-rich-editor", { content: @draft.body }, type: :lit %>
 </div>
+```
+
+### Island ファイル構造
+
+```
+app/
+├── islands/                    # Preact / Lit コンポーネント
+│   ├── Counter.js              # Preact + HTM
+│   ├── SalesChart.js           # Preact + Chart.js
+│   ├── Calendar.js             # Preact
+│   └── components/             # 共有コンポーネント
+│       ├── Button.js
+│       └── Modal.js
+└── views/
+    └── layouts/
+        └── application.html.erb  # Import Maps 定義
 ```
 
 ### なぜ革命的か
