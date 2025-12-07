@@ -236,45 +236,97 @@ customElements.define('my-chart', MyChart);
 | 既存の React ライブラリを使いたい | **Preact + HTM** |
 | 最小限の学習コスト | **Preact + HTM** |
 
-### TypeScript について
+### TypeScript サポート
 
-**結論: Island では JavaScript + JSDoc で十分**
+**結論: TypeScript で書いて、ビルドレスで実行**
 
-#### 理由
+#### アプローチ: esm.sh の自動変換
 
-| Ruby | JavaScript (Islands) |
-|------|---------------------|
-| 動的型付け | 動的型付け |
-| 型なしでも問題なく開発 | 型なしでも問題なく開発 |
-| 大規模なら Sorbet | 大規模なら TypeScript |
+```
+┌─────────────────────────────────────────────────────────┐
+│  開発時: TypeScript で書く (.ts)                        │
+│  ├─ VS Code が型チェック・補完                          │
+│  └─ エラーを事前に検出                                  │
+├─────────────────────────────────────────────────────────┤
+│  実行時: esm.sh / ブラウザが処理                        │
+│  └─ .ts → .js を CDN が自動変換                         │
+│     Node.js / ビルドステップ不要！                      │
+└─────────────────────────────────────────────────────────┘
+```
 
-Ruby で型なしで開発しているなら、**小さな Island も型なしで十分**。
-Salvia の Island は「必要な部分だけ」なので、大規模にはならない想定。
+#### Island を TypeScript で書く
 
-#### JSDoc で型ヒント（ビルド不要）
+```typescript
+// app/islands/Counter.ts
+import { useState } from 'preact/hooks';
+import { html } from 'htm/preact';
+import type { User } from './types.ts';
 
-```javascript
-/**
- * チャートコンポーネント
- * @param {{ data: number[], title: string, type: 'line' | 'bar' }} props
- */
-export function Chart({ data, title, type }) {
-  // VS Code が型補完してくれる！
-  // TypeScript なしで型の恩恵を受けられる
+interface CounterProps {
+  initial: number;
+  user: User;
+}
+
+export function Counter({ initial, user }: CounterProps) {
+  const [count, setCount] = useState(initial);
+  
+  return html`
+    <div class="counter">
+      <span>${user.name}: ${count}</span>
+      <button onClick=${() => setCount(c => c + 1)}>+1</button>
+    </div>
+  `;
 }
 ```
 
-#### どうしても TypeScript を使いたい場合
+#### 型定義ファイル（自動生成）
 
-```bash
-# 開発時に型チェックだけ実行
-npx tsc --noEmit app/islands/**/*.ts
+```typescript
+// app/islands/types.ts (salvia types:generate で生成)
+export interface User {
+  id: number;
+  name: string;
+  email: string;
+  age: number | null;
+  created_at: string;
+  updated_at: string;
+}
 
-# または esm.sh が .ts を自動変換
-# https://esm.sh/gh/user/repo/src/Component.ts
+export interface Post {
+  id: number;
+  title: string;
+  body: string;
+  user_id: number;
+}
 ```
 
-**哲学: Ruby と同じく「動的型付けの自由さ」を Island でも享受する** 🌿
+#### Import Maps 設定
+
+```html
+<!-- layouts/application.html.erb -->
+<script type="importmap">
+{
+  "imports": {
+    "preact": "https://esm.sh/preact@10",
+    "preact/hooks": "https://esm.sh/preact@10/hooks",
+    "htm/preact": "https://esm.sh/htm@3/preact"
+  }
+}
+</script>
+
+<!-- TypeScript ファイルを直接読み込み（esm.sh が変換） -->
+<script type="module" src="/islands/Counter.ts"></script>
+```
+
+#### 開発時の型チェック（オプション）
+
+```bash
+# tsconfig.json を用意すれば、IDE が型チェック
+# ビルドは不要、型チェックのみ
+npx tsc --noEmit
+```
+
+**哲学: TypeScript の恩恵を受けつつ、Node.js ビルド不要を維持** 🌿
 
 ### 実装計画
 
@@ -383,9 +435,9 @@ app/
 
 ### アプローチ一覧
 
-#### Pattern A: routes.rb → Client 自動生成
+#### Pattern A: routes.rb → TypeScript Client 自動生成
 
-**コンセプト**: ルーティング定義から API クライアントを自動生成
+**コンセプト**: ルーティング定義から型付き API クライアントを自動生成
 
 ```ruby
 # config/routes.rb
@@ -399,32 +451,38 @@ end
 
 ↓ `salvia client:generate`
 
-```javascript
-// app/islands/client.js (自動生成)
+```typescript
+// app/islands/client.ts (自動生成)
 export const salvia = {
   users: {
-    index: () => fetch('/users').then(r => r.json()),
-    show: (id) => fetch(`/users/${id}`).then(r => r.json()),
-    create: (data) => fetchPost('/users', data),
-    update: (id, data) => fetchPatch(`/users/${id}`, data),
-    destroy: (id) => fetchDelete(`/users/${id}`),
+    index: (): Promise<unknown[]> => 
+      fetch('/users').then(r => r.json()),
+    show: (id: number): Promise<unknown> => 
+      fetch(`/users/${id}`).then(r => r.json()),
+    create: (data: Record<string, unknown>): Promise<unknown> => 
+      fetch('/users', { method: 'POST', body: JSON.stringify(data) }).then(r => r.json()),
+    update: (id: number, data: Record<string, unknown>): Promise<unknown> => 
+      fetch(`/users/${id}`, { method: 'PATCH', body: JSON.stringify(data) }).then(r => r.json()),
+    destroy: (id: number): Promise<void> => 
+      fetch(`/users/${id}`, { method: 'DELETE' }).then(() => {}),
   },
   posts: {
     comments: {
-      index: (postId) => fetch(`/posts/${postId}/comments`).then(r => r.json()),
+      index: (postId: number): Promise<unknown[]> => 
+        fetch(`/posts/${postId}/comments`).then(r => r.json()),
     }
   }
 };
 ```
 
-**メリット**: シンプル、REST のまま、学習コスト低い
-**デメリット**: 型情報は別途必要
+**メリット**: シンプル、REST のまま、基本的な型付き
+**デメリット**: 戻り値の型は `unknown`（Pattern B-E と組み合わせて改善）
 
 ---
 
-#### Pattern B: ActiveRecord → JSDoc 型生成
+#### Pattern B: ActiveRecord → TypeScript 型生成
 
-**コンセプト**: DB スキーマから JavaScript の型定義を自動生成
+**コンセプト**: DB スキーマから TypeScript の型定義を自動生成
 
 ```ruby
 # db/schema.rb
@@ -438,35 +496,33 @@ end
 
 ↓ `salvia types:generate`
 
-```javascript
-// app/islands/types.js (自動生成)
-/**
- * @typedef {Object} User
- * @property {number} id
- * @property {string} name
- * @property {string} email
- * @property {number|null} age
- * @property {string} created_at
- * @property {string} updated_at
- */
+```typescript
+// app/islands/types.ts (自動生成)
+export interface User {
+  id: number;
+  name: string;
+  email: string;
+  age: number | null;
+  created_at: string;
+  updated_at: string;
+}
 
-/**
- * @typedef {Object} Post
- * @property {number} id
- * @property {string} title
- * @property {string} body
- * @property {number} user_id
- */
+export interface Post {
+  id: number;
+  title: string;
+  body: string;
+  user_id: number;
+}
 ```
 
-**メリット**: DB スキーマが Source of Truth、自動同期
+**メリット**: DB スキーマが Source of Truth、自動同期、TypeScript の恩恵
 **デメリット**: API レスポンスと完全一致とは限らない
 
 ---
 
-#### Pattern C: Sorbet RBI → JSDoc/TypeScript 変換
+#### Pattern C: Sorbet RBI → TypeScript 変換
 
-**コンセプト**: Sorbet の型定義から JavaScript 型を生成
+**コンセプト**: Sorbet の型定義から TypeScript 型を生成
 
 ```ruby
 # sorbet/rbi/user.rbi
@@ -484,17 +540,16 @@ end
 
 ↓ `salvia types:from_sorbet`
 
-```javascript
-// app/islands/types.js
-/**
- * @typedef {Object} User
- * @property {number} id
- * @property {string} name
- * @property {number|null} age
- */
+```typescript
+// app/islands/types.ts
+export interface User {
+  id: number;
+  name: string;
+  age: number | null;
+}
 ```
 
-**メリット**: Sorbet ユーザーには自然、Ruby 側も型安全
+**メリット**: Sorbet ユーザーには自然、Ruby 側も型安全、完全な型共有
 **デメリット**: Sorbet 導入が前提、変換ロジックが複雑
 
 ---
@@ -533,12 +588,17 @@ class User < T::Struct
 end
 ```
 
-```javascript
-// app/islands/types.js (JSDoc)
-/** @typedef {{ id: number, name: string, email: string, age: number|null }} User */
+```typescript
+// app/islands/types.ts (TypeScript)
+export interface User {
+  id: number;
+  name: string;
+  email: string;
+  age: number | null;
+}
 ```
 
-**メリット**: 言語非依存、OpenAPI/GraphQL と親和性高い
+**メリット**: 言語非依存、OpenAPI/GraphQL と親和性高い、完全な型安全
 **デメリット**: スキーマを別途管理、二重定義感
 
 ---
@@ -566,20 +626,29 @@ end
 
 ↓ `salvia client:generate`
 
-```javascript
-// app/islands/client.js
+```typescript
+// app/islands/client.ts
+import type { User } from './types';
+
 export const salvia = {
   users: {
-    /** @returns {Promise<User[]>} */
-    index: () => fetch('/users').then(r => r.json()),
+    index: (): Promise<User[]> => 
+      fetch('/users').then(r => r.json()),
     
-    /** @param {number} id @returns {Promise<User>} */
-    show: (id) => fetch(`/users/${id}`).then(r => r.json()),
+    show: (id: number): Promise<User> => 
+      fetch(`/users/${id}`).then(r => r.json()),
+    
+    create: (data: Omit<User, 'id' | 'created_at' | 'updated_at'>): Promise<User> =>
+      fetch('/users', { 
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data) 
+      }).then(r => r.json()),
   }
 };
 ```
 
-**メリット**: 型情報が API に紐付く、柔軟
+**メリット**: 型情報が API に紐付く、完全な型安全、IDE 補完
 **デメリット**: アノテーション記述が必要
 
 ---
@@ -588,11 +657,18 @@ export const salvia = {
 
 | Pattern | Source of Truth | 難易度 | 型の正確さ | おすすめ度 |
 |---------|-----------------|--------|-----------|-----------|
-| **A** | routes.rb | ★☆☆ | △ 型なし | 入門向け |
+| **A** | routes.rb | ★☆☆ | △ unknown | 入門向け |
 | **B** | ActiveRecord | ★★☆ | ○ DB 基準 | **実用的** |
 | **C** | Sorbet | ★★★ | ◎ 完全 | Sorbet 使うなら |
 | **D** | JSON Schema | ★★☆ | ◎ 完全 | API 重視なら |
-| **E** | Controller | ★★☆ | ○ 明示的 | **バランス良い** |
+| **E** | Controller | ★★☆ | ◎ 明示的 | **バランス良い** |
+
+### 組み合わせ推奨
+
+```
+Pattern A (Client) + Pattern B (Types) = 最小構成
+Pattern A (Client) + Pattern E (Types) = 最も正確
+```
 
 ### 推奨アプローチ
 
@@ -614,12 +690,24 @@ Future:  Pattern C/D
 
 | 項目 | tRPC | Salvia Types/Client |
 |------|------|---------------------|
-| 言語 | TS ↔ TS | **Ruby ↔ JS** |
+| 言語 | TS ↔ TS | **Ruby ↔ TS** |
 | 型共有 | 自動 | 生成ベース |
 | プロトコル | 独自 RPC | **REST (標準)** |
-| ビルド | 必要 | **不要 (JSDoc)** |
+| ビルド | 必要 | **不要 (esm.sh)** |
 | HTMX 共存 | 難しい | **自然に共存** |
 | 学習コスト | 高い | **低い** |
+| TypeScript | 必須 | **オプション** |
+
+### 生成されるファイル
+
+```
+app/
+├── islands/
+│   ├── client.ts        # 自動生成: 型付き API クライアント
+│   ├── types.ts         # 自動生成: TypeScript 型定義
+│   ├── Counter.ts       # 開発者が書く Island
+│   └── UserList.ts      # 開発者が書く Island
+```
 
 ---
 
