@@ -1,6 +1,6 @@
 # Salvia.rb Roadmap
 
-> "Wisdom for Rubyists." — HTMX × Tailwind × ActiveRecord を前提にした、小さくて理解しやすい Ruby MVC フレームワーク
+> "Wisdom for Rubyists." — 小さくて理解しやすい Ruby MVC フレームワーク
 
 ---
 
@@ -9,10 +9,24 @@
 Salvia.rb は「Rails は重すぎる、Sinatra は軽すぎる」という隙間を埋めるフレームワークです。
 
 - **サーバーレンダリング (HTML) ファースト**
-- **HTMX による部分更新**が基本
-- **Tailwind CSS** でモダンな見た目
+- **HTMX 推奨**（Rails の Hotwire のような位置付け）
+- **Tailwind CSS** でモダンな見た目（推奨）
 - **ActiveRecord** でデータベース操作
 - **Node.js 不要**（tailwindcss-ruby を使用）
+
+### HTMX の位置付け
+
+Salvia における HTMX は、**Rails における Hotwire (Turbo/Stimulus)** のような位置付けです：
+
+| 項目 | Rails | Salvia |
+|------|-------|--------|
+| 推奨技術 | Hotwire (Turbo/Stimulus) | **HTMX** |
+| 必須か？ | ❌ 選択可能 | ❌ **選択可能** |
+| コア依存 | なし | **なし** |
+| 他の選択肢 | React, Vue, Vanilla JS | Preact Islands, Vanilla JS, React |
+
+**Smart Rendering** は HTMX ヘッダーを検出しますが、HTMX がなくても動作します。
+他の JavaScript フレームワークや Vanilla JS でも問題なく使えます。
 
 ---
 
@@ -39,8 +53,8 @@ Salvia.rb は「Rails は重すぎる、Sinatra は軽すぎる」という隙�
 - [x] `salvia css:build` - Tailwind CSS ビルド
 
 ### Assets
-- [x] HTMX (htmx.min.js) の自動配置
-- [x] Tailwind CSS の初期設定
+- [x] HTMX (htmx.min.js) のプレースホルダー配置（推奨、オプショナル）
+- [x] Tailwind CSS の初期設定（推奨、オプショナル）
 
 ---
 
@@ -48,10 +62,12 @@ Salvia.rb は「Rails は重すぎる、Sinatra は軽すぎる」という隙�
 
 開発者体験の向上。コードリロードとスマートなレンダリング。
 
-### Smart Rendering
-- [ ] `htmx_request?` ヘルパー
-- [ ] HTMX リクエスト時の自動レイアウト除外
-- [ ] `render` メソッドの統一（view/partial の自動判定）
+### Smart Rendering（HTMX 推奨）
+- [x] `htmx_request?` ヘルパー（HTMX ヘッダーを検出、オプショナル）
+- [x] HTMX リクエスト時の自動レイアウト除外（HTMX がない場合は通常レンダリング）
+- [x] `render` メソッドの統一（view/partial の自動判定）
+
+**注**: Smart Rendering は HTMX がなくても動作します。HTMX は推奨ですが、必須ではありません。
 
 ### Auto-reloading
 - [ ] Zeitwerk によるオートローディング
