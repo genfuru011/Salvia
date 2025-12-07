@@ -236,6 +236,46 @@ customElements.define('my-chart', MyChart);
 | 既存の React ライブラリを使いたい | **Preact + HTM** |
 | 最小限の学習コスト | **Preact + HTM** |
 
+### TypeScript について
+
+**結論: Island では JavaScript + JSDoc で十分**
+
+#### 理由
+
+| Ruby | JavaScript (Islands) |
+|------|---------------------|
+| 動的型付け | 動的型付け |
+| 型なしでも問題なく開発 | 型なしでも問題なく開発 |
+| 大規模なら Sorbet | 大規模なら TypeScript |
+
+Ruby で型なしで開発しているなら、**小さな Island も型なしで十分**。
+Salvia の Island は「必要な部分だけ」なので、大規模にはならない想定。
+
+#### JSDoc で型ヒント（ビルド不要）
+
+```javascript
+/**
+ * チャートコンポーネント
+ * @param {{ data: number[], title: string, type: 'line' | 'bar' }} props
+ */
+export function Chart({ data, title, type }) {
+  // VS Code が型補完してくれる！
+  // TypeScript なしで型の恩恵を受けられる
+}
+```
+
+#### どうしても TypeScript を使いたい場合
+
+```bash
+# 開発時に型チェックだけ実行
+npx tsc --noEmit app/islands/**/*.ts
+
+# または esm.sh が .ts を自動変換
+# https://esm.sh/gh/user/repo/src/Component.ts
+```
+
+**哲学: Ruby と同じく「動的型付けの自由さ」を Island でも享受する** 🌿
+
 ### 実装計画
 
 #### Phase A: 基盤 (v2.0)
