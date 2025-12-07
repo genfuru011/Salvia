@@ -653,6 +653,196 @@ export const salvia = {
 
 ---
 
+#### Pattern F: GraphQL スキーマ
+
+**コンセプト**: GraphQL スキーマから Ruby と TypeScript の型を生成
+
+```graphql
+# schema.graphql
+type User {
+  id: ID!
+  name: String!
+  email: String!
+  age: Int
+  posts: [Post!]!
+}
+
+type Post {
+  id: ID!
+  title: String!
+  body: String!
+  author: User!
+}
+
+type Query {
+  users: [User!]!
+  user(id: ID!): User
+  posts: [Post!]!
+}
+```
+
+↓ `salvia types:from_graphql`
+
+```ruby
+# app/types/user.rb (自動生成)
+class User < T::Struct
+  prop :id, String
+  prop :name, String
+  prop :email, String
+  prop :age, T.nilable(Integer)
+  prop :posts, T::Array[Post]
+end
+```
+
+```typescript
+// app/islands/types.ts (自動生成)
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  age: number | null;
+  posts: Post[];
+}
+
+export interface Post {
+  id: string;
+  title: string;
+  body: string;
+  author: User;
+}
+```
+
+**メリット**: GraphQL エコシステムと統合、クエリ型も自動生成可能
+**デメリット**: GraphQL サーバーが必要、REST とは別のアプローチ
+
+---
+
+#### Pattern G: OpenAPI / Swagger
+
+**コンセプト**: OpenAPI 仕様から両言語の型とクライアントを生成
+
+```yaml
+# openapi.yml
+openapi: 3.0.0
+info:
+  title: Salvia API
+  version: 1.0.0
+
+paths:
+  /users:
+    get:
+      summary: List users
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+  
+components:
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        age:
+          type: integer
+          nullable: true
+      required: [id, name, email]
+```
+
+↓ `salvia types:from_openapi`
+
+```ruby
+# app/types/user.rb (自動生成)
+class User < T::Struct
+  prop :id, Integer
+  prop :name, String
+  prop :email, String
+  prop :age, T.nilable(Integer)
+end
+```
+
+```typescript
+// app/islands/types.ts (自動生成)
+export interface User {
+  id: number;
+  name: string;
+  email: string;
+  age: number | null;
+}
+
+// app/islands/client.ts (自動生成)
+export const salvia = {
+  users: {
+    index: (): Promise<User[]> => 
+      fetch('/users').then(r => r.json()),
+  }
+};
+```
+
+**メリット**: 業界標準、ツールエコシステム豊富、API ドキュメントも自動生成
+**デメリット**: OpenAPI 仕様を維持する必要
+
+---
+
+#### Pattern H: Protocol Buffers (Protobuf)
+
+**コンセプト**: .proto ファイルから多言語の型を生成
+
+```protobuf
+// schema/user.proto
+syntax = "proto3";
+
+message User {
+  int32 id = 1;
+  string name = 2;
+  string email = 3;
+  optional int32 age = 4;
+  repeated Post posts = 5;
+}
+
+message Post {
+  int32 id = 1;
+  string title = 2;
+  string body = 3;
+  User author = 4;
+}
+```
+
+↓ `salvia types:from_protobuf`
+
+```ruby
+# app/types/user.rb (自動生成 via protobuf-ruby)
+class User < Google::Protobuf::MessageExts::ClassMethods
+  # protobuf の Ruby 実装
+end
+```
+
+```typescript
+// app/islands/types.ts (自動生成 via protobufjs)
+export interface User {
+  id: number;
+  name: string;
+  email: string;
+  age?: number;
+  posts: Post[];
+}
+```
+
+**メリット**: バイナリ効率、gRPC と統合可能、言語非依存
+**デメリット**: バイナリ形式、REST とは異なる、学習コスト
+
+---
+
 ### パターン比較
 
 | Pattern | Source of Truth | 難易度 | 型の正確さ | おすすめ度 |
@@ -662,12 +852,18 @@ export const salvia = {
 | **C** | Sorbet | ★★★ | ◎ 完全 | Sorbet 使うなら |
 | **D** | JSON Schema | ★★☆ | ◎ 完全 | API 重視なら |
 | **E** | Controller | ★★☆ | ◎ 明示的 | **バランス良い** |
+| **F** | GraphQL | ★★★ | ◎ 完全 | GraphQL 使うなら |
+| **G** | OpenAPI | ★★☆ | ◎ 完全 | **API 標準重視** |
+| **H** | Protobuf | ★★★ | ◎ 完全 | gRPC / 高性能重視 |
 
 ### 組み合わせ推奨
 
 ```
 Pattern A (Client) + Pattern B (Types) = 最小構成
 Pattern A (Client) + Pattern E (Types) = 最も正確
+Pattern G (OpenAPI) = 業界標準、API ドキュメントも自動生成
+Pattern F (GraphQL) = GraphQL エコシステムと統合
+Pattern H (Protobuf) = 高性能 / gRPC が必要な場合
 ```
 
 ### 推奨アプローチ
@@ -677,14 +873,24 @@ Phase 1: Pattern A (routes → Client)
          まずシンプルに API クライアントを自動生成
 
 Phase 2: Pattern B (ActiveRecord → Types)
-         DB スキーマから JSDoc 型を生成
+         DB スキーマから TypeScript 型を生成
 
 Phase 3: Pattern E (Controller アノテーション)
          より正確な型情報を提供
 
-Future:  Pattern C/D
-         Sorbet や JSON Schema との統合
+Future:  Pattern C/D/F/G/H
+         Sorbet、JSON Schema、GraphQL、OpenAPI、Protobuf との統合
 ```
+
+### 標準スキーマ形式の選択ガイド
+
+| 要件 | 推奨パターン |
+|------|-------------|
+| REST API を標準化したい | **Pattern G (OpenAPI)** |
+| GraphQL を使っている | **Pattern F (GraphQL)** |
+| 高性能 / gRPC が必要 | **Pattern H (Protobuf)** |
+| シンプルに始めたい | **Pattern A + B** |
+| 既存の JSON Schema がある | **Pattern D** |
 
 ### tRPC との比較
 
