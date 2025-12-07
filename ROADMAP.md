@@ -361,6 +361,268 @@ app/
 
 ---
 
+## 🔮 Salvia Types / Client (実験的構想)
+
+> **Ruby と JavaScript の型・API を繋ぐ** - tRPC にインスパイアされた構想
+
+### コンセプト
+
+```
+┌─────────────────────────────────────────────────────────┐
+│               Source of Truth (何か一つ)                │
+│    routes.rb / schema / Sorbet / ActiveRecord          │
+└─────────────────────────────────────────────────────────┘
+                         │
+          ┌──────────────┼──────────────┐
+          ▼              ▼              ▼
+    ┌──────────┐   ┌──────────┐   ┌──────────┐
+    │  Ruby 型  │   │  JS 型   │   │ Client   │
+    │ (Sorbet) │   │ (JSDoc)  │   │ (fetch)  │
+    └──────────┘   └──────────┘   └──────────┘
+```
+
+### アプローチ一覧
+
+#### Pattern A: routes.rb → Client 自動生成
+
+**コンセプト**: ルーティング定義から API クライアントを自動生成
+
+```ruby
+# config/routes.rb
+Salvia::Router.draw do
+  resources :users
+  resources :posts do
+    resources :comments
+  end
+end
+```
+
+↓ `salvia client:generate`
+
+```javascript
+// app/islands/client.js (自動生成)
+export const salvia = {
+  users: {
+    index: () => fetch('/users').then(r => r.json()),
+    show: (id) => fetch(`/users/${id}`).then(r => r.json()),
+    create: (data) => fetchPost('/users', data),
+    update: (id, data) => fetchPatch(`/users/${id}`, data),
+    destroy: (id) => fetchDelete(`/users/${id}`),
+  },
+  posts: {
+    comments: {
+      index: (postId) => fetch(`/posts/${postId}/comments`).then(r => r.json()),
+    }
+  }
+};
+```
+
+**メリット**: シンプル、REST のまま、学習コスト低い
+**デメリット**: 型情報は別途必要
+
+---
+
+#### Pattern B: ActiveRecord → JSDoc 型生成
+
+**コンセプト**: DB スキーマから JavaScript の型定義を自動生成
+
+```ruby
+# db/schema.rb
+create_table "users" do |t|
+  t.string "name", null: false
+  t.string "email", null: false
+  t.integer "age"
+  t.timestamps
+end
+```
+
+↓ `salvia types:generate`
+
+```javascript
+// app/islands/types.js (自動生成)
+/**
+ * @typedef {Object} User
+ * @property {number} id
+ * @property {string} name
+ * @property {string} email
+ * @property {number|null} age
+ * @property {string} created_at
+ * @property {string} updated_at
+ */
+
+/**
+ * @typedef {Object} Post
+ * @property {number} id
+ * @property {string} title
+ * @property {string} body
+ * @property {number} user_id
+ */
+```
+
+**メリット**: DB スキーマが Source of Truth、自動同期
+**デメリット**: API レスポンスと完全一致とは限らない
+
+---
+
+#### Pattern C: Sorbet RBI → JSDoc/TypeScript 変換
+
+**コンセプト**: Sorbet の型定義から JavaScript 型を生成
+
+```ruby
+# sorbet/rbi/user.rbi
+class User
+  sig { returns(Integer) }
+  def id; end
+
+  sig { returns(String) }
+  def name; end
+
+  sig { returns(T.nilable(Integer)) }
+  def age; end
+end
+```
+
+↓ `salvia types:from_sorbet`
+
+```javascript
+// app/islands/types.js
+/**
+ * @typedef {Object} User
+ * @property {number} id
+ * @property {string} name
+ * @property {number|null} age
+ */
+```
+
+**メリット**: Sorbet ユーザーには自然、Ruby 側も型安全
+**デメリット**: Sorbet 導入が前提、変換ロジックが複雑
+
+---
+
+#### Pattern D: JSON Schema 共通定義
+
+**コンセプト**: 言語に依存しないスキーマから両方生成
+
+```yaml
+# schema/user.yml
+User:
+  type: object
+  properties:
+    id:
+      type: integer
+    name:
+      type: string
+    email:
+      type: string
+      format: email
+    age:
+      type: integer
+      nullable: true
+  required: [id, name, email]
+```
+
+↓ `salvia schema:generate`
+
+```ruby
+# app/types/user.rb (Ruby/Sorbet)
+class User < T::Struct
+  prop :id, Integer
+  prop :name, String
+  prop :email, String
+  prop :age, T.nilable(Integer)
+end
+```
+
+```javascript
+// app/islands/types.js (JSDoc)
+/** @typedef {{ id: number, name: string, email: string, age: number|null }} User */
+```
+
+**メリット**: 言語非依存、OpenAPI/GraphQL と親和性高い
+**デメリット**: スキーマを別途管理、二重定義感
+
+---
+
+#### Pattern E: Controller アノテーション
+
+**コンセプト**: Controller の戻り値を明示的にアノテーション
+
+```ruby
+class UsersController < ApplicationController
+  # @return [Array<User>]
+  def index
+    @users = User.all
+    render json: @users
+  end
+
+  # @param id [Integer]
+  # @return [User]
+  def show
+    @user = User.find(params[:id])
+    render json: @user
+  end
+end
+```
+
+↓ `salvia client:generate`
+
+```javascript
+// app/islands/client.js
+export const salvia = {
+  users: {
+    /** @returns {Promise<User[]>} */
+    index: () => fetch('/users').then(r => r.json()),
+    
+    /** @param {number} id @returns {Promise<User>} */
+    show: (id) => fetch(`/users/${id}`).then(r => r.json()),
+  }
+};
+```
+
+**メリット**: 型情報が API に紐付く、柔軟
+**デメリット**: アノテーション記述が必要
+
+---
+
+### パターン比較
+
+| Pattern | Source of Truth | 難易度 | 型の正確さ | おすすめ度 |
+|---------|-----------------|--------|-----------|-----------|
+| **A** | routes.rb | ★☆☆ | △ 型なし | 入門向け |
+| **B** | ActiveRecord | ★★☆ | ○ DB 基準 | **実用的** |
+| **C** | Sorbet | ★★★ | ◎ 完全 | Sorbet 使うなら |
+| **D** | JSON Schema | ★★☆ | ◎ 完全 | API 重視なら |
+| **E** | Controller | ★★☆ | ○ 明示的 | **バランス良い** |
+
+### 推奨アプローチ
+
+```
+Phase 1: Pattern A (routes → Client)
+         まずシンプルに API クライアントを自動生成
+
+Phase 2: Pattern B (ActiveRecord → Types)
+         DB スキーマから JSDoc 型を生成
+
+Phase 3: Pattern E (Controller アノテーション)
+         より正確な型情報を提供
+
+Future:  Pattern C/D
+         Sorbet や JSON Schema との統合
+```
+
+### tRPC との比較
+
+| 項目 | tRPC | Salvia Types/Client |
+|------|------|---------------------|
+| 言語 | TS ↔ TS | **Ruby ↔ JS** |
+| 型共有 | 自動 | 生成ベース |
+| プロトコル | 独自 RPC | **REST (標準)** |
+| ビルド | 必要 | **不要 (JSDoc)** |
+| HTMX 共存 | 難しい | **自然に共存** |
+| 学習コスト | 高い | **低い** |
+
+---
+
 ## Version Policy
 
 - **0.x.x**: 実験的リリース。破壊的変更あり
