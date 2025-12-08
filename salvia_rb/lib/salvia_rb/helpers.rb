@@ -4,5 +4,6 @@ module Salvia
   module Helpers
     include Tag
     include Htmx
+    include Component
   end
 end

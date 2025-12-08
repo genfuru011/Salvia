@@ -131,6 +131,31 @@ end
 
 また、`htmx_trigger` や `htmx_request?` もこのモジュールに移動し、コントローラーとビューの両方で利用可能にしました。
 
+### 2. View Components
+
+再利用可能な UI コンポーネントを作成するための `Salvia::Component` クラスと `component` ヘルパーを追加しました。
+
+**コンポーネント定義:** `app/components/user_card_component.rb`
+```ruby
+class UserCardComponent < Salvia::Component
+  def initialize(user:)
+    @user = user
+  end
+end
+```
+
+**テンプレート:** `app/components/user_card_component.html.erb`
+```erb
+<div class="card">
+  <h2><%= user.name %></h2>
+</div>
+```
+
+**使用方法:**
+```erb
+<%= component "user_card", user: @user %>
+```
+
 ---
 
 ## v0.4.0: Production Ready

@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.5.0] - Unreleased
 
 ### Added
+- **View Components**: Added `Salvia::Component` and `component` helper for reusable UI components.
 - **HTMX Helpers**: Added `htmx_link_to`, `htmx_trigger`, and `htmx_request?` helpers in `Salvia::Helpers::Htmx`.
 - **Tag Helpers**: Added `tag` and `link_to` helpers in `Salvia::Helpers::Tag`.
 
@@ -56,7 +57,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed `Mustermann` match method compatibility issue.
 - Fixed `salvia console` startup arguments for IRB compatibility.
 
-## [0.1.0] - 2024-12 (Development)
+## [0.1.0] - 2025-12 (Development)
 
 ### Added
 - **Core Framework**

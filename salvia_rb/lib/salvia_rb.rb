@@ -11,6 +11,7 @@ require "mustermann"
 require "tilt"
 require "erubi"
 require "active_record"
+require "active_support/core_ext/string/inflections"
 require "zeitwerk"
 loader = Zeitwerk::Loader.for_gem
 loader.ignore("#{__dir__}/salvia_rb/version.rb")

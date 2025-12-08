@@ -156,7 +156,7 @@ module Salvia
       empty_directory "#{@app_name}/app/models"
       empty_directory "#{@app_name}/app/views/layouts"
       empty_directory "#{@app_name}/app/views/home"
-      empty_directory "#{@app_name}/app/views/components"
+      empty_directory "#{@app_name}/app/components"
       empty_directory "#{@app_name}/app/assets/stylesheets"
 
       # 設定
@@ -302,6 +302,7 @@ module Salvia
         loader = Zeitwerk::Loader.new
         loader.push_dir(File.join(Salvia.root, "app", "controllers"))
         loader.push_dir(File.join(Salvia.root, "app", "models"))
+        loader.push_dir(File.join(Salvia.root, "app", "components"))
         loader.enable_reloading if Salvia.development?
         loader.setup
         Salvia.app_loader = loader
