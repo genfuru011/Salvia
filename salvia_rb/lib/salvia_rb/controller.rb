@@ -27,6 +27,8 @@ module Salvia
   class Controller
     attr_reader :request, :response, :params
 
+    include Salvia::Router.helpers
+
     def initialize(request, response, route_params = {})
       @request = request
       @response = response

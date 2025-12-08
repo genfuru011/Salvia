@@ -97,6 +97,22 @@ Rack 3.0 以降の変更に対応するため、以下の gem を依存関係に
 
 また、HTMX リクエストに対しては、`app.js` で自動的に `X-CSRF-Token` ヘッダーを付与するように設定しています。
 
+### 3. Routing Enhancement
+
+`Salvia::Router` を強化し、ネストしたリソースと名前付きルートをサポートしました。
+
+```ruby
+resources :posts do
+  resources :comments
+end
+```
+
+これにより、以下のパスとヘルパーが生成されます：
+- `/posts/:post_id/comments` -> `post_comments_path(post_id)`
+- `/posts/:post_id/comments/:id` -> `post_comment_path(post_id, id)`
+
+`Mustermann` のパターンマッチングと `ActiveSupport` の単数形化ロジックを組み合わせて実現しています。
+
 ---
 
 ## v0.1.0: Foundation

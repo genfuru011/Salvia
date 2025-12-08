@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **CSRF Protection**: Integrated `Rack::Protection` for CSRF defense.
 - **CSRF Helpers**: Added `csrf_token` and `csrf_meta_tags` helpers.
 - **HTMX Integration**: Automatic CSRF token injection for HTMX requests.
+- **Routing Enhancement**: Added support for nested resources and named routes (e.g., `posts_path`, `post_comments_path`).
 
 ## [0.2.0] - Unreleased
 
