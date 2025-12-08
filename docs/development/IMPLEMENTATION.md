@@ -115,6 +115,24 @@ end
 
 ---
 
+## v0.5.0: Rich UI & Advanced Features
+
+### 1. HTMX Helpers
+
+`Salvia::Helpers::Htmx` モジュールを追加し、HTMX 属性を簡単に扱えるようにしました。
+
+```ruby
+# View
+<%= htmx_link_to "Delete", post_path(@post), 
+      method: :delete, 
+      target: "#post-#{@post.id}", 
+      confirm: "Are you sure?" %>
+```
+
+また、`htmx_trigger` や `htmx_request?` もこのモジュールに移動し、コントローラーとビューの両方で利用可能にしました。
+
+---
+
 ## v0.4.0: Production Ready
 
 ### 1. Environment Configuration

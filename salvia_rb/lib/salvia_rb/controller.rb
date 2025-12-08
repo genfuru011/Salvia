@@ -28,6 +28,7 @@ module Salvia
     attr_reader :request, :response, :params
 
     include Salvia::Router.helpers
+    include Salvia::Helpers
 
     def initialize(request, response, route_params = {})
       @request = request
@@ -91,13 +92,6 @@ module Salvia
       end
     end
 
-    # HTMX からのリクエストかどうかを判定
-    #
-    # @return [Boolean]
-    def htmx_request?
-      request.env["HTTP_HX_REQUEST"] == "true"
-    end
-
     # セッションにアクセス
     def session
       request.session
@@ -106,14 +100,6 @@ module Salvia
     # Flash メッセージにアクセス
     def flash
       @flash ||= Flash.new(session)
-    end
-
-    # HTMX イベントをトリガー
-    #
-    # @param event [String] イベント名
-    # @param detail [Hash] イベント詳細データ
-    def htmx_trigger(event, detail = {})
-      response["HX-Trigger"] = { event => detail }.to_json
     end
 
     # CSRF トークンを取得

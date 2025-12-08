@@ -18,6 +18,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.5.0] - Unreleased
+
+### Added
+- **HTMX Helpers**: Added `htmx_link_to`, `htmx_trigger`, and `htmx_request?` helpers in `Salvia::Helpers::Htmx`.
+- **Tag Helpers**: Added `tag` and `link_to` helpers in `Salvia::Helpers::Tag`.
+
 ## [0.4.0] - 2025-12-08
 
 ### Added
