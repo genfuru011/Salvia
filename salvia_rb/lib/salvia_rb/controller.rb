@@ -45,13 +45,46 @@ module Salvia
 
     # Smart Rendering 対応のテンプレートレンダリング
     #
-    # @param template [String] テンプレートパス（例: "home/index" or "home/_list"）
+    # @param template [String, Hash] テンプレートパスまたはオプション
     # @param locals [Hash] テンプレートに渡すローカル変数
     # @param layout [String, nil, false] レイアウト（nil = 自動, false = なし）
     # @param status [Integer] HTTP ステータスコード
-    def render(template, locals: {}, layout: nil, status: 200)
+    def render(template = nil, locals: {}, layout: nil, status: 200, **options)
       @rendered = true
+      
+      # オプション引数の処理 (Rails-like)
+      if template.is_a?(Hash)
+        options = template.merge(options)
+        template = nil
+      end
+
+      # status オプションの処理
+      status = options[:status] if options[:status]
       response.status = status
+
+      # plain: "text"
+      if options[:plain]
+        response["Content-Type"] = "text/plain; charset=utf-8"
+        response.write(options[:plain])
+        return
+      end
+
+      # json: { key: "value" }
+      if options[:json]
+        response["Content-Type"] = "application/json; charset=utf-8"
+        response.write(options[:json].to_json)
+        return
+      end
+
+      # partial: "path/to/partial"
+      if options[:partial]
+        template = options[:partial]
+        layout = false
+      end
+
+      # template が指定されていない場合はエラー（通常は process メソッドでデフォルトが渡される）
+      raise ArgumentError, "テンプレートを指定してください" if template.nil?
+
       response["Content-Type"] = "text/html; charset=utf-8"
 
       # インスタンス変数をテンプレートに渡す
