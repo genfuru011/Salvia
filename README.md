@@ -64,6 +64,9 @@ salvia server
 |-------------|------|
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | 内部構造と設計思想 |
 | [docs/ROADMAP.md](docs/ROADMAP.md) | 開発ロードマップ |
+| [docs/SECURITY_ASSESSMENT.md](docs/SECURITY_ASSESSMENT.md) | セキュリティ脆弱性リスク評価 |
+| [docs/SECURITY_GUIDE.md](docs/SECURITY_GUIDE.md) | セキュリティガイド |
+| [docs/SECURITY_CHECKLIST.md](docs/SECURITY_CHECKLIST.md) | セキュリティチェックリスト |
 | [CHANGELOG.md](CHANGELOG.md) | 変更履歴 |
 | [docs/Idea.md](docs/Idea.md) | 元のアイデアメモ |
 
@@ -203,6 +206,28 @@ salvia version          # Show version
 - [ ] **v1.0.0** - Stable Release
 
 詳細は [docs/ROADMAP.md](docs/ROADMAP.md) を参照してください。
+
+## 🔒 Security
+
+セキュリティは重要です。Salvia.rb を使用する前に、以下のドキュメントを確認してください:
+
+- **[セキュリティ脆弱性リスク評価](docs/SECURITY_ASSESSMENT.md)** - 現在のバージョンの既知の脆弱性とリスク
+- **[セキュリティガイド](docs/SECURITY_GUIDE.md)** - 安全なアプリケーション開発のベストプラクティス
+- **[セキュリティチェックリスト](docs/SECURITY_CHECKLIST.md)** - 開発・デプロイ時のチェック項目
+
+### ⚠️ 重要な注意事項
+
+**現在のバージョン (v0.1.0) には、重大なセキュリティ上の懸念があります:**
+
+- 🔴 CSRF 保護が不完全
+- 🔴 XSS 対策の自動エスケープが未設定
+- 🟠 セッション管理のセキュリティ設定が不十分
+
+**本番環境での使用は推奨しません。** v0.3.0 (Security Phase) のリリースをお待ちください。
+
+### 脆弱性の報告
+
+セキュリティ脆弱性を発見した場合は、公開 Issue を作成せず、メンテナーに直接ご連絡ください。
 
 ## 📝 License
 
