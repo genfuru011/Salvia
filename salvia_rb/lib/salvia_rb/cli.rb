@@ -67,18 +67,21 @@ module Salvia
 
     # データベースコマンド
     desc "db:create", "データベースを作成"
+    map "db:create" => :db_create
     def db_create
       require_app_environment
       Salvia::Database.create!
     end
 
     desc "db:drop", "データベースを削除"
+    map "db:drop" => :db_drop
     def db_drop
       require_app_environment
       Salvia::Database.drop!
     end
 
     desc "db:migrate", "保留中のマイグレーションを実行"
+    map "db:migrate" => :db_migrate
     def db_migrate
       require_app_environment
       Salvia::Database.migrate!
@@ -86,6 +89,7 @@ module Salvia
     end
 
     desc "db:rollback", "直前のマイグレーションをロールバック"
+    map "db:rollback" => :db_rollback
     method_option :step, aliases: "-s", type: :numeric, default: 1, desc: "ロールバックするステップ数"
     def db_rollback
       require_app_environment
@@ -94,6 +98,7 @@ module Salvia
     end
 
     desc "db:setup", "データベースの作成とマイグレーションを実行"
+    map "db:setup" => :db_setup
     def db_setup
       invoke :db_create
       invoke :db_migrate
@@ -101,6 +106,7 @@ module Salvia
 
     # CSS コマンド
     desc "css:build", "Tailwind CSS をビルド"
+    map "css:build" => :css_build
     def css_build
       say "🎨 Tailwind CSS をビルド中...", :green
       system "bundle exec tailwindcss -i ./app/assets/stylesheets/application.tailwind.css -o ./public/assets/stylesheets/tailwind.css --minify"
@@ -108,6 +114,7 @@ module Salvia
     end
 
     desc "css:watch", "Tailwind CSS の変更を監視してリビルド"
+    map "css:watch" => :css_watch
     def css_watch
       say "👀 CSS の変更を監視中...", :green
       exec "bundle exec tailwindcss -i ./app/assets/stylesheets/application.tailwind.css -o ./public/assets/stylesheets/tailwind.css --watch"
@@ -166,6 +173,9 @@ module Salvia
 
       # データベース
       empty_directory "#{@app_name}/db/migrate"
+
+      # ログ
+      empty_directory "#{@app_name}/log"
 
       # 公開アセット
       empty_directory "#{@app_name}/public/assets/javascripts"
