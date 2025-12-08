@@ -529,15 +529,14 @@ module Salvia
     ]
     
     def self.filter(params)
-      params.transform_keys(&:to_s).transform_values do |value|
-        if value.is_a?(Hash)
+      params.transform_keys(&:to_s).each_with_object({}) do |(key, value), result|
+        result[key] = if FILTERED_PARAMS.any? { |filtered| key.to_s.include?(filtered) }
+          '[FILTERED]'
+        elsif value.is_a?(Hash)
           filter(value)
         else
           value
         end
-      end.transform_keys do |key|
-        FILTERED_PARAMS.any? { |filtered| key.to_s.include?(filtered) } ? 
-          "[FILTERED]" : key
       end
     end
   end
