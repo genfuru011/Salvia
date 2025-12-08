@@ -29,6 +29,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Form Helpers**: Added `form_tag` and `form_close` helpers with CSRF protection and method override support.
 - **HTMX Helpers**: Added `htmx_link_to`, `htmx_form`, `htmx_trigger`, and `htmx_request?` helpers in `Salvia::Helpers::Htmx`.
 - **Tag Helpers**: Added `tag` and `link_to` helpers in `Salvia::Helpers::Tag`.
+- **Render Options**: Added support for Rails-like option arguments (`plain:`, `json:`, `partial:`) in `render`.
+
+### Fixed
+- Fixed duplicate output issue when using nested `render` calls in views.
+- Fixed `partial:` option to automatically prepend `_` to the filename.
 
 ## [0.4.0] - 2025-12-08
 
@@ -39,10 +44,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Testing Support**: Added `Salvia::Test::ControllerHelper` and `rack-test` integration.
 - **Security Documentation**: Added comprehensive security assessment, guide, and checklist.
 - **CLI Update**: `salvia new` now generates `config/environments/development.rb` and `production.rb`.
-
-- **Fix**: `Salvia::Controller#render` でネストした呼び出し（ビュー内での `render`）が重複して出力される問題を修正
-- **Fix**: `Salvia::Controller#render` で `partial:` オプション使用時にファイル名の先頭に `_` を自動付与するように修正
-- **Fix**: `Salvia::Controller#render` で Rails ライクなオプション引数 (`plain:`, `json:`, `partial:`) をサポート
 
 ## [0.3.0] - 2025-12-08
 

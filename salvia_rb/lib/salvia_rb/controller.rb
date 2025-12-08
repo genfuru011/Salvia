@@ -33,7 +33,7 @@ module Salvia
     def initialize(request, response, route_params = {})
       @request = request
       @response = response
-      @params = request.params.merge(route_params)
+      @params = request.params.merge(route_params).with_indifferent_access
       @rendered = false
     end
 
@@ -66,14 +66,14 @@ module Salvia
 
       # plain: "text"
       if options[:plain]
-        response["Content-Type"] = "text/plain; charset=utf-8"
+        response["content-type"] = "text/plain; charset=utf-8"
         response.write(options[:plain])
         return
       end
 
       # json: { key: "value" }
       if options[:json]
-        response["Content-Type"] = "application/json; charset=utf-8"
+        response["content-type"] = "application/json; charset=utf-8"
         response.write(options[:json].to_json)
         return
       end
@@ -95,7 +95,7 @@ module Salvia
       # template が指定されていない場合はエラー（通常は process メソッドでデフォルトが渡される）
       raise ArgumentError, "テンプレートを指定してください" if template.nil?
 
-      response["Content-Type"] = "text/html; charset=utf-8"
+      response["content-type"] = "text/html; charset=utf-8"
 
       # インスタンス変数をテンプレートに渡す
       template_locals = instance_variables_hash.merge(locals)
