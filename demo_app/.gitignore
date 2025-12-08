@@ -1,0 +1,23 @@
+# データベース
+db/*.sqlite3
+
+# Bundler
+/.bundle/
+/vendor/bundle/
+
+# 環境変数
+.env
+.env.local
+
+# ログ
+/log/*.log
+
+# 一時ファイル
+/tmp/
+
+# OS ファイル
+.DS_Store
+
+# IDE
+.idea/
+.vscode/
