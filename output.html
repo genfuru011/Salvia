@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DemoApp</title>
+
+  <meta name="csrf-param" content="authenticity_token">
+<meta name="csrf-token" content="Zs8jLhAqLYPW8D55FJECV2FWXqBQ8kN8bViz_nAgbz0=">
+  <script async src="https://ga.jspm.io/npm:es-module-shims@1.8.2/dist/es-module-shims.js"></script>
+<script type="importmap">
+{"imports":{"preact":"https://esm.sh/preact@10.19.3","preact/hooks":"https://esm.sh/preact@10.19.3/hooks?external=preact","htm/preact":"https://esm.sh/htm@3.1.1/preact?external=preact","chart.js/auto":"https://esm.sh/chart.js@4.4.1/auto","SalesChart":"/islands/SalesChart.js"}}
+</script>
+
+  <link rel="stylesheet" href="/assets/stylesheets/tailwind.css">
+
+  <script src="/assets/javascripts/htmx.min.js" defer></script>
+  <script type="module" src="/assets/javascripts/app.js"></script>
+  <script type="module" src="/assets/javascripts/islands.js"></script>
+</head>
+<body class="min-h-screen bg-slate-50 text-slate-900">
+  <div class="max-w-md mx-auto mt-10">
+  <h1 class="text-2xl font-bold mb-4 text-salvia-700">ToDo List</h1>
+
+  <!-- 新規作成フォーム -->
+  <form hx-post="/todos" hx-target="#todo-list" hx-swap="afterbegin" action="/todos" method="post">
+<input type="hidden" name="authenticity_token" value="Zs8jLhAqLYPW8D55FJECV2FWXqBQ8kN8bViz_nAgbz0=">
+    <div class="flex gap-2 mb-6">
+      <input type="text" name="title" placeholder="新しいタスク..." class="flex-1 border rounded px-3 py-2" required>
+      <button type="submit" class="bg-salvia-500 text-white px-4 py-2 rounded hover:bg-salvia-600">追加</button>
+    </div>
+  </form>
+
+  <!-- リスト -->
+  <div id="todo-list" class="space-y-2">
+      <div id="todo-5" class="flex items-center justify-between p-3 bg-white border rounded shadow-sm ">
+  <div class="flex items-center gap-3">
+    <form hx-put="/todos/5" hx-target="#todo-5" hx-swap="outerHTML" action="/todos/5" method="post">
+<input type="hidden" name="authenticity_token" value="Zs8jLhAqLYPW8D55FJECV2FWXqBQ8kN8bViz_nAgbz0=">
+<input type="hidden" name="_method" value="put">
+      <input type="checkbox" 
+             onchange="this.form.requestSubmit()" 
+             
+             class="w-5 h-5 text-salvia-600 rounded focus:ring-salvia-500">
+    </form>
+    
+    <span class="">
+      DeleteMe
+    </span>
+  </div>
+
+  <a class="text-red-500 hover:text-red-700 text-sm" hx-delete="/todos/5" hx-target="#todo-5" hx-swap="outerHTML" hx-confirm="本当に削除しますか？" href="/todos/5">削除</a>
+</div>
+
+      <div id="todo-4" class="flex items-center justify-between p-3 bg-white border rounded shadow-sm ">
+  <div class="flex items-center gap-3">
+    <form hx-put="/todos/4" hx-target="#todo-4" hx-swap="outerHTML" action="/todos/4" method="post">
+<input type="hidden" name="authenticity_token" value="Zs8jLhAqLYPW8D55FJECV2FWXqBQ8kN8bViz_nAgbz0=">
+<input type="hidden" name="_method" value="put">
+      <input type="checkbox" 
+             onchange="this.form.requestSubmit()" 
+             
+             class="w-5 h-5 text-salvia-600 rounded focus:ring-salvia-500">
+    </form>
+    
+    <span class="">
+      DeleteMe
+    </span>
+  </div>
+
+  <a class="text-red-500 hover:text-red-700 text-sm" hx-delete="/todos/4" hx-target="#todo-4" hx-swap="outerHTML" hx-confirm="本当に削除しますか？" href="/todos/4">削除</a>
+</div>
+
+      <div id="todo-3" class="flex items-center justify-between p-3 bg-white border rounded shadow-sm ">
+  <div class="flex items-center gap-3">
+    <form hx-put="/todos/3" hx-target="#todo-3" hx-swap="outerHTML" action="/todos/3" method="post">
+<input type="hidden" name="authenticity_token" value="Zs8jLhAqLYPW8D55FJECV2FWXqBQ8kN8bViz_nAgbz0=">
+<input type="hidden" name="_method" value="put">
+      <input type="checkbox" 
+             onchange="this.form.requestSubmit()" 
+             
+             class="w-5 h-5 text-salvia-600 rounded focus:ring-salvia-500">
+    </form>
+    
+    <span class="">
+      aaa
+    </span>
+  </div>
+
+  <a class="text-red-500 hover:text-red-700 text-sm" hx-delete="/todos/3" hx-target="#todo-3" hx-swap="outerHTML" hx-confirm="本当に削除しますか？" href="/todos/3">削除</a>
+</div>
+
+      <div id="todo-2" class="flex items-center justify-between p-3 bg-white border rounded shadow-sm ">
+  <div class="flex items-center gap-3">
+    <form hx-put="/todos/2" hx-target="#todo-2" hx-swap="outerHTML" action="/todos/2" method="post">
+<input type="hidden" name="authenticity_token" value="Zs8jLhAqLYPW8D55FJECV2FWXqBQ8kN8bViz_nAgbz0=">
+<input type="hidden" name="_method" value="put">
+      <input type="checkbox" 
+             onchange="this.form.requestSubmit()" 
+             
+             class="w-5 h-5 text-salvia-600 rounded focus:ring-salvia-500">
+    </form>
+    
+    <span class="">
+      あああ
+    </span>
+  </div>
+
+  <a class="text-red-500 hover:text-red-700 text-sm" hx-delete="/todos/2" hx-target="#todo-2" hx-swap="outerHTML" hx-confirm="本当に削除しますか？" href="/todos/2">削除</a>
+</div>
+
+      <div id="todo-1" class="flex items-center justify-between p-3 bg-white border rounded shadow-sm ">
+  <div class="flex items-center gap-3">
+    <form hx-put="/todos/1" hx-target="#todo-1" hx-swap="outerHTML" action="/todos/1" method="post">
+<input type="hidden" name="authenticity_token" value="Zs8jLhAqLYPW8D55FJECV2FWXqBQ8kN8bViz_nAgbz0=">
+<input type="hidden" name="_method" value="put">
+      <input type="checkbox" 
+             onchange="this.form.requestSubmit()" 
+             
+             class="w-5 h-5 text-salvia-600 rounded focus:ring-salvia-500">
+    </form>
+    
+    <span class="">
+      あああ
+    </span>
+  </div>
+
+  <a class="text-red-500 hover:text-red-700 text-sm" hx-delete="/todos/1" hx-target="#todo-1" hx-swap="outerHTML" hx-confirm="本当に削除しますか？" href="/todos/1">削除</a>
+</div>
+
+  </div>
+  
+  <div class="mt-8 text-center">
+    <a class="text-salvia-500 hover:underline" href="/dashboard">ダッシュボードへ (Islands Demo)</a>
+  </div>
+</div>
+
+</body>
+</html>

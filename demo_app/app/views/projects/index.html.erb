@@ -1,0 +1,40 @@
+<div class="flex min-h-screen bg-slate-50 font-sans">
+  <%= render partial: "shared/sidebar" %>
+
+  <main class="flex-1 md:ml-64 p-8">
+    <header class="flex justify-between items-center mb-8">
+      <div class="flex items-center gap-4">
+        <div class="flex items-center gap-2 text-slate-400 text-sm">
+          <span class="p-1.5 bg-white border border-slate-200 rounded-md"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg></span>
+          <span class="font-medium text-slate-900">Projects</span>
+        </div>
+      </div>
+      <button class="px-4 py-2 bg-slate-900 text-white rounded-md text-sm font-medium hover:bg-slate-800 transition-colors">
+        New Project
+      </button>
+    </header>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <% 3.times do |i| %>
+        <div class="bg-white rounded-md border border-slate-100 shadow-sm p-6 hover:shadow-md transition-shadow">
+          <div class="flex justify-between items-start mb-4">
+            <div class="w-10 h-10 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path></svg>
+            </div>
+            <span class="px-2 py-1 rounded bg-green-50 text-green-600 text-xs font-medium">Active</span>
+          </div>
+          <h3 class="font-bold text-slate-900 mb-1">Website Redesign <%= i + 1 %></h3>
+          <p class="text-sm text-slate-500 mb-4">Revamping the corporate website with new branding guidelines.</p>
+          <div class="flex items-center justify-between mt-4 pt-4 border-t border-slate-50">
+            <div class="flex -space-x-2">
+              <img class="w-6 h-6 rounded-full border-2 border-white" src="https://i.pravatar.cc/150?u=1" alt="">
+              <img class="w-6 h-6 rounded-full border-2 border-white" src="https://i.pravatar.cc/150?u=2" alt="">
+              <img class="w-6 h-6 rounded-full border-2 border-white" src="https://i.pravatar.cc/150?u=3" alt="">
+            </div>
+            <span class="text-xs text-slate-400">Due in 3 days</span>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  </main>
+</div>

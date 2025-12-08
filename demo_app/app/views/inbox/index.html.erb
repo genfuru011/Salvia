@@ -1,0 +1,22 @@
+<div class="flex min-h-screen bg-slate-50 font-sans">
+  <%= render partial: "shared/sidebar" %>
+
+  <main class="flex-1 md:ml-64 p-8">
+    <header class="flex justify-between items-center mb-8">
+      <div class="flex items-center gap-4">
+        <div class="flex items-center gap-2 text-slate-400 text-sm">
+          <span class="p-1.5 bg-white border border-slate-200 rounded-md"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg></span>
+          <span class="font-medium text-slate-900">Inbox</span>
+        </div>
+      </div>
+    </header>
+
+    <div class="bg-white rounded-md border border-slate-100 shadow-sm p-8 text-center">
+      <div class="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4 text-blue-500">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+      </div>
+      <h2 class="text-xl font-bold text-slate-900 mb-2">All caught up!</h2>
+      <p class="text-slate-500">You have no new messages in your inbox.</p>
+    </div>
+  </main>
+</div>

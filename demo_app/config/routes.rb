@@ -6,4 +6,7 @@ Salvia::Router.draw do
   
   # Dashboard
   get "/dashboard", to: "dashboard#index"
+  get "/inbox", to: "inbox#index"
+  get "/projects", to: "projects#index"
+  get "/settings", to: "settings#index"
 end
