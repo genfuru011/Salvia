@@ -275,7 +275,7 @@ module Salvia
           urls: ["/assets"],
           root: "public",
           header_rules: [
-            [:all, { "Cache-Control" => "public, max-age=31536000" }]
+            [:all, { "cache-control" => "public, max-age=31536000" }]
           ]
 
         # Islands 用 (app/islands を /islands として公開)
