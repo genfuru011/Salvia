@@ -151,15 +151,15 @@ Salvia における HTMX は、**Rails における Hotwire (Turbo/Stimulus)** �
 
 ---
 
-## Phase 5: Salvia Islands (v0.6.0)
+## Phase 5: Salvia Islands (v0.6.0) ✅
 
 > **"HTML ファーストを維持しながら、必要な部分だけリッチに"**
 > Node.js 不要で Island Architecture を実現する。
 
 ### Core Islands
-- [ ] Import Maps 自動生成・管理
-- [ ] `island` ビューヘルパー
-- [ ] Preact + HTM 統合
+- [x] Import Maps 自動生成・管理
+- [x] `island` ビューヘルパー
+- [x] Preact + HTM 統合
 
 ### TypeScript Support (Client)
 - [ ] `salvia types:generate` - ActiveRecord から TypeScript 型定義を生成

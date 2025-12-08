@@ -157,6 +157,7 @@ module Salvia
       empty_directory "#{@app_name}/app/views/layouts"
       empty_directory "#{@app_name}/app/views/home"
       empty_directory "#{@app_name}/app/components"
+      empty_directory "#{@app_name}/app/islands"
       empty_directory "#{@app_name}/app/assets/stylesheets"
 
       # 設定
@@ -183,6 +184,9 @@ module Salvia
 
       # config/routes.rb
       create_file "#{@app_name}/config/routes.rb", routes_rb_content
+
+      # config/importmap.rb
+      create_file "#{@app_name}/config/importmap.rb", importmap_rb_content
 
       # config/database.yml
       create_file "#{@app_name}/config/database.yml", database_yml_content
@@ -233,6 +237,9 @@ module Salvia
       # app.js
       create_file "#{@app_name}/public/assets/javascripts/app.js", app_js_content
 
+      # islands.js
+      create_file "#{@app_name}/public/assets/javascripts/islands.js", islands_js_content
+
       # Tailwind CSS プレースホルダー
       create_file "#{@app_name}/public/assets/stylesheets/tailwind.css", "/* 'salvia css:build' を実行してこのファイルを生成してください */\n"
 
@@ -270,6 +277,11 @@ module Salvia
           header_rules: [
             [:all, { "Cache-Control" => "public, max-age=31536000" }]
           ]
+
+        # Islands 用 (app/islands を /islands として公開)
+        use Rack::Static,
+          urls: ["/islands"],
+          root: "app"
 
         use Rack::Session::Cookie,
           key: "_#{@app_name}_session",
@@ -309,6 +321,9 @@ module Salvia
 
         # ルーティングを読み込み
         require_relative "routes"
+
+        # Import Map を読み込み
+        require_relative "importmap"
       RUBY
     end
 
@@ -499,11 +514,13 @@ module Salvia
           <title><%= @title || "#{@app_class_name}" %></title>
 
           <%= csrf_meta_tags %>
+          <%= importmap_tags %>
 
           <link rel="stylesheet" href="/assets/stylesheets/tailwind.css">
 
           <script src="/assets/javascripts/htmx.min.js" defer></script>
           <script type="module" src="/assets/javascripts/app.js"></script>
+          <script type="module" src="/assets/javascripts/islands.js"></script>
         </head>
         <body class="min-h-screen bg-slate-50 text-slate-900">
           <%= yield %>
@@ -667,6 +684,53 @@ module Salvia
           config.logger.level = Logger::INFO
         end
       RUBY
+    end
+
+    def importmap_rb_content
+      <<~RUBY
+        Salvia.importmap.draw do
+          # Preact + HTM
+          pin "preact", to: "https://esm.sh/preact@10.19.3"
+          pin "preact/hooks", to: "https://esm.sh/preact@10.19.3/hooks"
+          pin "htm/preact", to: "https://esm.sh/htm@3.1.1/preact"
+
+          # アプリケーションの Islands
+          # pin "Counter", to: "/islands/Counter.js"
+        end
+      RUBY
+    end
+
+    def islands_js_content
+      <<~JS
+        import { render } from 'htm/preact';
+        import { html } from 'htm/preact';
+
+        // Island コンポーネントをマウントする
+        document.addEventListener('DOMContentLoaded', async () => {
+          const islands = document.querySelectorAll('[data-island]');
+          
+          for (const island of islands) {
+            const name = island.dataset.island;
+            const props = JSON.parse(island.dataset.props || '{}');
+            
+            try {
+              // 動的インポート
+              // 注意: Import Map で定義された名前で import する
+              const module = await import(name);
+              const Component = module[name] || module.default;
+              
+              if (Component) {
+                render(html`<${Component} ...${props} />`, island);
+                console.log(`🏝️ Island mounted: ${name}`);
+              } else {
+                console.error(`Island component ${name} not found in module`);
+              }
+            } catch (error) {
+              console.error(`Failed to load island: ${name}`, error);
+            }
+          }
+        });
+      JS
     end
   end
 end

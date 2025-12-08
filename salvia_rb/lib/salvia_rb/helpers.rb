@@ -5,5 +5,7 @@ module Salvia
     include Tag
     include Htmx
     include Component
+    include ImportMap
+    include Island
   end
 end

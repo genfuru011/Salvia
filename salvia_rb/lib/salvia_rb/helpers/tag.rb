@@ -10,7 +10,19 @@ module Salvia
       # @param block [Proc] コンテンツブロック
       # @return [String]
       def tag(name, options = {}, &block)
-        attributes = options.map { |k, v| "#{k}=\"#{v}\"" }.join(" ")
+        html_options = options.dup
+        data = html_options.delete(:data)
+        
+        attributes = html_options.map { |k, v| "#{k}=\"#{v.to_s.gsub('"', '&quot;')}\"" }
+        
+        if data
+          data.each do |k, v|
+            key = k.to_s.tr("_", "-") # dasherize
+            attributes << "data-#{key}=\"#{v.to_s.gsub('"', '&quot;')}\""
+          end
+        end
+        
+        attributes = attributes.join(" ")
         attributes = " " + attributes unless attributes.empty?
 
         if block_given?

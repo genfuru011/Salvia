@@ -2,6 +2,7 @@
 
 require_relative "salvia_rb/version"
 require_relative "salvia_rb/assets"
+require_relative "salvia_rb/import_map"
 
 # コア依存関係
 require "rack"
@@ -28,6 +29,10 @@ module Salvia
 
   class << self
     attr_accessor :root, :env, :app_loader, :logger
+
+    def importmap
+      @importmap ||= ImportMap.new
+    end
 
     def configure
       yield self if block_given?

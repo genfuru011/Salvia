@@ -162,6 +162,34 @@ end
 <%= component "user_card", user: @user %>
 ```
 
+### 3. Salvia Islands (v0.6.0)
+
+Node.js 不要で Island Architecture を実現する機能を実装しました。
+
+**Import Maps:** `config/importmap.rb`
+```ruby
+Salvia.importmap.draw do
+  pin "preact", to: "https://esm.sh/preact@10.19.3"
+  pin "Counter", to: "/islands/Counter.js"
+end
+```
+
+**Island Component:** `app/islands/Counter.js`
+```javascript
+import { useState } from 'preact/hooks';
+import { html } from 'htm/preact';
+
+export function Counter({ initial = 0 }) {
+  const [count, setCount] = useState(initial);
+  return html`...`;
+}
+```
+
+**View:**
+```erb
+<%= island "Counter", initial: 10 %>
+```
+
 ---
 
 ## v0.4.0: Production Ready

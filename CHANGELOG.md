@@ -21,6 +21,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.5.0] - Unreleased
 
 ### Added
+- **Salvia Islands**: Added support for Island Architecture with `Salvia::ImportMap` and `island` helper.
+  - Added `config/importmap.rb` generation.
+  - Added `app/islands` directory support.
+  - Added `island` helper for mounting Preact components.
 - **View Components**: Added `Salvia::Component` and `component` helper for reusable UI components.
 - **Form Helpers**: Added `form_tag` and `form_close` helpers with CSRF protection and method override support.
 - **HTMX Helpers**: Added `htmx_link_to`, `htmx_form`, `htmx_trigger`, and `htmx_request?` helpers in `Salvia::Helpers::Htmx`.
