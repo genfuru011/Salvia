@@ -18,7 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [0.4.0] - Unreleased
+## [0.4.0] - 2025-12-08
 
 ### Added
 - **Environment Configuration**: Added support for `config/environments/*.rb` files.
@@ -28,7 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Security Documentation**: Added comprehensive security assessment, guide, and checklist.
 - **CLI Update**: `salvia new` now generates `config/environments/development.rb` and `production.rb`.
 
-## [0.3.0] - Unreleased
+## [0.3.0] - 2025-12-08
 
 ### Added
 - **Flash Messages**: Added `flash` and `flash.now` support for temporary messages.
@@ -37,7 +37,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **HTMX Integration**: Automatic CSRF token injection for HTMX requests.
 - **Routing Enhancement**: Added support for nested resources and named routes (e.g., `posts_path`, `post_comments_path`).
 
-## [0.2.0] - Unreleased
+## [0.2.0] - 2025-12-08
 
 ### Added
 - **Zeitwerk Integration**: Auto-loading for framework components and application code.

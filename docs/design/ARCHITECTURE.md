@@ -15,7 +15,7 @@
 ┌─────────────────────────────────────────────────────────────┐
 │                     Rack Middleware                         │
 │  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐  │
-│  │ Rack::Static│  │Rack::Session│  │ (Future: CSRF etc.) │  │
+│  │ Rack::Static│  │Rack::Session│  │  Rack::Protection   │  │
 │  └─────────────┘  └─────────────┘  └─────────────────────┘  │
 └─────────────────────────────────────────────────────────────┘
                               │
@@ -203,7 +203,38 @@ Database.drop!       # DB 削除
 
 ---
 
-### 6. CLI (Thor)
+### 6. Salvia::Assets
+
+**役割:** アセット管理とキャッシュバスティング
+
+```ruby
+# lib/salvia_rb/assets.rb
+Salvia::Assets.manifest_path  # マニフェストファイルのパス
+Salvia::Assets.resolve(path)  # 論理パス -> ハッシュ付きパス
+```
+
+**機能:**
+- `assets:precompile`: アセットのハッシュ化とマニフェスト生成
+- `asset_path`: 環境に応じたパス解決（開発: そのまま, 本番: マニフェスト参照）
+
+---
+
+### 7. Salvia::Test
+
+**役割:** テスト支援機能
+
+```ruby
+# lib/salvia_rb/test.rb
+include Salvia::Test::ControllerHelper
+```
+
+**機能:**
+- `rack-test` のラッパー
+- コントローラーテスト用のヘルパーメソッド (`get`, `post`, `last_response` 等)
+
+---
+
+### 8. CLI (Thor)
 
 **役割:** コマンドラインインターフェース
 
@@ -279,6 +310,8 @@ salvia_rb/
 │       ├── controller.rb         # コントローラー基底クラス
 │       ├── application.rb        # Rack アプリケーション
 │       ├── database.rb           # ActiveRecord 接続管理
+│       ├── assets.rb             # アセット管理
+│       ├── test.rb               # テスト支援
 │       └── cli.rb                # Thor CLI（コマンド定義 + テンプレート生成）
 ├── salvia_rb.gemspec             # Gem 定義（依存関係）
 ├── Gemfile                       # 開発用依存関係
@@ -321,6 +354,9 @@ myapp/
 ├── config/
 │   ├── database.yml           # DB 設定
 │   ├── environment.rb         # 初期化
+│   ├── environments/          # 環境別設定
+│   │   ├── development.rb
+│   │   └── production.rb
 │   └── routes.rb              # ルーティング
 ├── db/
 │   └── migrate/               # マイグレーションファイル
@@ -330,6 +366,10 @@ myapp/
 │       │   └── htmx.min.js
 │       └── stylesheets/
 │           └── tailwind.css
+├── test/                      # テスト
+│   ├── test_helper.rb
+│   └── controllers/
+│       └── home_controller_test.rb
 ├── config.ru                  # Rack 設定
 ├── Gemfile
 ├── Rakefile
@@ -373,26 +413,11 @@ myapp/
 
 ## Future Architecture (Planned)
 
-### Phase 1: Zeitwerk Integration
-```ruby
-# Auto-loading with Zeitwerk
-loader = Zeitwerk::Loader.new
-loader.push_dir("app/controllers")
-loader.push_dir("app/models")
-loader.setup
-loader.eager_load  # Production
-```
+### Phase 4: Advanced Features
+- HTMX Helpers
+- View Components
 
-### Phase 2: Middleware Stack
-```ruby
-# Configurable middleware
-Salvia.configure do |config|
-  config.middleware.use Rack::Protection
-  config.middleware.use Rack::Deflater
-end
-```
-
-### Phase 3: Islands Architecture
+### Phase 5: Islands Architecture
 ```erb
 <!-- Hydrate React components in ERB -->
 <%= island "Counter", { initial: 0 } %>
