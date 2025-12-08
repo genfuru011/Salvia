@@ -62,13 +62,13 @@ salvia server
 
 | ドキュメント | 説明 |
 |-------------|------|
-| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | 内部構造と設計思想 |
-| [docs/ROADMAP.md](docs/ROADMAP.md) | 開発ロードマップ |
-| [docs/SECURITY_ASSESSMENT.md](docs/SECURITY_ASSESSMENT.md) | セキュリティ脆弱性リスク評価 |
-| [docs/SECURITY_GUIDE.md](docs/SECURITY_GUIDE.md) | セキュリティガイド |
-| [docs/SECURITY_CHECKLIST.md](docs/SECURITY_CHECKLIST.md) | セキュリティチェックリスト |
+| [docs/design/ARCHITECTURE.md](docs/design/ARCHITECTURE.md) | 内部構造と設計思想 |
+| [docs/development/ROADMAP.md](docs/development/ROADMAP.md) | 開発ロードマップ |
+| [docs/security/SECURITY_ASSESSMENT.md](docs/security/SECURITY_ASSESSMENT.md) | セキュリティ脆弱性リスク評価 |
+| [docs/security/SECURITY_GUIDE.md](docs/security/SECURITY_GUIDE.md) | セキュリティガイド |
+| [docs/security/SECURITY_CHECKLIST.md](docs/security/SECURITY_CHECKLIST.md) | セキュリティチェックリスト |
 | [CHANGELOG.md](CHANGELOG.md) | 変更履歴 |
-| [docs/Idea.md](docs/Idea.md) | 元のアイデアメモ |
+| [docs/design/Idea.md](docs/design/Idea.md) | 元のアイデアメモ |
 
 ## 📁 Project Structure
 
@@ -85,9 +85,14 @@ Salvia/
 │   └── exe/
 │       └── salvia              # CLI エントリーポイント
 ├── docs/               # ドキュメント
-│   ├── ARCHITECTURE.md
-│   ├── ROADMAP.md
-│   └── ...
+│   ├── design/
+│   │   ├── ARCHITECTURE.md
+│   │   └── ...
+│   ├── development/
+│   │   ├── ROADMAP.md
+│   │   └── ...
+│   └── security/
+│       └── ...
 ├── CHANGELOG.md        # 変更履歴
 └── README.md           # このファイル
 ```
@@ -205,15 +210,15 @@ salvia version          # Show version
 - [ ] **v0.4.0** - Production Ready (Assets, Logging)
 - [ ] **v1.0.0** - Stable Release
 
-詳細は [docs/ROADMAP.md](docs/ROADMAP.md) を参照してください。
+詳細は [docs/development/ROADMAP.md](docs/development/ROADMAP.md) を参照してください。
 
 ## 🔒 Security
 
 セキュリティは重要です。Salvia.rb を使用する前に、以下のドキュメントを確認してください:
 
-- **[セキュリティ脆弱性リスク評価](docs/SECURITY_ASSESSMENT.md)** - 現在のバージョンの既知の脆弱性とリスク
-- **[セキュリティガイド](docs/SECURITY_GUIDE.md)** - 安全なアプリケーション開発のベストプラクティス
-- **[セキュリティチェックリスト](docs/SECURITY_CHECKLIST.md)** - 開発・デプロイ時のチェック項目
+- **[セキュリティ脆弱性リスク評価](docs/security/SECURITY_ASSESSMENT.md)** - 現在のバージョンの既知の脆弱性とリスク
+- **[セキュリティガイド](docs/security/SECURITY_GUIDE.md)** - 安全なアプリケーション開発のベストプラクティス
+- **[セキュリティチェックリスト](docs/security/SECURITY_CHECKLIST.md)** - 開発・デプロイ時のチェック項目
 
 ### ⚠️ 重要な注意事項
 

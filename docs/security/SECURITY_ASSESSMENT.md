@@ -148,7 +148,7 @@ User.find_by_sql("SELECT * FROM users WHERE id = #{params[:id]}")  # ❌ Vulnera
 **推奨対策**:
 ```ruby
 # 1. セキュリティガイドの作成
-# docs/SECURITY_GUIDE.md に安全な ActiveRecord の使用方法を記載
+# docs/security/SECURITY_GUIDE.md に安全な ActiveRecord の使用方法を記載
 
 # 2. 安全な使用例
 User.where("name = ?", params[:name])  # ✅ Safe
@@ -436,7 +436,7 @@ use SecurityHeaders
 
 **推奨対策**:
 ```ruby
-# docs/SECURITY_GUIDE.md にガイドラインを追加
+# docs/security/SECURITY_GUIDE.md にガイドラインを追加
 
 ## ファイルアップロードのセキュリティ
 
@@ -828,15 +828,15 @@ end
 
 以下のセキュリティ関連ドキュメントの作成を推奨します:
 
-1. **SECURITY_GUIDE.md**
+1. **docs/security/SECURITY_GUIDE.md**
    - セキュリティのベストプラクティス
    - 一般的な脆弱性への対策方法
 
-2. **AUTHENTICATION_GUIDE.md**
+2. **docs/security/AUTHENTICATION_GUIDE.md**
    - 認証の実装パターン
    - セッション管理のベストプラクティス
 
-3. **DEPLOYMENT_SECURITY.md**
+3. **docs/security/DEPLOYMENT_SECURITY.md**
    - 本番環境でのセキュリティ設定
    - 環境変数の管理
    - HTTPS の設定

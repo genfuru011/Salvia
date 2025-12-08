@@ -106,18 +106,18 @@ Salvia.rb のコードベース全体を評価した結果、**15件のセキュ
 
 セキュリティ評価の一環として、以下のドキュメントを作成しました:
 
-1. **[SECURITY_ASSESSMENT.md](docs/SECURITY_ASSESSMENT.md)**
+1. **[docs/security/SECURITY_ASSESSMENT.md](docs/security/SECURITY_ASSESSMENT.md)**
    - 詳細な脆弱性評価レポート (18,000+ 文字)
    - 各脆弱性の詳細な説明と対策方法
    - コードサンプルと実装例
 
-2. **[SECURITY_GUIDE.md](docs/SECURITY_GUIDE.md)**
+2. **[docs/security/SECURITY_GUIDE.md](docs/security/SECURITY_GUIDE.md)**
    - セキュリティベストプラクティスガイド (14,000+ 文字)
    - CSRF、XSS、SQL インジェクション対策の実装方法
    - 認証、認可、セッション管理のパターン
    - ファイルアップロードのセキュリティ
 
-3. **[SECURITY_CHECKLIST.md](docs/SECURITY_CHECKLIST.md)**
+3. **[docs/security/SECURITY_CHECKLIST.md](docs/security/SECURITY_CHECKLIST.md)**
    - 開発時のセキュリティチェックリスト
    - デプロイ前のチェックリスト
    - 推奨セキュリティツール
@@ -174,7 +174,7 @@ Salvia.rb は有望なフレームワークであり、セキュリティ問題�
 
 この評価により、Salvia.rb のセキュリティ状況が明確になりました。詳細については、各ドキュメントを参照してください。
 
-**詳細レポート**: [docs/SECURITY_ASSESSMENT.md](docs/SECURITY_ASSESSMENT.md)
+**詳細レポート**: [docs/security/SECURITY_ASSESSMENT.md](docs/security/SECURITY_ASSESSMENT.md)
 
 ---
 

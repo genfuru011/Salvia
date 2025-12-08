@@ -77,7 +77,7 @@ ERB テンプレートでエスケープを有効化する
 
 ## Known Vulnerabilities
 
-現在の既知の脆弱性については、[SECURITY_ASSESSMENT.md](docs/SECURITY_ASSESSMENT.md) を参照してください。
+現在の既知の脆弱性については、[docs/security/SECURITY_ASSESSMENT.md](docs/security/SECURITY_ASSESSMENT.md) を参照してください。
 
 ### Critical (緊急対応必要)
 
@@ -96,8 +96,8 @@ ERB テンプレートでエスケープを有効化する
 
 Salvia.rb を使用する際は、以下のドキュメントを参照してください:
 
-- [セキュリティガイド](docs/SECURITY_GUIDE.md)
-- [セキュリティチェックリスト](docs/SECURITY_CHECKLIST.md)
+- [セキュリティガイド](docs/security/SECURITY_GUIDE.md)
+- [セキュリティチェックリスト](docs/security/SECURITY_CHECKLIST.md)
 
 ## Acknowledgments
 
