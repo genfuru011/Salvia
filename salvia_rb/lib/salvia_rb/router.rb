@@ -110,6 +110,7 @@ module Salvia
     # @return [Array<Class, String, Hash>] [コントローラークラス, アクション, パラメータ] または nil
     def recognize(request)
       request_method = request.request_method
+      request_method = "GET" if request_method == "HEAD"
       path = request.path_info
 
       @routes.each do |route|
