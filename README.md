@@ -205,9 +205,11 @@ salvia version          # Show version
 ## 🗺️ Roadmap
 
 - [x] **v0.1.0** - Foundation (Router, Controller, CLI)
-- [ ] **v0.2.0** - Developer Experience (Zeitwerk, Error pages)
-- [ ] **v0.3.0** - Security (CSRF, Session, Flash)
-- [ ] **v0.4.0** - Production Ready (Assets, Logging)
+- [x] **v0.2.0** - Developer Experience (Zeitwerk, Error pages)
+- [x] **v0.3.0** - Security (CSRF, Session, Flash)
+- [x] **v0.4.0** - Production Ready (Assets, Logging)
+- [ ] **v0.5.0** - Advanced Features (HTMX Helpers, View Components)
+- [ ] **v0.6.0** - Salvia Islands (Island Architecture)
 - [ ] **v1.0.0** - Stable Release
 
 詳細は [docs/development/ROADMAP.md](docs/development/ROADMAP.md) を参照してください。
