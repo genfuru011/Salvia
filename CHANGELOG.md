@@ -40,6 +40,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Security Documentation**: Added comprehensive security assessment, guide, and checklist.
 - **CLI Update**: `salvia new` now generates `config/environments/development.rb` and `production.rb`.
 
+- **Fix**: `Salvia::Controller#render` でネストした呼び出し（ビュー内での `render`）が重複して出力される問題を修正
+- **Fix**: `Salvia::Controller#render` で `partial:` オプション使用時にファイル名の先頭に `_` を自動付与するように修正
+- **Fix**: `Salvia::Controller#render` で Rails ライクなオプション引数 (`plain:`, `json:`, `partial:`) をサポート
+
 ## [0.3.0] - 2025-12-08
 
 ### Added
