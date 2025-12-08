@@ -50,6 +50,8 @@ module Salvia
     # @param layout [String, nil, false] レイアウト（nil = 自動, false = なし）
     # @param status [Integer] HTTP ステータスコード
     def render(template = nil, locals: {}, layout: nil, status: 200, **options)
+      # ネストしたレンダリング（ビュー内の render）かどうかの判定
+      is_top_level_render = !@rendered
       @rendered = true
       
       # オプション引数の処理 (Rails-like)
@@ -79,6 +81,14 @@ module Salvia
       # partial: "path/to/partial"
       if options[:partial]
         template = options[:partial]
+        
+        # パーシャルの場合はファイル名の先頭に _ を付与
+        dirname = File.dirname(template)
+        basename = File.basename(template)
+        unless basename.start_with?("_")
+          template = (dirname == ".") ? "_#{basename}" : File.join(dirname, "_#{basename}")
+        end
+        
         layout = false
       end
 
@@ -102,7 +112,11 @@ module Salvia
         body = content
       end
 
-      response.write(body)
+      if is_top_level_render
+        response.write(body)
+      else
+        body
+      end
     end
 
     # パーシャルテンプレートをレンダリング（レイアウトなし）
