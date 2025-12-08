@@ -258,6 +258,8 @@ module Salvia
           key: "_#{@app_name}_session",
           secret: ENV.fetch("SESSION_SECRET") { SecureRandom.hex(64) }
 
+        use Rack::Protection, use: [:authenticity_token, :cookie_tossing, :form_token, :remote_referrer, :session_hijacking]
+
         run Salvia::Application.new
       RUBY
     end
@@ -445,6 +447,8 @@ module Salvia
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
           <title><%= @title || "#{@app_class_name}" %></title>
 
+          <%= csrf_meta_tags %>
+
           <link rel="stylesheet" href="/assets/stylesheets/tailwind.css">
 
           <script src="/assets/javascripts/htmx.min.js" defer></script>
@@ -528,11 +532,11 @@ module Salvia
 
         // HTMX の設定（オプション）
         document.addEventListener('htmx:configRequest', (event) => {
-          // 必要に応じて CSRF トークンを HTMX リクエストに追加
-          // const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
-          // if (csrfToken) {
-          //   event.detail.headers['X-CSRF-Token'] = csrfToken;
-          // }
+          // CSRF トークンを HTMX リクエストに追加
+          const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+          if (csrfToken) {
+            event.detail.headers['X-CSRF-Token'] = csrfToken;
+          }
         });
 
         // 開発環境で HTMX イベントをログ出力

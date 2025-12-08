@@ -79,6 +79,26 @@ Rack 3.0 以降の変更に対応するため、以下の gem を依存関係に
 
 ---
 
+## v0.3.0: Security & Stability
+
+### 1. Flash Messages
+
+`Salvia::Flash` クラスを実装し、`session[:_flash]` を使用してメッセージを管理します。
+`flash[:notice]` は次のリクエストまで、`flash.now[:alert]` は現在のリクエストのみ有効です。
+
+### 2. CSRF Protection
+
+`Rack::Protection` を導入し、以下の攻撃に対する防御を有効化しました：
+- `authenticity_token`: CSRF トークンの検証
+- `cookie_tossing`: クッキーの競合防止
+- `form_token`: フォーム送信時のトークン検証
+- `remote_referrer`: リファラー検証
+- `session_hijacking`: セッションハイジャック対策
+
+また、HTMX リクエストに対しては、`app.js` で自動的に `X-CSRF-Token` ヘッダーを付与するように設定しています。
+
+---
+
 ## v0.1.0: Foundation
 
 ### Core Architecture

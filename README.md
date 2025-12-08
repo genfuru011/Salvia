@@ -62,10 +62,10 @@ salvia server
 
 | ドキュメント | 説明 |
 |-------------|------|
-| [ARCHITECTURE.md](ARCHITECTURE.md) | 内部構造と設計思想 |
-| [ROADMAP.md](ROADMAP.md) | 開発ロードマップ |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | 内部構造と設計思想 |
+| [docs/ROADMAP.md](docs/ROADMAP.md) | 開発ロードマップ |
 | [CHANGELOG.md](CHANGELOG.md) | 変更履歴 |
-| [Note/Idea.md](Note/Idea.md) | 元のアイデアメモ |
+| [docs/Idea.md](docs/Idea.md) | 元のアイデアメモ |
 
 ## 📁 Project Structure
 
@@ -81,9 +81,10 @@ Salvia/
 │   │       └── cli.rb           # CLI コマンド
 │   └── exe/
 │       └── salvia              # CLI エントリーポイント
-├── Note/               # 設計メモ
-├── ARCHITECTURE.md     # 構造ドキュメント
-├── ROADMAP.md          # ロードマップ
+├── docs/               # ドキュメント
+│   ├── ARCHITECTURE.md
+│   ├── ROADMAP.md
+│   └── ...
 ├── CHANGELOG.md        # 変更履歴
 └── README.md           # このファイル
 ```
@@ -201,7 +202,7 @@ salvia version          # Show version
 - [ ] **v0.4.0** - Production Ready (Assets, Logging)
 - [ ] **v1.0.0** - Stable Release
 
-詳細は [ROADMAP.md](ROADMAP.md) を参照してください。
+詳細は [docs/ROADMAP.md](docs/ROADMAP.md) を参照してください。
 
 ## 📝 License
 

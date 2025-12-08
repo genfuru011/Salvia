@@ -5,6 +5,7 @@ require_relative "salvia_rb/version"
 # コア依存関係
 require "rack"
 require "rack/session"
+require "rack/protection"
 require "mustermann"
 require "tilt"
 require "erubi"

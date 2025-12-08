@@ -101,9 +101,9 @@ module Salvia
       request.session
     end
 
-    # Flash メッセージにアクセス（セッションミドルウェアが必要）
+    # Flash メッセージにアクセス
     def flash
-      session[:flash] ||= {}
+      @flash ||= Flash.new(session)
     end
 
     # HTMX イベントをトリガー
@@ -112,6 +112,17 @@ module Salvia
     # @param detail [Hash] イベント詳細データ
     def htmx_trigger(event, detail = {})
       response["HX-Trigger"] = { event => detail }.to_json
+    end
+
+    # CSRF トークンを取得
+    def csrf_token
+      session[:csrf]
+    end
+
+    # CSRF トークン用の meta タグを生成
+    def csrf_meta_tags
+      %(<meta name="csrf-param" content="authenticity_token">\n) +
+      %(<meta name="csrf-token" content="#{csrf_token}">)
     end
 
     protected

@@ -30,6 +30,8 @@ Gem::Specification.new do |spec|
   spec.add_dependency "rack", "~> 3.0"
   spec.add_dependency "rackup", "~> 2.0"
   spec.add_dependency "rack-session", "~> 2.0"
+  spec.add_dependency "rack-protection", "~> 3.0"
+
 
 
   spec.add_dependency "puma", "~> 6.0"

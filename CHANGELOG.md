@@ -18,6 +18,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.3.0] - Unreleased
+
+### Added
+- **Flash Messages**: Added `flash` and `flash.now` support for temporary messages.
+- **CSRF Protection**: Integrated `Rack::Protection` for CSRF defense.
+- **CSRF Helpers**: Added `csrf_token` and `csrf_meta_tags` helpers.
+- **HTMX Integration**: Automatic CSRF token injection for HTMX requests.
+
 ## [0.2.0] - Unreleased
 
 ### Added
