@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Logging**: Added `Salvia.logger` and `config.logger` configuration.
 - **Asset Management**: Added `assets:precompile` command and `asset_path` helper for cache busting.
 - **Testing Support**: Added `Salvia::Test::ControllerHelper` and `rack-test` integration.
+- **Security Documentation**: Added comprehensive security assessment, guide, and checklist.
 - **CLI Update**: `salvia new` now generates `config/environments/development.rb` and `production.rb`.
 
 ## [0.3.0] - Unreleased
