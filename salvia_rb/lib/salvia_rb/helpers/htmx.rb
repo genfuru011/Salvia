@@ -54,6 +54,33 @@ module Salvia
       def htmx_request?
         request.env["HTTP_HX_REQUEST"] == "true"
       end
+
+      # HTMX 対応のフォームタグを生成する
+      #
+      # @param url [String] 送信先URL
+      # @param options [Hash] オプション
+      # @option options [Symbol] :method HTTPメソッド (:post, :put, :patch, :delete)
+      # @option options [String] :target 更新対象のセレクタ (hx-target)
+      # @option options [String] :swap 更新方法 (hx-swap)
+      # @return [String]
+      def htmx_form(url, options = {})
+        html_options = options.dup
+        
+        method = html_options[:method] || :post
+        target = html_options.delete(:target)
+        swap = html_options.delete(:swap)
+        indicator = html_options.delete(:indicator)
+        
+        # HTMX 属性の設定
+        # hx-post, hx-put, hx-delete 等を設定
+        # 注意: form_tag も method 属性を設定するが、HTMX は hx-* を優先する
+        html_options["hx-#{method}"] = url
+        html_options["hx-target"] = target if target
+        html_options["hx-swap"] = swap if swap
+        html_options["hx-indicator"] = indicator if indicator
+        
+        form_tag(url, html_options)
+      end
     end
   end
 end

@@ -135,14 +135,14 @@ Salvia における HTMX は、**Rails における Hotwire (Turbo/Stimulus)** �
 よりリッチな UI と高度な機能のサポート。
 
 ### HTMX Helpers
-- [ ] `htmx_link_to` ヘルパー
-- [ ] `htmx_form_for` ヘルパー
-- [ ] `htmx_trigger` レスポンスヘッダー設定ヘルパー
+- [x] `htmx_link_to` ヘルパー
+- [x] `htmx_form_for` ヘルパー
+- [x] `htmx_trigger` レスポンスヘッダー設定ヘルパー
 
 ### View Components
-- [ ] `component` ヘルパー (View Component パターン)
-- [ ] Tailwind クラスのカプセル化支援
-- [ ] UI プリセット（Button, Card, Modal）
+- [x] `component` ヘルパー (View Component パターン)
+- [x] Tailwind クラスのカプセル化支援
+- [x] UI プリセット（Button, Card, Modal）
 
 ### Advanced Features
 - [ ] WebSocket サポート（ActionCable 的な機能）

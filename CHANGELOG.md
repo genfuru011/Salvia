@@ -22,7 +22,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - **View Components**: Added `Salvia::Component` and `component` helper for reusable UI components.
-- **HTMX Helpers**: Added `htmx_link_to`, `htmx_trigger`, and `htmx_request?` helpers in `Salvia::Helpers::Htmx`.
+- **Form Helpers**: Added `form_tag` and `form_close` helpers with CSRF protection and method override support.
+- **HTMX Helpers**: Added `htmx_link_to`, `htmx_form`, `htmx_trigger`, and `htmx_request?` helpers in `Salvia::Helpers::Htmx`.
 - **Tag Helpers**: Added `tag` and `link_to` helpers in `Salvia::Helpers::Tag`.
 
 ## [0.4.0] - 2025-12-08

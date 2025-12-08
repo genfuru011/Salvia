@@ -122,11 +122,17 @@ end
 `Salvia::Helpers::Htmx` モジュールを追加し、HTMX 属性を簡単に扱えるようにしました。
 
 ```ruby
-# View
+# Link
 <%= htmx_link_to "Delete", post_path(@post), 
       method: :delete, 
       target: "#post-#{@post.id}", 
       confirm: "Are you sure?" %>
+
+# Form
+<%= htmx_form post_path(@post), method: :put, target: "#result" %>
+  <input type="text" name="title">
+  <button type="submit">Save</button>
+<%= form_close %>
 ```
 
 また、`htmx_trigger` や `htmx_request?` もこのモジュールに移動し、コントローラーとビューの両方で利用可能にしました。
