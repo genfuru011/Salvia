@@ -28,8 +28,13 @@ Gem::Specification.new do |spec|
 
   # Core dependencies
   spec.add_dependency "rack", "~> 3.0"
+  spec.add_dependency "rackup", "~> 2.0"
+  spec.add_dependency "rack-session", "~> 2.0"
+
+
   spec.add_dependency "puma", "~> 6.0"
   spec.add_dependency "mustermann", "~> 3.0"
+  spec.add_dependency "mustermann-contrib", "~> 3.0"
   spec.add_dependency "tilt", "~> 2.0"
   spec.add_dependency "erubi", "~> 1.12"
 

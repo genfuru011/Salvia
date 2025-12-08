@@ -18,6 +18,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.2.0] - Unreleased
+
+### Added
+- **Zeitwerk Integration**: Auto-loading for framework components and application code.
+- **Code Reloading**: Automatic code reloading in development environment.
+- **Rack 3.0 Support**: Updated dependencies (`rackup`, `rack-session`) for Rack 3.0 compatibility.
+- **Custom Error Pages**: Support for `public/404.html` and `public/500.html` in production.
+- **CLI Update**: `salvia new` now generates default error pages.
+
+### Fixed
+- Fixed `Mustermann` match method compatibility issue.
+- Fixed `salvia console` startup arguments for IRB compatibility.
+
 ## [0.1.0] - 2024-12 (Development)
 
 ### Added

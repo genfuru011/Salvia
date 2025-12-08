@@ -11,6 +11,10 @@ module Salvia
   #
   class Application
     def call(env)
+      if Salvia.development? && Salvia.app_loader
+        Salvia.app_loader.reload
+      end
+
       request = Rack::Request.new(env)
       response = Rack::Response.new
 
@@ -54,7 +58,7 @@ module Salvia
       if Salvia.development?
         response.write(not_found_development_html)
       else
-        response.write(not_found_production_html)
+        response.write(public_file_content("404.html") || not_found_production_html)
       end
     end
 
@@ -67,7 +71,12 @@ module Salvia
     def render_production_error(response)
       response.status = 500
       response["Content-Type"] = "text/html; charset=utf-8"
-      response.write(production_error_html)
+      response.write(public_file_content("500.html") || production_error_html)
+    end
+
+    def public_file_content(filename)
+      path = File.join(Salvia.root, "public", filename)
+      File.read(path) if File.exist?(path)
     end
 
     def not_found_development_html

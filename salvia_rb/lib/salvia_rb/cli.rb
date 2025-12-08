@@ -61,6 +61,7 @@ module Salvia
       require_app_environment
 
       require "irb"
+      ARGV.clear
       IRB.start
     end
 
@@ -218,6 +219,10 @@ module Salvia
       # Tailwind CSS プレースホルダー
       create_file "#{@app_name}/public/assets/stylesheets/tailwind.css", "/* 'salvia css:build' を実行してこのファイルを生成してください */\n"
 
+      # エラーページ
+      create_file "#{@app_name}/public/404.html", error_404_content
+      create_file "#{@app_name}/public/500.html", error_500_content
+
       say ""
       say "⚠️  HTMX を手動でダウンロードしてください:", :yellow
       say "   curl -o #{@app_name}/public/assets/javascripts/htmx.min.js https://unpkg.com/htmx.org@1.9.10/dist/htmx.min.js"
@@ -268,11 +273,16 @@ module Salvia
         # データベース設定を読み込み
         Salvia::Database.setup!
 
+        # Zeitwerk オートローダー設定
+        loader = Zeitwerk::Loader.new
+        loader.push_dir(File.join(Salvia.root, "app", "controllers"))
+        loader.push_dir(File.join(Salvia.root, "app", "models"))
+        loader.enable_reloading if Salvia.development?
+        loader.setup
+        Salvia.app_loader = loader
+
         # ルーティングを読み込み
         require_relative "routes"
-
-        # アプリファイルを自動読み込み
-        Dir[File.join(Salvia.root, "app", "**", "*.rb")].sort.each { |f| require f }
       RUBY
     end
 
@@ -532,6 +542,52 @@ module Salvia
           });
         }
       JS
+    end
+
+    def error_404_content
+      <<~HTML
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>ページが見つかりません (404)</title>
+          <meta charset="utf-8">
+          <style>
+            body { font-family: system-ui, sans-serif; color: #333; text-align: center; padding: 100px 20px; }
+            h1 { font-size: 3em; margin-bottom: 10px; color: #6A5ACD; }
+            p { font-size: 1.2em; color: #666; }
+            a { color: #6A5ACD; text-decoration: none; }
+            a:hover { text-decoration: underline; }
+          </style>
+        </head>
+        <body>
+          <h1>404</h1>
+          <p>お探しのページは見つかりませんでした。</p>
+          <p><a href="/">トップページへ戻る</a></p>
+        </body>
+        </html>
+      HTML
+    end
+
+    def error_500_content
+      <<~HTML
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>サーバーエラー (500)</title>
+          <meta charset="utf-8">
+          <style>
+            body { font-family: system-ui, sans-serif; color: #333; text-align: center; padding: 100px 20px; }
+            h1 { font-size: 3em; margin-bottom: 10px; color: #dc2626; }
+            p { font-size: 1.2em; color: #666; }
+          </style>
+        </head>
+        <body>
+          <h1>500</h1>
+          <p>サーバー内部でエラーが発生しました。</p>
+          <p>しばらくしてからもう一度お試しください。</p>
+        </body>
+        </html>
+      HTML
     end
   end
 end

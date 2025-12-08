@@ -4,17 +4,25 @@ require_relative "salvia_rb/version"
 
 # コア依存関係
 require "rack"
+require "rack/session"
 require "mustermann"
 require "tilt"
 require "erubi"
 require "active_record"
 require "zeitwerk"
+loader = Zeitwerk::Loader.for_gem
+loader.ignore("#{__dir__}/salvia_rb/version.rb")
+loader.inflector.inflect(
+  "salvia_rb" => "Salvia",
+  "cli" => "CLI"
+)
+loader.setup
 
 module Salvia
   class Error < StandardError; end
 
   class << self
-    attr_accessor :root, :env
+    attr_accessor :root, :env, :app_loader
 
     def configure
       yield self if block_given?
@@ -42,8 +50,3 @@ module Salvia
   end
 end
 
-# Salvia コンポーネントを読み込み
-require_relative "salvia_rb/router"
-require_relative "salvia_rb/controller"
-require_relative "salvia_rb/application"
-require_relative "salvia_rb/database"

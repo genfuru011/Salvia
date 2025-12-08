@@ -2,6 +2,7 @@
 
 require "mustermann"
 
+
 module Salvia
   # Rails ライクな DSL ルーター（Mustermann ベース）
   #
@@ -17,7 +18,7 @@ module Salvia
 
     Route = Struct.new(:method, :pattern, :controller, :action, keyword_init: true) do
       def match?(request_method, path)
-        method.to_s.upcase == request_method && pattern.match?(path)
+        method.to_s.upcase == request_method && pattern.match(path)
       end
 
       def params_from(path)
