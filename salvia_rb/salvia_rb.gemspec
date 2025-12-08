@@ -31,8 +31,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency "rackup", "~> 2.0"
   spec.add_dependency "rack-session", "~> 2.0"
   spec.add_dependency "rack-protection", "~> 3.0"
-
-
+  spec.add_dependency "rack-test", "~> 2.0"
 
   spec.add_dependency "puma", "~> 6.0"
   spec.add_dependency "mustermann", "~> 3.0"

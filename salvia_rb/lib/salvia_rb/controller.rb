@@ -127,6 +127,16 @@ module Salvia
       %(<meta name="csrf-token" content="#{csrf_token}">)
     end
 
+    # ロガーを取得
+    def logger
+      Salvia.logger
+    end
+
+    # アセットパスを取得
+    def asset_path(source)
+      Salvia::Assets.path(source)
+    end
+
     protected
 
     # サブクラスでオーバーライドしてデフォルトレイアウトを設定

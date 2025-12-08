@@ -115,6 +115,52 @@ end
 
 ---
 
+## v0.4.0: Production Ready
+
+### 1. Environment Configuration
+
+`Salvia.load_config` メソッドを追加し、アプリケーション起動時に `config/environments/#{Salvia.env}.rb` を読み込むようにしました。
+これにより、環境ごとに異なる設定（ロギング、データベース接続オプションなど）を記述できるようになりました。
+
+### 2. Logging
+
+`Salvia.logger` を導入し、標準の `Logger` クラスを使用するようにしました。
+`config/environments/*.rb` で以下のように設定できます：
+
+```ruby
+Salvia.configure do |config|
+  config.logger = Logger.new("log/production.log")
+  config.logger.level = Logger::INFO
+end
+```
+
+また、`Rack::CommonLogger` にこのロガーを渡すことで、アクセスログも同じ出力先に統合されます。
+
+### 3. Asset Management
+
+本番環境でのキャッシュバスティング（Cache Busting）を実現するために、以下の機能を実装しました：
+
+- **`Salvia::Assets`**: `public/assets/manifest.json` を読み込み、論理パスからハッシュ付きパスへの解決を行います。
+- **`assets:precompile`**: `public/assets` 以下のファイルをハッシュ付きでコピーし、マニフェストファイルを生成する CLI コマンド。
+- **`asset_path`**: コントローラーとビューで使用できるヘルパー。開発環境ではそのままのパスを、本番環境ではマニフェストに基づいたパスを返します。
+
+### 4. Testing Support
+
+`Salvia::Test::ControllerHelper` を提供し、`rack-test` を利用したコントローラーテストを簡単に書けるようにしました。
+`salvia new` で生成されるプロジェクトには、デフォルトで `test/` ディレクトリとサンプルテストが含まれます。
+
+```ruby
+class HomeControllerTest < Minitest::Test
+  def test_index
+    get "/"
+    assert last_response.ok?
+    assert_includes last_response.body, "Salvia"
+  end
+end
+```
+
+---
+
 ## v0.1.0: Foundation
 
 ### Core Architecture

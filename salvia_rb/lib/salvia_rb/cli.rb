@@ -113,6 +113,13 @@ module Salvia
       exec "bundle exec tailwindcss -i ./app/assets/stylesheets/application.tailwind.css -o ./public/assets/stylesheets/tailwind.css --watch"
     end
 
+    desc "assets:precompile", "アセットをプリコンパイル（ハッシュ付与）"
+    map "assets:precompile" => :assets_precompile
+    def assets_precompile
+      require_app_environment
+      Salvia::Assets.precompile!
+    end
+
     desc "routes", "登録されたルート一覧を表示"
     def routes
       require_app_environment
@@ -154,6 +161,7 @@ module Salvia
 
       # 設定
       empty_directory "#{@app_name}/config"
+      empty_directory "#{@app_name}/config/environments"
 
       # データベース
       empty_directory "#{@app_name}/db/migrate"
@@ -179,8 +187,17 @@ module Salvia
       # config/database.yml
       create_file "#{@app_name}/config/database.yml", database_yml_content
 
+      # config/environments
+      create_file "#{@app_name}/config/environments/development.rb", development_config_content
+      create_file "#{@app_name}/config/environments/production.rb", production_config_content
+
       # Rakefile
       create_file "#{@app_name}/Rakefile", rakefile_content
+
+      # テスト
+      empty_directory "#{@app_name}/test"
+      create_file "#{@app_name}/test/test_helper.rb", test_helper_content
+      create_file "#{@app_name}/test/controllers/home_controller_test.rb", home_controller_test_content
 
       # tailwind.config.js
       create_file "#{@app_name}/tailwind.config.js", tailwind_config_content
@@ -260,6 +277,9 @@ module Salvia
 
         use Rack::Protection, use: [:authenticity_token, :cookie_tossing, :form_token, :remote_referrer, :session_hijacking]
 
+        # ロギング
+        use Rack::CommonLogger, Salvia.logger
+
         run Salvia::Application.new
       RUBY
     end
@@ -274,6 +294,9 @@ module Salvia
 
         # データベース設定を読み込み
         Salvia::Database.setup!
+
+        # 環境設定を読み込み
+        Salvia.load_config
 
         # Zeitwerk オートローダー設定
         loader = Zeitwerk::Loader.new
@@ -382,6 +405,33 @@ module Salvia
           plugins: [],
         }
       JS
+    end
+
+    def test_helper_content
+      <<~RUBY
+        ENV["RACK_ENV"] = "test"
+        require_relative "../config/environment"
+        require "minitest/autorun"
+        require "salvia_rb/test"
+
+        class Minitest::Test
+          include Salvia::Test::ControllerHelper
+        end
+      RUBY
+    end
+
+    def home_controller_test_content
+      <<~RUBY
+        require_relative "../test_helper"
+
+        class HomeControllerTest < Minitest::Test
+          def test_index
+            get "/"
+            assert last_response.ok?
+            assert_includes last_response.body, "Salvia"
+          end
+        end
+      RUBY
     end
 
     def gitignore_content
@@ -592,6 +642,30 @@ module Salvia
         </body>
         </html>
       HTML
+    end
+
+    def development_config_content
+      <<~RUBY
+        Salvia.configure do |config|
+          # 開発環境の設定
+          config.logger = Logger.new(STDOUT)
+          config.logger.level = Logger::DEBUG
+        end
+      RUBY
+    end
+
+    def production_config_content
+      <<~RUBY
+        Salvia.configure do |config|
+          # 本番環境の設定
+          # log ディレクトリがない場合は作成
+          log_dir = File.join(Salvia.root, "log")
+          Dir.mkdir(log_dir) unless Dir.exist?(log_dir)
+
+          config.logger = Logger.new(File.join(log_dir, "production.log"))
+          config.logger.level = Logger::INFO
+        end
+      RUBY
     end
   end
 end

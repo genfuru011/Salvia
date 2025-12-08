@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "salvia_rb/version"
+require_relative "salvia_rb/assets"
 
 # コア依存関係
 require "rack"
@@ -19,14 +20,25 @@ loader.inflector.inflect(
 )
 loader.setup
 
+require "logger"
+
 module Salvia
   class Error < StandardError; end
 
   class << self
-    attr_accessor :root, :env, :app_loader
+    attr_accessor :root, :env, :app_loader, :logger
 
     def configure
       yield self if block_given?
+    end
+
+    def logger
+      @logger ||= Logger.new(STDOUT)
+    end
+
+    def load_config
+      config_file = File.join(root, "config", "environments", "#{env}.rb")
+      require config_file if File.exist?(config_file)
     end
 
     def root
