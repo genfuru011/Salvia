@@ -53,7 +53,7 @@ module Salvia
 
     def render_not_found(response)
       response.status = 404
-      response["Content-Type"] = "text/html; charset=utf-8"
+      response["content-type"] = "text/html; charset=utf-8"
 
       if Salvia.development?
         response.write(not_found_development_html)
@@ -64,13 +64,13 @@ module Salvia
 
     def render_development_error(error, request, response)
       response.status = 500
-      response["Content-Type"] = "text/html; charset=utf-8"
+      response["content-type"] = "text/html; charset=utf-8"
       response.write(development_error_html(error, request))
     end
 
     def render_production_error(response)
       response.status = 500
-      response["Content-Type"] = "text/html; charset=utf-8"
+      response["content-type"] = "text/html; charset=utf-8"
       response.write(public_file_content("500.html") || production_error_html)
     end
 
