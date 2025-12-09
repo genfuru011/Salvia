@@ -2,7 +2,6 @@
 
 require_relative "salvia_rb/version"
 require_relative "salvia_rb/assets"
-require_relative "salvia_rb/import_map"
 
 # コア依存関係
 require "rack"
@@ -27,25 +26,18 @@ require "logger"
 
 # プラグインシステム
 require_relative "salvia_rb/plugins/base"
-require_relative "salvia_rb/plugins/htmx"
 
 module Salvia
   class Error < StandardError; end
 
   # 設定クラス
   class Configuration
-    attr_accessor :plugins, :ssr_engine, :ssr_bundle_path, :island_inspector
+    attr_accessor :plugins, :ssr_bundle_path, :island_inspector
 
     def initialize
       @plugins = []
-      @ssr_engine = :hybrid
       @ssr_bundle_path = "vendor/server/ssr_bundle.js"
       @island_inspector = nil # nil = auto (development のみ)
-    end
-
-    # HTMX プラグインが有効かどうか
-    def htmx_enabled?
-      plugins.include?(:htmx)
     end
 
     # Island Inspector が有効かどうか
@@ -60,10 +52,6 @@ module Salvia
 
     def config
       @config ||= Configuration.new
-    end
-
-    def importmap
-      @importmap ||= ImportMap.new
     end
 
     def configure

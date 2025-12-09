@@ -19,18 +19,12 @@ module Salvia
       File.join(__dir__, "templates")
     end
 
-    desc "new APP_NAME", "新しい Salvia アプリケーションを作成"
-    method_option :htmx, type: :boolean, default: false, desc: "HTMX プラグインを有効化"
-    method_option :ssr, type: :boolean, default: true, desc: "Island SSR を有効化"
+    desc "new APP_NAME", "Create a new Salvia application"
     def new(app_name)
       @app_name = app_name
       @app_class_name = app_name.split(/[-_]/).map(&:capitalize).join
-      @use_htmx = options[:htmx]
-      @use_ssr = options[:ssr]
 
-      say "🌿 Salvia アプリを作成中: #{@app_name}...", :green
-      say "   HTMX: #{@use_htmx ? '有効' : '無効'}", :cyan
-      say "   SSR: #{@use_ssr ? '有効' : '無効'}", :cyan
+      say "🌿 Creating Salvia app: #{@app_name}...", :green
       say ""
 
       # ディレクトリ構造を作成
@@ -40,29 +34,30 @@ module Salvia
       create_public_assets
 
       say ""
-      say "💎 #{@app_name} を作成しました！", :blue
+      say "💎 Created #{@app_name}!", :blue
       say ""
-      say "次のステップ:", :yellow
+      say "Next steps:", :yellow
       say "  cd #{@app_name}"
       say "  bundle install"
       say "  salvia db:create"
       say "  salvia db:migrate"
+      say "  deno run -A bin/build_ssr.ts"
       say "  salvia server"
       say ""
     end
 
-    desc "server", "開発サーバーを起動（エイリアス: s）"
+    desc "server", "Start development server (alias: s)"
     map "s" => "server"
-    method_option :port, aliases: "-p", type: :numeric, default: 9292, desc: "ポート番号"
-    method_option :host, aliases: "-b", type: :string, default: "localhost", desc: "バインドするホスト"
+    method_option :port, aliases: "-p", type: :numeric, default: 9292, desc: "Port number"
+    method_option :host, aliases: "-b", type: :string, default: "localhost", desc: "Host to bind"
     def server
       require_app_environment
 
-      say "🚀 Salvia サーバーを起動: http://#{options[:host]}:#{options[:port]}", :green
+      say "🚀 Starting Salvia server: http://#{options[:host]}:#{options[:port]}", :green
       exec "bundle exec rackup -p #{options[:port]} -o #{options[:host]}"
     end
 
-    desc "console", "対話式コンソールを起動（エイリアス: c）"
+    desc "console", "Start interactive console (alias: c)"
     map "c" => "console"
     def console
       require_app_environment
@@ -72,73 +67,73 @@ module Salvia
       IRB.start
     end
 
-    # データベースコマンド
-    desc "db:create", "データベースを作成"
+    # Database commands
+    desc "db:create", "Create database"
     map "db:create" => :db_create
     def db_create
       require_app_environment
       Salvia::Database.create!
     end
 
-    desc "db:drop", "データベースを削除"
+    desc "db:drop", "Drop database"
     map "db:drop" => :db_drop
     def db_drop
       require_app_environment
       Salvia::Database.drop!
     end
 
-    desc "db:migrate", "保留中のマイグレーションを実行"
+    desc "db:migrate", "Run pending migrations"
     map "db:migrate" => :db_migrate
     def db_migrate
       require_app_environment
       Salvia::Database.migrate!
-      say "マイグレーション完了！", :green
+      say "Migration completed!", :green
     end
 
-    desc "db:rollback", "直前のマイグレーションをロールバック"
+    desc "db:rollback", "Rollback last migration"
     map "db:rollback" => :db_rollback
-    method_option :step, aliases: "-s", type: :numeric, default: 1, desc: "ロールバックするステップ数"
+    method_option :step, aliases: "-s", type: :numeric, default: 1, desc: "Steps to rollback"
     def db_rollback
       require_app_environment
       Salvia::Database.rollback!(options[:step])
-      say "ロールバック完了！", :green
+      say "Rollback completed!", :green
     end
 
-    desc "db:setup", "データベースの作成とマイグレーションを実行"
+    desc "db:setup", "Create database and run migrations"
     map "db:setup" => :db_setup
     def db_setup
       invoke :db_create
       invoke :db_migrate
     end
 
-    # CSS コマンド
-    desc "css:build", "Tailwind CSS をビルド"
+    # CSS commands
+    desc "css:build", "Build Tailwind CSS"
     map "css:build" => :css_build
     def css_build
-      say "🎨 Tailwind CSS をビルド中...", :green
+      say "🎨 Building Tailwind CSS...", :green
       system "bundle exec tailwindcss -i ./app/assets/stylesheets/application.tailwind.css -o ./public/assets/stylesheets/tailwind.css --minify"
-      say "CSS ビルド完了！", :green
+      say "CSS build completed!", :green
     end
 
-    desc "css:watch", "Tailwind CSS の変更を監視してリビルド"
+    desc "css:watch", "Watch and rebuild Tailwind CSS"
     map "css:watch" => :css_watch
     def css_watch
-      say "👀 CSS の変更を監視中...", :green
+      say "👀 Watching CSS changes...", :green
       exec "bundle exec tailwindcss -i ./app/assets/stylesheets/application.tailwind.css -o ./public/assets/stylesheets/tailwind.css --watch"
     end
 
-    desc "assets:precompile", "アセットをプリコンパイル（ハッシュ付与）"
+    desc "assets:precompile", "Precompile assets with hash"
     map "assets:precompile" => :assets_precompile
     def assets_precompile
       require_app_environment
       Salvia::Assets.precompile!
     end
 
-    desc "routes", "登録されたルート一覧を表示"
+    desc "routes", "Display registered routes"
     def routes
       require_app_environment
 
-      say "ルート一覧:", :green
+      say "Routes:", :green
       Salvia::Router.instance.routes.each do |route|
         method = route.method.to_s.upcase.ljust(7)
         path = route.pattern.to_s.ljust(30)
@@ -147,20 +142,20 @@ module Salvia
       end
     end
 
-    desc "version", "Salvia のバージョンを表示"
+    desc "version", "Display Salvia version"
     def version
       require "salvia_rb/version"
       say "Salvia #{Salvia::VERSION}"
     end
 
-    # SSR コマンド
-    desc "ssr:build", "Island コンポーネントを SSR 用にビルド"
+    # SSR commands
+    desc "ssr:build", "Build Island components for SSR"
     map "ssr:build" => :ssr_build
-    method_option :verbose, aliases: "-v", type: :boolean, default: false, desc: "詳細ログを出力"
+    method_option :verbose, aliases: "-v", type: :boolean, default: false, desc: "Verbose output"
     def ssr_build
       check_deno_installed!
       
-      say "🏝️  Island コンポーネントをビルド中...", :green
+      say "🏝️  Building Island components...", :green
       
       cmd = "deno run --allow-all bin/build_ssr.ts"
       cmd += " --verbose" if options[:verbose]
@@ -168,20 +163,20 @@ module Salvia
       success = system(cmd)
       
       if success
-        say "✅ SSR ビルド完了！", :green
+        say "✅ SSR build completed!", :green
       else
-        say "❌ SSR ビルドに失敗しました", :red
+        say "❌ SSR build failed", :red
         exit 1
       end
     end
 
-    desc "ssr:watch", "Island コンポーネントの変更を監視してリビルド"
+    desc "ssr:watch", "Watch and rebuild Island components"
     map "ssr:watch" => :ssr_watch
-    method_option :verbose, aliases: "-v", type: :boolean, default: false, desc: "詳細ログを出力"
+    method_option :verbose, aliases: "-v", type: :boolean, default: false, desc: "Verbose output"
     def ssr_watch
       check_deno_installed!
       
-      say "👀 Island コンポーネントの変更を監視中...", :green
+      say "👀 Watching Island components...", :green
       
       cmd = "deno run --allow-all bin/build_ssr.ts --watch"
       cmd += " --verbose" if options[:verbose]
@@ -189,28 +184,28 @@ module Salvia
       exec cmd
     end
 
-    desc "dev", "開発サーバー + SSR ウォッチを同時に起動"
-    method_option :port, aliases: "-p", type: :numeric, default: 9292, desc: "ポート番号"
-    method_option :host, aliases: "-b", type: :string, default: "localhost", desc: "バインドするホスト"
+    desc "dev", "Start server + SSR watch together"
+    method_option :port, aliases: "-p", type: :numeric, default: 9292, desc: "Port number"
+    method_option :host, aliases: "-b", type: :string, default: "localhost", desc: "Host to bind"
     def dev
       require_app_environment
       
-      say "🚀 Salvia 開発モードを起動中...", :green
+      say "🚀 Starting Salvia dev mode...", :green
       say "   Server: http://#{options[:host]}:#{options[:port]}", :cyan
-      say "   SSR Watch: 有効", :cyan
+      say "   SSR Watch: enabled", :cyan
       say ""
       
-      # Deno SSR ウォッチをバックグラウンドで起動
+      # Deno SSR watch in background
       deno_pid = nil
       if deno_installed?
         deno_pid = spawn("deno run --allow-all bin/build_ssr.ts --watch",
                          out: "/dev/null", err: [:child, :out])
-        say "🏝️  SSR ウォッチ起動 (PID: #{deno_pid})", :blue
+        say "🏝️  SSR watch started (PID: #{deno_pid})", :blue
       else
-        say "⚠️  Deno が見つかりません。SSR ビルドはスキップされます。", :yellow
+        say "⚠️  Deno not found. Skipping SSR build.", :yellow
       end
       
-      # 終了時に Deno プロセスも終了
+      # Cleanup on exit
       at_exit do
         if deno_pid
           Process.kill("TERM", deno_pid) rescue nil
@@ -218,10 +213,10 @@ module Salvia
         end
       end
       
-      # Tailwind CSS ウォッチもバックグラウンドで起動
+      # Tailwind CSS watch in background
       tailwind_pid = spawn("bundle exec tailwindcss -i ./app/assets/stylesheets/application.tailwind.css -o ./public/assets/stylesheets/tailwind.css --watch",
                            out: "/dev/null", err: [:child, :out])
-      say "🎨 CSS ウォッチ起動 (PID: #{tailwind_pid})", :blue
+      say "🎨 CSS watch started (PID: #{tailwind_pid})", :blue
       
       at_exit do
         Process.kill("TERM", tailwind_pid) rescue nil
@@ -230,7 +225,7 @@ module Salvia
       
       say ""
       
-      # Ruby サーバーを起動
+      # Start Ruby server
       exec "bundle exec rackup -p #{options[:port]} -o #{options[:host]}"
     end
 
@@ -238,12 +233,12 @@ module Salvia
 
     def check_deno_installed!
       unless deno_installed?
-        say "❌ Deno がインストールされていません。", :red
+        say "❌ Deno is not installed.", :red
         say ""
-        say "インストール方法:", :yellow
+        say "Install:", :yellow
         say "  curl -fsSL https://deno.land/install.sh | sh"
         say ""
-        say "または: https://deno.land", :yellow
+        say "Or visit: https://deno.land", :yellow
         exit 1
       end
     end
@@ -255,7 +250,7 @@ module Salvia
     def require_app_environment
       env_file = File.join(Dir.pwd, "config", "environment.rb")
       unless File.exist?(env_file)
-        say "エラー: config/environment.rb が見つかりません。Salvia アプリのディレクトリで実行してください。", :red
+        say "Error: config/environment.rb not found. Run this command in a Salvia app directory.", :red
         exit 1
       end
       require env_file
@@ -298,9 +293,6 @@ module Salvia
 
       # config/routes.rb
       create_file "#{@app_name}/config/routes.rb", routes_rb_content
-
-      # config/importmap.rb
-      create_file "#{@app_name}/config/importmap.rb", importmap_rb_content
 
       # config/database.yml
       create_file "#{@app_name}/config/database.yml", database_yml_content
@@ -345,35 +337,22 @@ module Salvia
     end
 
     def create_public_assets
-      # HTMX - プラグイン有効時のみ
-      if @use_htmx
-        create_file "#{@app_name}/public/assets/javascripts/htmx.min.js", htmx_placeholder_content
-      end
-
       # app.js
       create_file "#{@app_name}/public/assets/javascripts/app.js", app_js_content
 
       # islands.js
       create_file "#{@app_name}/public/assets/javascripts/islands.js", islands_js_content
 
-      # Tailwind CSS プレースホルダー
-      create_file "#{@app_name}/public/assets/stylesheets/tailwind.css", "/* 'salvia css:build' を実行してこのファイルを生成してください */\n"
+      # Tailwind CSS placeholder
+      create_file "#{@app_name}/public/assets/stylesheets/tailwind.css", "/* Run 'salvia css:build' to generate */\n"
 
-      # エラーページ
+      # Error pages
       create_file "#{@app_name}/public/404.html", error_404_content
       create_file "#{@app_name}/public/500.html", error_500_content
 
-      # SSR 有効時は build_ssr.ts も作成
-      if @use_ssr
-        create_file "#{@app_name}/bin/build_ssr.ts", build_ssr_ts_content
-        empty_directory "#{@app_name}/vendor/server"
-      end
-
-      if @use_htmx
-        say ""
-        say "⚠️  HTMX を手動でダウンロードしてください:", :yellow
-        say "   curl -o #{@app_name}/public/assets/javascripts/htmx.min.js https://unpkg.com/htmx.org@1.9.10/dist/htmx.min.js"
-      end
+      # SSR build script
+      create_file "#{@app_name}/bin/build_ssr.ts", build_ssr_ts_content
+      empty_directory "#{@app_name}/vendor/server"
     end
 
     # ファイルコンテンツメソッド
@@ -421,27 +400,25 @@ module Salvia
     end
 
     def environment_rb_content
-      htmx_config = @use_htmx ? "\n  config.plugins << :htmx" : ""
-      ssr_config = @use_ssr ? "\n  config.ssr_engine = :hybrid" : "\n  config.ssr_engine = nil"
-      
       <<~RUBY
         require "bundler/setup"
         require "salvia_rb"
 
-        # アプリケーションルートを設定
+        # Set application root
         Salvia.root = File.expand_path("..", __dir__)
 
-        # アプリケーション設定
-        Salvia.configure do |config|#{htmx_config}#{ssr_config}
+        # Application configuration
+        Salvia.configure do |config|
+          # config.ssr_bundle_path = "vendor/server/ssr_bundle.js"
         end
 
-        # データベース設定を読み込み
+        # Setup database
         Salvia::Database.setup!
 
-        # 環境設定を読み込み
+        # Load environment config
         Salvia.load_config
 
-        # Zeitwerk オートローダー設定
+        # Zeitwerk autoloader
         loader = Zeitwerk::Loader.new
         loader.push_dir(File.join(Salvia.root, "app", "controllers"))
         loader.push_dir(File.join(Salvia.root, "app", "models"))
@@ -450,11 +427,8 @@ module Salvia
         loader.setup
         Salvia.app_loader = loader
 
-        # ルーティングを読み込み
+        # Load routes
         require_relative "routes"
-
-        # Import Map を読み込み
-        require_relative "importmap"
       RUBY
     end
 
@@ -636,21 +610,17 @@ module Salvia
     end
 
     def layout_content
-      htmx_script = @use_htmx ? "\n      <script src=\"/assets/javascripts/htmx.min.js\" defer></script>" : ""
-      
       <<~ERB
         <!DOCTYPE html>
-        <html lang="ja">
+        <html lang="en">
         <head>
           <meta charset="UTF-8">
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
           <title><%= @title || "#{@app_class_name}" %></title>
 
           <%= csrf_meta_tags %>
-          <%= importmap_tags %>
 
           <link rel="stylesheet" href="/assets/stylesheets/tailwind.css">
-#{htmx_script}
           <script type="module" src="/assets/javascripts/app.js"></script>
           <script type="module" src="/assets/javascripts/islands.js"></script>
 
@@ -722,33 +692,12 @@ module Salvia
       CSS
     end
 
-    def htmx_placeholder_content
-      <<~JS
-        // HTMX プレースホルダー - 実際のファイルをダウンロードしてください:
-        // curl -o public/assets/javascripts/htmx.min.js https://unpkg.com/htmx.org@1.9.10/dist/htmx.min.js
-        console.warn("HTMX が読み込まれていません。htmx.min.js をダウンロードしてください。");
-      JS
-    end
-
     def app_js_content
       <<~JS
-        // Salvia アプリのカスタム JavaScript
-
-        // HTMX の設定（オプション）
-        document.addEventListener('htmx:configRequest', (event) => {
-          // CSRF トークンを HTMX リクエストに追加
-          const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
-          if (csrfToken) {
-            event.detail.headers['X-CSRF-Token'] = csrfToken;
-          }
-        });
-
-        // 開発環境で HTMX イベントをログ出力
-        if (window.location.hostname === 'localhost') {
-          document.addEventListener('htmx:afterSwap', (event) => {
-            console.log('HTMX swap:', event.detail.target);
-          });
-        }
+        // Salvia application JavaScript
+        
+        // Add custom initialization code here
+        console.log('🌿 Salvia app loaded');
       JS
     end
 
@@ -757,7 +706,7 @@ module Salvia
         <!DOCTYPE html>
         <html>
         <head>
-          <title>ページが見つかりません (404)</title>
+          <title>Page Not Found (404)</title>
           <meta charset="utf-8">
           <style>
             body { font-family: system-ui, sans-serif; color: #333; text-align: center; padding: 100px 20px; }
@@ -769,8 +718,8 @@ module Salvia
         </head>
         <body>
           <h1>404</h1>
-          <p>お探しのページは見つかりませんでした。</p>
-          <p><a href="/">トップページへ戻る</a></p>
+          <p>The page you're looking for could not be found.</p>
+          <p><a href="/">Back to Home</a></p>
         </body>
         </html>
       HTML
@@ -781,7 +730,7 @@ module Salvia
         <!DOCTYPE html>
         <html>
         <head>
-          <title>サーバーエラー (500)</title>
+          <title>Server Error (500)</title>
           <meta charset="utf-8">
           <style>
             body { font-family: system-ui, sans-serif; color: #333; text-align: center; padding: 100px 20px; }
@@ -791,8 +740,8 @@ module Salvia
         </head>
         <body>
           <h1>500</h1>
-          <p>サーバー内部でエラーが発生しました。</p>
-          <p>しばらくしてからもう一度お試しください。</p>
+          <p>An internal server error occurred.</p>
+          <p>Please try again later.</p>
         </body>
         </html>
       HTML
@@ -800,7 +749,7 @@ module Salvia
 
     def development_config_content
       <<~RUBY
-        # 開発環境の設定
+        # Development configuration
         Salvia.logger = Logger.new(STDOUT)
         Salvia.logger.level = Logger::DEBUG
       RUBY
@@ -808,8 +757,7 @@ module Salvia
 
     def production_config_content
       <<~RUBY
-        # 本番環境の設定
-        # log ディレクトリがない場合は作成
+        # Production configuration
         log_dir = File.join(Salvia.root, "log")
         Dir.mkdir(log_dir) unless Dir.exist?(log_dir)
 
@@ -818,26 +766,15 @@ module Salvia
       RUBY
     end
 
-    def importmap_rb_content
-      <<~RUBY
-        Salvia.importmap.draw do
-          # Preact + HTM
-          pin "preact", to: "https://esm.sh/preact@10.19.3"
-          pin "preact/hooks", to: "https://esm.sh/preact@10.19.3/hooks"
-          pin "htm/preact", to: "https://esm.sh/htm@3.1.1/preact"
-
-          # アプリケーションの Islands
-          # pin "Counter", to: "/islands/Counter.js"
-        end
-      RUBY
-    end
-
     def islands_js_content
       <<~JS
-        import { render } from 'htm/preact';
-        import { html } from 'htm/preact';
+        // Salvia Islands - Client-side hydration
+        import { h, render, hydrate } from 'https://esm.sh/preact@10.19.3';
+        import htm from 'https://esm.sh/htm@3.1.1';
 
-        // Island コンポーネントをマウントする
+        const html = htm.bind(h);
+
+        // Mount Island components
         document.addEventListener('DOMContentLoaded', async () => {
           const islands = document.querySelectorAll('[data-island]');
           
@@ -846,19 +783,23 @@ module Salvia
             const props = JSON.parse(island.dataset.props || '{}');
             
             try {
-              // 動的インポート
-              // 注意: Import Map で定義された名前で import する
-              const module = await import(name);
+              // Dynamic import from /islands/
+              const module = await import(`/islands/${name}.js`);
               const Component = module[name] || module.default;
               
               if (Component) {
-                render(html`<${Component} ...${props} />`, island);
-                console.log(`🏝️ Island mounted: ${name}`);
+                // Hydrate if SSR content exists, otherwise render
+                if (island.innerHTML.trim()) {
+                  hydrate(html`<\${Component} ...\${props} />`, island);
+                } else {
+                  render(html`<\${Component} ...\${props} />`, island);
+                }
+                console.log(`🏝️ Island mounted: \${name}`);
               } else {
-                console.error(`Island component ${name} not found in module`);
+                console.error(`Island component \${name} not found in module`);
               }
             } catch (error) {
-              console.error(`Failed to load island: ${name}`, error);
+              console.error(`Failed to load island: \${name}`, error);
             }
           }
         });

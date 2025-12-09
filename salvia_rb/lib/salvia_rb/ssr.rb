@@ -61,27 +61,12 @@ module Salvia
       attr_accessor :last_build_error
 
       # SSR エンジンを設定
-      # @param engine [Symbol] :hybrid (推奨), :quickjs_native, :quickjs_wasm, :deno
-      # @param options [Hash] エンジン固有のオプション
-      def configure(engine = :hybrid, options = {})
-        adapter_class = case engine.to_sym
-                        when :hybrid, :quickjs_hybrid
-                          require_relative "ssr/adapters/quickjs_hybrid"
-                          Adapters::QuickJSNative
-                        when :quickjs, :quickjs_native
-                          require_relative "ssr/adapters/quickjs_native"
-                          Adapters::QuickJSNative
-                        when :quickjs_wasm, :wasm
-                          require_relative "ssr/adapters/quickjs_wasm"
-                          Adapters::QuickJSWasm
-                        when :deno
-                          require_relative "ssr/adapters/deno"
-                          Adapters::Deno
-                        else
-                          raise EngineNotFoundError, "Unknown SSR engine: #{engine}"
-                        end
-
-        @current_adapter = adapter_class.new(options)
+      # @param options [Hash] エンジンオプション
+      # @option options [String] :bundle_path SSR バンドルのパス
+      # @option options [Boolean] :development 開発モード
+      def configure(options = {})
+        require_relative "ssr/quickjs"
+        @current_adapter = QuickJS.new(options)
         @current_adapter.setup!
         @current_adapter
       end

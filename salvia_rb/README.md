@@ -2,47 +2,46 @@
 
 > **"Wisdom for Rubyists."**
 >
-> 小さくて理解しやすい Ruby MVC フレームワーク
+> A small, understandable Ruby MVC framework
 
-**SSR Islands Architecture** × **HTMX** × **Tailwind** × **ActiveRecord** を組み合わせた、シンプルで明快な Ruby Web フレームワークです。
+**SSR Islands Architecture** × **Tailwind** × **ActiveRecord** combined into a simple and clear Ruby Web framework.
 
-## 特徴
+## Features
 
-- **サーバーレンダリング (HTML) ファースト** - JSON API ではなく HTML を返す
-- **🏝️ SSR Islands Architecture** - Preact コンポーネントを QuickJS でサーバーサイドレンダリング
-- **Smart Rendering** - HTMX リクエストを自動検出してレイアウトを除外
-- **Rails ライクな DSL** - 馴染みのある `resources`, `root to:` などのルーティング
-- **ActiveRecord 統合** - Rails と同じ感覚でモデルを扱える
-- **Node.js 不要** - QuickJS で SSR、Deno でビルド（本番は Node 不要）
+- **Server-Rendered (HTML) First** - Return HTML, not JSON APIs
+- **🏝️ SSR Islands Architecture** - Server-side render Preact components with QuickJS
+- **Rails-like DSL** - Familiar `resources`, `root to:` routing
+- **ActiveRecord Integration** - Use models like Rails
+- **No Node.js Required** - QuickJS for SSR, Deno for build (production needs no Node)
 
-## インストール
+## Installation
 
 ```ruby
 gem "salvia_rb"
 ```
 
-## クイックスタート
+## Quick Start
 
 ```bash
-# 新しいアプリを作成
+# Create a new app
 salvia new myapp
 cd myapp
 
-# セットアップ
+# Setup
 bundle install
 salvia db:setup
 salvia css:build
 
-# Islands を使う場合: SSR バンドルをビルド
+# Build SSR bundle
 deno run -A bin/build_ssr.ts
 
-# サーバー起動
+# Start server
 salvia server
 ```
 
-ブラウザで http://localhost:9292 を開くと、ウェルカムページが表示されます。
+Open http://localhost:9292 in your browser.
 
-## ディレクトリ構造
+## Directory Structure
 
 ```
 myapp/
@@ -57,15 +56,12 @@ myapp/
 │   │   │   └── application.html.erb
 │   │   └── home/
 │   │       └── index.html.erb
-│   └── islands/                # 🏝️ Island コンポーネント
-│       ├── Counter.jsx
-│       └── TodoList.jsx
+│   └── islands/                # 🏝️ Island components
+│       └── Counter.jsx
 ├── bin/
-│   └── build_ssr.ts            # Deno ビルドスクリプト
+│   └── build_ssr.ts            # Deno build script
 ├── vendor/server/
-│   └── ssr_bundle.js           # SSR バンドル
-├── public/assets/javascripts/
-│   └── islands_bundle.js       # クライアントバンドル
+│   └── ssr_bundle.js           # SSR bundle
 ├── config/
 │   ├── database.yml
 │   ├── environment.rb
@@ -78,7 +74,7 @@ myapp/
 └── Gemfile
 ```
 
-## ルーティング
+## Routing
 
 ```ruby
 # config/routes.rb
@@ -88,51 +84,29 @@ Salvia::Router.draw do
   get "/about", to: "pages#about"
 
   resources :posts, only: [:index, :show, :create]
-  resources :comments, only: [:create, :destroy]
 end
 ```
 
-## コントローラー
+## Controller
 
 ```ruby
 class PostsController < ApplicationController
   def index
     @posts = Post.order(created_at: :desc)
-    render "posts/index"
   end
 
   def create
-    @post = Post.create!(title: params["title"], body: params["body"])
-
-    # HTMX リクエストならパーシャルのみ返す（Smart Rendering）
+    @post = Post.create!(title: params["title"])
     render "posts/_post", locals: { post: @post }
   end
 end
 ```
 
-## HTMX を使ったビュー
-
-```erb
-<!-- app/views/posts/index.html.erb -->
-<div class="max-w-2xl mx-auto">
-  <form hx-post="/posts" hx-target="#posts" hx-swap="afterbegin">
-    <input name="title" placeholder="タイトル" class="border rounded px-2 py-1">
-    <button class="bg-blue-500 text-white px-4 py-1 rounded">追加</button>
-  </form>
-
-  <div id="posts">
-    <% @posts.each do |post| %>
-      <%= render "posts/_post", locals: { post: post } %>
-    <% end %>
-  </div>
-</div>
-```
-
 ## 🏝️ SSR Islands
 
-Salvia の Islands Architecture はサーバーサイドレンダリング (SSR) をサポートしています。
+Salvia's Islands Architecture supports server-side rendering (SSR).
 
-### Island コンポーネントの作成
+### Create an Island Component
 
 ```jsx
 // app/islands/Counter.jsx
@@ -156,73 +130,62 @@ export function Counter({ initialCount = 0 }) {
 }
 ```
 
-### ERB での使用
+### Use in ERB
 
 ```erb
 <!-- app/views/home/index.html.erb -->
-<h1>カウンターデモ</h1>
+<h1>Counter Demo</h1>
 
 <%# SSR + Client Hydration %>
 <%= island "Counter", { initialCount: 10 } %>
 ```
 
-### SSR バンドルのビルド
+### Build SSR Bundle
 
 ```bash
-# Deno でビルド（SSR バンドル + クライアントバンドル）
 deno run -A bin/build_ssr.ts
 ```
 
-### 仕組み
+### How It Works
 
 ```
-1. SSR: QuickJS で Preact コンポーネントをレンダリング (0.3ms/render)
-2. HTML: レンダリング結果を ERB に埋め込み
-3. Hydrate: クライアントで Preact hydrate() を実行
-4. Interactive: クリックや入力が動作するように
+1. SSR: Render Preact components with QuickJS (0.3ms/render)
+2. HTML: Embed rendered result in ERB
+3. Hydrate: Client-side Preact hydrate()
+4. Interactive: Clicks and inputs work
 ```
 
-## CLI コマンド
+## CLI Commands
 
-| コマンド | 説明 |
-|---------|------|
-| `salvia new APP_NAME` | 新しいアプリケーションを作成 |
-| `salvia server` / `salvia s` | 開発サーバーを起動 |
-| `salvia console` / `salvia c` | IRB コンソールを起動 |
-| `salvia db:create` | データベースを作成 |
-| `salvia db:migrate` | マイグレーションを実行 |
-| `salvia db:rollback` | 直前のマイグレーションをロールバック |
-| `salvia db:setup` | データベースの作成とマイグレーション |
-| `salvia css:build` | Tailwind CSS をビルド |
-| `salvia css:watch` | CSS の変更を監視してリビルド |
-| `salvia routes` | ルート一覧を表示 |
+| Command | Description |
+|---------|-------------|
+| `salvia new APP_NAME` | Create a new application |
+| `salvia server` / `salvia s` | Start development server |
+| `salvia dev` | Start server + SSR watch |
+| `salvia console` / `salvia c` | Start IRB console |
+| `salvia db:create` | Create database |
+| `salvia db:migrate` | Run migrations |
+| `salvia db:rollback` | Rollback last migration |
+| `salvia db:setup` | Create database and run migrations |
+| `salvia css:build` | Build Tailwind CSS |
+| `salvia css:watch` | Watch and rebuild CSS |
+| `salvia ssr:build` | Build SSR bundle |
+| `salvia ssr:watch` | Watch and rebuild SSR |
+| `salvia routes` | Display routes |
 
-## Smart Rendering
+## Requirements
 
-Salvia は HTMX リクエスト（`HX-Request` ヘッダー）を自動検出し、レイアウトをスキップします：
+- Ruby 3.1+
+- Deno (for SSR build)
+- SQLite3 (default) or PostgreSQL/MySQL
 
-```ruby
-def create
-  @item = Item.create!(params)
-
-  # 通常リクエスト: レイアウト付きでレンダリング
-  # HTMX リクエスト: パーシャルのみ（レイアウトなし）
-  render "items/_item", locals: { item: @item }
-end
-```
-
-## 動作環境
-
-- Ruby 3.1 以上
-- SQLite3（デフォルト）または PostgreSQL/MySQL
-
-## ライセンス
+## License
 
 MIT License
 
-## コントリビュート
+## Contributing
 
-バグ報告やプルリクエストを歓迎します！
+Bug reports and pull requests are welcome!
 
 ---
 

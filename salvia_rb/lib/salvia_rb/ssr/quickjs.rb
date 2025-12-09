@@ -4,22 +4,21 @@ require "json"
 
 module Salvia
   module SSR
-    module Adapters
-      # QuickJS (C拡張) アダプター - Hybrid SSR Engine
-      #
-      # Deno でビルドした ssr_bundle.js を読み込み、
-      # 同一プロセス内で高速に SSR を実行します。
-      #
-      # Features:
-      # - console.log を Ruby Logger に転送
-      # - SSR エラー時のオーバーレイ HTML 生成
-      # - 開発/本番モードの切り替え
-      #
-      # @example
-      #   Salvia::SSR.configure(:quickjs_native, bundle_path: "vendor/server/ssr_bundle.js")
-      #   html = Salvia::SSR.render("Counter", { count: 5 })
-      #
-      class QuickJSNative < BaseAdapter
+    # QuickJS SSR Engine
+    #
+    # Deno でビルドした ssr_bundle.js を読み込み、
+    # 同一プロセス内で高速に SSR を実行します。
+    #
+    # Features:
+    # - console.log を Ruby Logger に転送
+    # - SSR エラー時のオーバーレイ HTML 生成
+    # - 開発/本番モードの切り替え
+    #
+    # @example
+    #   Salvia::SSR.configure(bundle_path: "vendor/server/ssr_bundle.js")
+    #   html = Salvia::SSR.render("Counter", { count: 5 })
+    #
+    class QuickJS < BaseAdapter
         # JS から収集したログを保持
         attr_reader :js_logs
         
