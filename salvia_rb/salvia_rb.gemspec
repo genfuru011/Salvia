@@ -5,8 +5,8 @@ require_relative "lib/salvia_rb/version"
 Gem::Specification.new do |spec|
   spec.name = "salvia_rb"
   spec.version = Salvia::VERSION
-  spec.authors = ["Salvia Contributors"]
-  spec.email = []
+  spec.authors = ["Hiroto Furugen"]
+  spec.email = ["hiro_genfuru0119@icloud.com"]
 
   spec.summary = "A small, understandable Ruby MVC framework"
   spec.description = "A simple and clear Ruby web framework with ERB, SSR Islands, Tailwind, and ActiveRecord. No Node.js required."
@@ -20,7 +20,7 @@ Gem::Specification.new do |spec|
 
   # Specify which files should be added to the gem when it is released.
   spec.files = Dir.chdir(__dir__) do
-    Dir["{lib,exe,templates}/**/*", "LICENSE.txt", "README.md"]
+    Dir["{lib,exe,templates,assets}/**/*", "LICENSE.txt", "README.md"]
   end
   spec.bindir = "exe"
   spec.executables = ["salvia"]
@@ -30,7 +30,6 @@ Gem::Specification.new do |spec|
   spec.add_dependency "rack", "~> 3.0"
   spec.add_dependency "rackup", "~> 2.0"
   spec.add_dependency "rack-session", "~> 2.0"
-  spec.add_dependency "rack-protection", "~> 3.0"
   spec.add_dependency "rack-test", "~> 2.0"
 
   spec.add_dependency "puma", "~> 6.0"

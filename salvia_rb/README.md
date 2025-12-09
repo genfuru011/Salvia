@@ -1,3 +1,9 @@
+<p align="center">
+  <img src="https://img.shields.io/badge/Ruby-3.1+-CC342D?style=flat-square&logo=ruby" alt="Ruby">
+  <img src="https://img.shields.io/badge/License-MIT-blue?style=flat-square" alt="License">
+  <img src="https://img.shields.io/badge/Version-0.5.0-6A5ACD?style=flat-square" alt="Version">
+</p>
+
 # 🌿 Salvia.rb
 
 > **"Wisdom for Rubyists."**

@@ -211,9 +211,6 @@ module Salvia
       template_name = File.basename(template)
       return false if template_name.start_with?("_")
 
-      # HTMX リクエストはデフォルトでレイアウトなし（Smart Rendering）
-      return false if htmx_request?
-
       # 指定されたレイアウトまたはデフォルトを使用
       layout_option || default_layout
     end

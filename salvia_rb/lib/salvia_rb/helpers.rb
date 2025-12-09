@@ -6,5 +6,6 @@ module Salvia
     include Component
     include Island
     include Inspector
+    include CSRF
   end
 end

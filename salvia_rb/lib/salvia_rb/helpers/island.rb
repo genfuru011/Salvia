@@ -5,6 +5,33 @@ require "json"
 module Salvia
   module Helpers
     module Island
+      # Island マニフェストをキャッシュ
+      @manifest = nil
+      @manifest_mtime = nil
+      
+      class << self
+        # マニフェストを読み込む
+        def load_manifest
+          manifest_path = File.join(Dir.pwd, "vendor/server/manifest.json")
+          return {} unless File.exist?(manifest_path)
+          
+          mtime = File.mtime(manifest_path)
+          if @manifest.nil? || @manifest_mtime != mtime
+            @manifest = JSON.parse(File.read(manifest_path))
+            @manifest_mtime = mtime
+          end
+          @manifest
+        rescue => e
+          {}
+        end
+        
+        # Island が client only かどうか
+        def client_only?(name)
+          manifest = load_manifest
+          manifest.dig(name, "clientOnly") == true
+        end
+      end
+      
       # Island コンポーネントをレンダリングする
       #
       # SSR が有効な場合はサーバーサイドで HTML を生成し、
@@ -15,14 +42,14 @@ module Salvia
       # @param options [Hash] オプション
       # @option options [String] :id 要素のID
       # @option options [String] :tag ラッパータグ (デフォルト: div)
-      # @option options [Boolean] :ssr SSR を有効にするか (デフォルト: true)
+      # @option options [Boolean] :ssr SSR を有効にするか (デフォルト: auto)
       # @option options [Boolean] :hydrate クライアントサイドでハイドレーションするか (デフォルト: true)
       # @return [String] レンダリングされた HTML
       #
       # @example 基本的な使用法
       #   <%= island "Counter", count: 5 %>
       #
-      # @example SSR を無効化 (クライアントサイドのみ)
+      # @example SSR を明示的に無効化
       #   <%= island "HeavyChart", data: @data, ssr: false %>
       #
       # @example ハイドレーションを無効化 (静的 HTML のみ)
@@ -30,8 +57,17 @@ module Salvia
       #
       def island(name, props = {}, options = {})
         tag_name = options.delete(:tag) || :div
-        ssr_enabled = options.fetch(:ssr, true)
         hydrate = options.fetch(:hydrate, true)
+        
+        # SSR 有効/無効の判定
+        # 1. options[:ssr] が明示的に指定されていればそれを使う
+        # 2. マニフェストで "client only" ならば SSR 無効
+        # 3. デフォルトは SSR 有効
+        ssr_enabled = if options.key?(:ssr)
+          options[:ssr]
+        else
+          !Island.client_only?(name)
+        end
         
         # 開発モードかどうか
         development = defined?(Salvia.env) ? Salvia.env == "development" : true

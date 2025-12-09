@@ -7,9 +7,13 @@ require "erb"
 module Salvia
   # ActiveRecord を使用したデータベース接続管理
   #
-  # @example
-  #   # config/environment.rb にて
-  #   Salvia::Database.setup!
+  # ゼロコンフィグ対応: config/database.yml がなくても動作
+  #
+  # @example 規約ベースのデフォルト
+  #   # config/database.yml なしで自動的に以下を使用:
+  #   # development: db/development.sqlite3
+  #   # test: db/test.sqlite3
+  #   # production: DATABASE_URL または db/production.sqlite3
   #
   class Database
     class << self
@@ -29,21 +33,48 @@ module Salvia
       end
 
       # config/database.yml からデータベース設定を読み込み
+      # ファイルがなければ規約ベースのデフォルトを使用
       #
       # @param env [String] 環境名
       # @return [Hash] データベース設定
       def load_config(env)
         config_path = File.join(Salvia.root, "config", "database.yml")
 
-        unless File.exist?(config_path)
-          raise Error, "データベース設定が見つかりません: #{config_path}"
+        if File.exist?(config_path)
+          load_config_from_file(config_path, env)
+        else
+          default_config(env)
+        end
+      end
+
+      # 規約ベースのデフォルト設定
+      def default_config(env)
+        # 本番環境で DATABASE_URL があればそれを使用
+        if env.to_s == "production" && ENV["DATABASE_URL"]
+          return { "url" => ENV["DATABASE_URL"] }
         end
 
+        # SQLite デフォルト
+        db_dir = File.join(Salvia.root, "db")
+        FileUtils.mkdir_p(db_dir)
+
+        {
+          "adapter" => "sqlite3",
+          "database" => File.join(db_dir, "#{env}.sqlite3"),
+          "pool" => 5,
+          "timeout" => 5000
+        }
+      end
+
+      private
+
+      def load_config_from_file(config_path, env)
         yaml_content = ERB.new(File.read(config_path)).result
         config = YAML.safe_load(yaml_content, aliases: true)
-
-        config[env] || config[env.to_s] || raise(Error, "環境 #{env} のデータベース設定がありません")
+        config[env] || config[env.to_s] || default_config(env)
       end
+
+      public
 
       # データベースを作成
       def create!(env = nil)
