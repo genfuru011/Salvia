@@ -590,6 +590,9 @@ module Salvia
       # .gitignore
       create_file "#{@app_name}/.gitignore", gitignore_content
 
+      # .env.example (環境変数テンプレート)
+      create_file "#{@app_name}/.env.example", env_example_content
+
       # Docker (本番環境用)
       create_file "#{@app_name}/Dockerfile", dockerfile_content
       create_file "#{@app_name}/docker-compose.yml", docker_compose_content
@@ -886,6 +889,32 @@ module Salvia
         # IDE
         .idea/
         .vscode/
+      TEXT
+    end
+
+    def env_example_content
+      <<~TEXT
+        # Salvia Environment Configuration
+        # Copy this file to .env and customize for your environment
+        # .env.local overrides .env (for local development secrets)
+        # .env.{environment} is loaded based on RACK_ENV
+
+        # Environment: development | production | test
+        # RACK_ENV=development
+
+        # Server Configuration
+        # PORT=9292
+        # HOST=0.0.0.0
+
+        # Session Secret (generate with: ruby -e "require 'securerandom'; puts SecureRandom.hex(64)")
+        # SESSION_SECRET=
+
+        # Database URL (overrides database.yml)
+        # DATABASE_URL=sqlite3:db/development.sqlite3
+        # DATABASE_URL=postgres://user:pass@localhost/myapp_production
+
+        # Logging
+        # LOG_LEVEL=debug
       TEXT
     end
 

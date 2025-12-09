@@ -200,6 +200,24 @@ salvia ssr:build
 | `salvia g controller NAME` | Generate controller |
 | `salvia g model NAME` | Generate model |
 
+## Environment Variables
+
+Salvia automatically loads `.env` files:
+
+```bash
+# Load order (later files override):
+# 1. .env                    - Default values
+# 2. .env.local              - Local overrides (gitignored)
+# 3. .env.{RACK_ENV}         - Environment-specific (.env.production)
+```
+
+```bash
+# .env.example (generated with your app)
+RACK_ENV=development
+SESSION_SECRET=your-secret-here
+DATABASE_URL=sqlite3:db/development.sqlite3
+```
+
 ## Docker
 
 Generated apps include Docker support:

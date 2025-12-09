@@ -4,6 +4,10 @@ require_relative "salvia_rb/version"
 require_relative "salvia_rb/assets"
 require_relative "salvia_rb/assets_middleware"
 
+# .env ファイルを自動読み込み
+require "dotenv"
+Dotenv.load(".env.#{ENV.fetch('RACK_ENV', 'development')}", ".env.local", ".env")
+
 # コア依存関係
 require "rack"
 require "rack/session"

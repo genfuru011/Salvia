@@ -45,6 +45,9 @@ Gem::Specification.new do |spec|
   spec.add_dependency "thor", "~> 1.3"
   spec.add_dependency "tty-prompt", "~> 0.23"
 
+  # Environment
+  spec.add_dependency "dotenv", "~> 3.0"
+
   # Auto-loading
   spec.add_dependency "zeitwerk", "~> 2.6"
 
