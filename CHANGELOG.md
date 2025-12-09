@@ -14,6 +14,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.1.1] - 2025-12-10
+
+> **"JSX & Deno Integration"** - Better DX for Islands development
+
+### 🏝️ Islands Improvements
+- **Counter.jsx**: Generate JSX instead of htm template syntax
+- **deno.json**: Auto-generate Deno configuration for SSR build
+- **Import Maps**: Use bare specifiers (`'preact'`) resolved via deno.json
+- **Deno Tasks**: `deno task build` / `deno task watch` commands
+
+### 🔧 Environment
+- **dotenv support**: Auto-load `.env`, `.env.local`, `.env.{environment}` files
+- **dotenv ~> 3.0**: Added as dependency
+
+### 📚 Documentation
+- **Reference guides**: Added REFERENCE_JA.md and REFERENCE_EN.md
+
+---
+
 ## [0.1.0] - 2025-12-10
 
 > **"Initial Public Release"** - Zero-config Ruby MVC with SSR Islands
