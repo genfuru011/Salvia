@@ -123,21 +123,55 @@ async function buildSSR() {
   await Deno.mkdir(CLIENT_OUTPUT_DIR, { recursive: true });
 
   try {
-    // SSR bundle (for QuickJS) - exclude client only
+    // SSR bundle (for QuickJS) - single bundle with all components
     if (ssrFiles.length > 0) {
+      // Create a virtual entry point that exports all components
+      // Get just the filename from the path
+      const entryCode = ssrFiles.map(f => {
+        const filename = f.path.split("/").pop();
+        return `import ${f.name} from "./${filename}";`;
+      }).join("\n") + `
+import { h } from "https://esm.sh/preact@10.19.3";
+import renderToString from "https://esm.sh/preact-render-to-string@6.3.1?deps=preact@10.19.3";
+
+// Salvia SSR Runtime
+const components = {
+${ssrFiles.map(f => `  "${f.name}": ${f.name}`).join(",\n")}
+};
+
+globalThis.SalviaSSR = {
+  render: function(name, props) {
+    const Component = components[name];
+    if (!Component) {
+      throw new Error("Component not found: " + name);
+    }
+    const vnode = h(Component, props);
+    return renderToString(vnode);
+  }
+};
+`;
+      const entryPath = `${ISLANDS_DIR}/_ssr_entry.js`;
+      await Deno.writeTextFile(entryPath, entryCode);
+
       await esbuild.build({
-        entryPoints: ssrFiles.map(f => f.path),
+        entryPoints: [entryPath],
         bundle: true,
-        format: "esm",
-        outdir: SSR_OUTPUT_DIR,
+        format: "iife",
+        outfile: `${SSR_OUTPUT_DIR}/ssr_bundle.js`,
         platform: "neutral",
         plugins: [...denoPlugins()],
         external: [],
+        jsx: "automatic",
+        jsxImportSource: "preact",
         banner: {
           js: `// Salvia SSR Bundle - Generated at ${new Date().toISOString()}`,
         },
       });
-      console.log(`✅ SSR bundle built: ${SSR_OUTPUT_DIR}/ (${ssrFiles.map(f => f.name).join(", ")})`);
+      
+      // Clean up temp file
+      await Deno.remove(entryPath);
+      
+      console.log(`✅ SSR bundle built: ${SSR_OUTPUT_DIR}/ssr_bundle.js (${ssrFiles.map(f => f.name).join(", ")})`);
     }
 
     // Client bundle (for hydration) - all files
@@ -149,6 +183,8 @@ async function buildSSR() {
       platform: "browser",
       plugins: [...denoPlugins()],
       external: [],
+      jsx: "automatic",
+      jsxImportSource: "preact",
       minify: true,
       banner: {
         js: `// Salvia Client Islands - Generated at ${new Date().toISOString()}`,

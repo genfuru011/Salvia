@@ -33,7 +33,7 @@ module Salvia
     def initialize(request, response, route_params = {})
       @request = request
       @response = response
-      @params = request.params.merge(route_params).with_indifferent_access
+      @params = build_params(request, route_params)
       @rendered = false
     end
 
@@ -170,7 +170,7 @@ module Salvia
 
     # CSRF トークンを取得
     def csrf_token
-      session[:csrf]
+      Salvia::CSRF.token(session)
     end
 
     # CSRF トークン用の input タグを生成
@@ -248,6 +248,30 @@ module Salvia
       instance_variables
         .reject { |v| v.to_s.start_with?("@_") || %i[@request @response @params @rendered].include?(v) }
         .each_with_object({}) { |v, h| h[v.to_s.delete("@").to_sym] = instance_variable_get(v) }
+    end
+
+    # リクエストパラメータを構築（JSON body を含む）
+    def build_params(request, route_params)
+      base_params = request.params.dup
+      
+      # Content-Type が JSON の場合、body をパース
+      if json_request?(request)
+        begin
+          body = request.body.read
+          request.body.rewind if request.body.respond_to?(:rewind)
+          json_params = JSON.parse(body) if body && !body.empty?
+          base_params.merge!(json_params) if json_params.is_a?(Hash)
+        rescue JSON::ParserError
+          # JSONパースエラーは無視
+        end
+      end
+      
+      base_params.merge(route_params).with_indifferent_access
+    end
+
+    def json_request?(request)
+      content_type = request.content_type.to_s
+      content_type.include?("application/json")
     end
   end
 end
