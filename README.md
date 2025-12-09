@@ -4,46 +4,31 @@
   <img src="https://img.shields.io/badge/Version-0.5.0-6A5ACD?style=flat-square" alt="Version">
 </p>
 
-<h1 align="center">🌿 Salvia.rb</h1>
+# 🌿 Salvia.rb
 
-<p align="center">
-  <strong>"Wisdom for Rubyists."</strong><br>
-  A tiny Ruby MVC framework for wise and clear web apps.
-</p>
+> **"Wisdom for Rubyists."**
+>
+> A small, understandable Ruby MVC framework
 
-<p align="center">
-  <strong>SSR Islands Architecture</strong> × <strong>HTMX</strong> × <strong>Tailwind</strong> × <strong>ActiveRecord</strong><br>
-  小さくて理解しやすい Ruby MVC フレームワーク
-</p>
+**SSR Islands Architecture** × **Tailwind** × **ActiveRecord** combined into a simple and clear Ruby Web framework.
 
----
+## Features
 
-## ✨ Features
+- **Server-Rendered (HTML) First** - Return HTML, not JSON APIs
+- **🏝️ SSR Islands Architecture** - Server-side render Preact components with QuickJS
+- **Rails-like DSL** - Familiar `resources`, `root to:` routing
+- **ActiveRecord Integration** - Use models like Rails
+- **No Node.js Required** - QuickJS for SSR, Deno for build (production needs no Node)
 
-- **🖥️ サーバーレンダリング (HTML) ファースト** - JSON API ではなく HTML を返す
-- **🏝️ SSR Islands Architecture** - Preact コンポーネントを QuickJS でサーバーサイドレンダリング
-- **⚡ Smart Rendering** - HTMX リクエストを自動検出してレイアウトを除外
-- **🛤️ Rails-like DSL** - 馴染みのある `resources`, `root to:` などのルーティング
-- **🗃️ ActiveRecord 統合** - Rails と同じ感覚でモデルを扱える
-- **📦 Node.js 不要** - QuickJS + Deno でビルド、本番は Node 不要
+## Installation
 
-## 🎯 Philosophy
+```ruby
+gem "salvia_rb"
+```
 
-> **"Write less, see more."**
-
-| Rails | Salvia |
-|-------|--------|
-| フルスタック・オールインワン | 必要最小限のコア機能 |
-| Hotwire (Turbo/Stimulus) | **SSR Islands** + HTMX |
-| JSON API + SPA | HTML + Islands |
-| 大規模向け | 小〜中規模向け |
-
-## 🚀 Quick Start
+## Quick Start
 
 ```bash
-# Install the gem
-gem install salvia_rb
-
 # Create a new app
 salvia new myapp
 cd myapp
@@ -53,238 +38,161 @@ bundle install
 salvia db:setup
 salvia css:build
 
-# Start the server
+# Build SSR bundle
+deno run -A bin/build_ssr.ts
+
+# Start server
 salvia server
 ```
 
-ブラウザで http://localhost:9292 を開いてください 🌿
+Open http://localhost:9292 in your browser.
 
-## 📖 Documentation
-
-| ドキュメント | 説明 |
-|-------------|------|
-| [docs/design/ARCHITECTURE.md](docs/design/ARCHITECTURE.md) | 内部構造と設計思想 |
-| [docs/development/ROADMAP.md](docs/development/ROADMAP.md) | 開発ロードマップ |
-| [docs/security/SECURITY_ASSESSMENT.md](docs/security/SECURITY_ASSESSMENT.md) | セキュリティ脆弱性リスク評価 |
-| [docs/security/SECURITY_GUIDE.md](docs/security/SECURITY_GUIDE.md) | セキュリティガイド |
-| [docs/security/SECURITY_CHECKLIST.md](docs/security/SECURITY_CHECKLIST.md) | セキュリティチェックリスト |
-| [CHANGELOG.md](CHANGELOG.md) | 変更履歴 |
-| [docs/design/Idea.md](docs/design/Idea.md) | 元のアイデアメモ |
-
-## 📁 Project Structure
-
-```
-Salvia/
-├── salvia_rb/          # Gem ソースコード
-│   ├── lib/
-│   │   └── salvia_rb/
-│   │       ├── application.rb   # Rack アプリ
-│   │       ├── router.rb        # ルーティング
-│   │       ├── controller.rb    # コントローラー
-│   │       ├── database.rb      # ActiveRecord 統合
-│   │       ├── cli.rb           # CLI コマンド
-│   │       └── ssr/             # SSR エンジン
-│   │           └── adapters/
-│   │               └── quickjs_hybrid.rb
-│   └── exe/
-│       └── salvia              # CLI エントリーポイント
-├── docs/               # ドキュメント
-│   ├── design/
-│   ├── development/
-│   └── security/
-├── CHANGELOG.md        # 変更履歴
-└── README.md           # このファイル
-```
-
-**生成されるアプリの構造:**
+## Directory Structure
 
 ```
 myapp/
 ├── app/
 │   ├── controllers/
+│   │   ├── application_controller.rb
+│   │   └── home_controller.rb
 │   ├── models/
+│   │   └── application_record.rb
 │   ├── views/
-│   ├── islands/             # 🏝️ Island コンポーネント (Preact/JSX)
-│   │   ├── TodoItem.jsx
-│   │   ├── TodoList.jsx
-│   │   └── TodoStats.jsx
-│   └── components/          # View Components (Ruby)
+│   │   ├── layouts/
+│   │   │   └── application.html.erb
+│   │   └── home/
+│   │       └── index.html.erb
+│   └── islands/                # 🏝️ Island components
+│       └── Counter.jsx
 ├── bin/
-│   └── build_ssr.ts         # Deno ビルドスクリプト
+│   └── build_ssr.ts            # Deno build script
 ├── vendor/server/
-│   └── ssr_bundle.js        # SSR バンドル
-├── public/assets/javascripts/
-│   └── islands_bundle.js    # クライアントバンドル
+│   └── ssr_bundle.js           # SSR bundle
 ├── config/
 │   ├── database.yml
 │   ├── environment.rb
-│   ├── routes.rb
-│   └── importmap.rb
+│   └── routes.rb
 ├── db/
+│   └── migrate/
+├── public/
+│   └── assets/
 ├── config.ru
 └── Gemfile
 ```
 
-## 🎨 Example: Todo App with SSR Islands
-
-### Routes
+## Routing
 
 ```ruby
 # config/routes.rb
 Salvia::Router.draw do
-  root to: "todos#index"
-  resources :todos, only: [:index, :create, :destroy] do
-    member do
-      patch :toggle
-    end
-  end
+  root to: "home#index"
+
+  get "/about", to: "pages#about"
+
+  resources :posts, only: [:index, :show, :create]
 end
 ```
 
-### Controller
+## Controller
 
 ```ruby
-# app/controllers/todos_controller.rb
-class TodosController < ApplicationController
+class PostsController < ApplicationController
   def index
-    @todos = Todo.order(created_at: :desc)
-    @stats = {
-      total: @todos.count,
-      completed: @todos.where(completed: true).count
-    }
-    render "todos/index"
+    @posts = Post.order(created_at: :desc)
   end
 
   def create
-    Todo.create!(title: params[:title])
-    redirect_to "/"
-  end
-
-  def toggle
-    todo = Todo.find(params[:id])
-    todo.update!(completed: !todo.completed)
-    head :ok
+    @post = Post.create!(title: params["title"])
+    render "posts/_post", locals: { post: @post }
   end
 end
 ```
 
-### View with Islands
+## 🏝️ SSR Islands
 
-```erb
-<!-- app/views/todos/index.html.erb -->
-<div class="max-w-2xl mx-auto py-8">
-  <h1 class="text-3xl font-bold">✅ Todo App with SSR Islands</h1>
+Salvia's Islands Architecture supports server-side rendering (SSR).
 
-  <%# Island コンポーネント: SSR + Client Hydration %>
-  <%= island "TodoStats", @stats %>
-  <%= island "AddTodoForm", {} %>
-  <%= island "TodoList", { todos: @todos.map { |t| t.attributes.slice("id", "title", "completed") } } %>
-</div>
-```
-
-### Island Component (Preact)
+### Create an Island Component
 
 ```jsx
-// app/islands/TodoItem.jsx
+// app/islands/Counter.jsx
 import { h } from "preact";
 import { useState } from "preact/hooks";
 
-export function TodoItem({ id, title, completed: initialCompleted }) {
-  const [completed, setCompleted] = useState(initialCompleted);
-
-  const handleToggle = async () => {
-    setCompleted(!completed);  // Optimistic UI update
-    await fetch(`/todos/${id}/toggle`, { method: 'PATCH' });
-    window.dispatchEvent(new CustomEvent('todo:toggled'));
-  };
+export function Counter({ initialCount = 0 }) {
+  const [count, setCount] = useState(initialCount);
 
   return (
-    <li className={`p-3 ${completed ? 'bg-green-50' : 'bg-white'}`}>
-      <button onClick={handleToggle} className="mr-3">
-        {completed ? '✅' : '⭕'}
+    <div className="p-4 border rounded">
+      <p className="text-2xl font-bold">{count}</p>
+      <button
+        onClick={() => setCount(count + 1)}
+        className="px-4 py-2 bg-blue-500 text-white rounded"
+      >
+        +1
       </button>
-      <span className={completed ? 'line-through text-gray-500' : ''}>
-        {title}
-      </span>
-    </li>
+    </div>
   );
 }
 ```
 
-## 🛠️ CLI Commands
+### Use in ERB
 
-```bash
-salvia new APP_NAME     # Create new app
-salvia server           # Start server (alias: s)
-salvia console          # Start IRB (alias: c)
-salvia db:create        # Create database
-salvia db:migrate       # Run migrations
-salvia db:rollback      # Rollback migration
-salvia db:setup         # Create + migrate
-salvia css:build        # Build Tailwind CSS
-salvia css:watch        # Watch CSS changes
-salvia routes           # List all routes
-salvia version          # Show version
+```erb
+<!-- app/views/home/index.html.erb -->
+<h1>Counter Demo</h1>
+
+<%# SSR + Client Hydration %>
+<%= island "Counter", { initialCount: 10 } %>
 ```
 
-## 🔧 Requirements
+### Build SSR Bundle
+
+```bash
+deno run -A bin/build_ssr.ts
+```
+
+### How It Works
+
+```
+1. SSR: Render Preact components with QuickJS (0.3ms/render)
+2. HTML: Embed rendered result in ERB
+3. Hydrate: Client-side Preact hydrate()
+4. Interactive: Clicks and inputs work
+```
+
+## CLI Commands
+
+| Command | Description |
+|---------|-------------|
+| `salvia new APP_NAME` | Create a new application |
+| `salvia server` / `salvia s` | Start development server |
+| `salvia dev` | Start server + SSR watch |
+| `salvia console` / `salvia c` | Start IRB console |
+| `salvia db:create` | Create database |
+| `salvia db:migrate` | Run migrations |
+| `salvia db:rollback` | Rollback last migration |
+| `salvia db:setup` | Create database and run migrations |
+| `salvia css:build` | Build Tailwind CSS |
+| `salvia css:watch` | Watch and rebuild CSS |
+| `salvia ssr:build` | Build SSR bundle |
+| `salvia ssr:watch` | Watch and rebuild SSR |
+| `salvia routes` | Display routes |
+
+## Requirements
 
 - Ruby 3.1+
-- Bundler 2.0+
+- Deno (for SSR build)
+- SQLite3 (default) or PostgreSQL/MySQL
 
-## 📦 Dependencies
+## License
 
-| Gem | Purpose |
-|-----|--------|
-| rack | HTTP interface |
-| puma | Web server |
-| mustermann | Route matching |
-| tilt + erubi | Template rendering |
-| activerecord | ORM |
-| thor | CLI |
-| zeitwerk | Auto-loading |
-| tailwindcss-ruby | CSS (no Node.js) |
-| quickjs | SSR JavaScript runtime |
+MIT License
 
-## 🗺️ Roadmap
-
-- [x] **v0.1.0** - Foundation (Router, Controller, CLI)
-- [x] **v0.2.0** - Developer Experience (Zeitwerk, Error pages)
-- [x] **v0.3.0** - Security (CSRF, Session, Flash)
-- [x] **v0.4.0** - Production Ready (Assets, Logging)
-- [x] **v0.5.0** - SSR Islands & Plugin System
-- [ ] **v1.0.0** - Stable Release
-
-詳細は [docs/development/ROADMAP.md](docs/development/ROADMAP.md) を参照してください。
-
-## 🔒 Security
-
-セキュリティは重要です。Salvia.rb を使用する前に、以下のドキュメントを確認してください:
-
-- **[セキュリティガイド](docs/security/SECURITY_GUIDE.md)** - 安全なアプリケーション開発のベストプラクティス
-- **[セキュリティチェックリスト](docs/security/SECURITY_CHECKLIST.md)** - 開発・デプロイ時のチェック項目
-
-### 脆弱性の報告
-
-セキュリティ脆弱性を発見した場合は、公開 Issue を作成せず、メンテナーに直接ご連絡ください。
-
-## 📝 License
-
-[MIT License](LICENSE)
-
-## 🤝 Contributing
+## Contributing
 
 Bug reports and pull requests are welcome!
 
-1. Fork it
-2. Create your feature branch (`git checkout -b feature/amazing`)
-3. Commit your changes (`git commit -am 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing`)
-5. Create a Pull Request
-
 ---
 
-<p align="center">
-  <em>"Simple, like a flower. Solid, like a gem."</em> 🌿
-</p>
-
+*"Simple, like a flower. Solid, like a gem."* 🌿
