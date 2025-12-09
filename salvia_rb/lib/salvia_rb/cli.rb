@@ -2,6 +2,7 @@
 
 require "thor"
 require "fileutils"
+require "tty-prompt"
 
 module Salvia
   # Salvia フレームワークの CLI ツール
@@ -9,22 +10,41 @@ module Salvia
   # @example
   #   salvia new myapp
   #   salvia server
-  #   salvia db:migrate
+  #   salvia generate controller posts
   #
   class CLI < Thor
     include Thor::Actions
 
-    # テンプレートディレクトリを指定
+    # テンプレートディレクトリ
     def self.source_root
       File.join(__dir__, "templates")
     end
 
     desc "new APP_NAME", "Create a new Salvia application"
+    method_option :template, aliases: "-t", type: :string, desc: "Template: full, api, minimal"
+    method_option :islands, type: :boolean, desc: "Include SSR Islands"
+    method_option :skip_prompts, type: :boolean, default: false, desc: "Skip interactive prompts"
     def new(app_name)
       @app_name = app_name
       @app_class_name = app_name.split(/[-_]/).map(&:capitalize).join
+      @prompt = TTY::Prompt.new
 
-      say "🌿 Creating Salvia app: #{@app_name}...", :green
+      say ""
+      say "🌿 Creating Salvia app: #{@app_name}", :green
+      say ""
+
+      # 対話式プロンプト（スキップでなければ）
+      if options[:skip_prompts]
+        @template = options[:template] || "full"
+        @include_islands = options[:islands].nil? ? true : options[:islands]
+      else
+        @template = options[:template] || select_template
+        @include_islands = options[:islands].nil? ? prompt_islands : options[:islands]
+      end
+
+      say ""
+      say "📦 Template: #{@template}", :cyan
+      say "🏝️  Islands: #{@include_islands ? 'Yes' : 'No'}", :cyan
       say ""
 
       # ディレクトリ構造を作成
@@ -34,16 +54,35 @@ module Salvia
       create_public_assets
 
       say ""
-      say "💎 Created #{@app_name}!", :blue
+      say "✨ Created #{@app_name}!", :green
       say ""
       say "Next steps:", :yellow
       say "  cd #{@app_name}"
       say "  bundle install"
       say "  salvia db:create"
       say "  salvia db:migrate"
-      say "  deno run -A bin/build_ssr.ts"
+      say "  salvia css:build"
+      if @include_islands
+        say "  salvia ssr:build"
+      end
       say "  salvia server"
       say ""
+    end
+
+    desc "generate GENERATOR NAME", "Generate controller, model, or migration (alias: g)"
+    map "g" => "generate"
+    def generate(generator, name, *args)
+      case generator.downcase
+      when "controller"
+        generate_controller(name, args)
+      when "model"
+        generate_model(name, args)
+      when "migration"
+        generate_migration(name, args)
+      else
+        say "Unknown generator: #{generator}", :red
+        say "Available: controller, model, migration", :yellow
+      end
     end
 
     desc "server", "Start development server (alias: s)"
@@ -231,6 +270,221 @@ module Salvia
 
     private
 
+    # ========================================
+    # 対話式プロンプト
+    # ========================================
+
+    def select_template
+      @prompt.select("What template would you like?", cycle: true) do |menu|
+        menu.choice "Full app (ERB + Database + Views)", "full"
+        menu.choice "API only (JSON responses, no views)", "api"
+        menu.choice "Minimal (bare Rack app)", "minimal"
+      end
+    end
+
+    def prompt_islands
+      @prompt.yes?("Include SSR Islands? (Preact components)")
+    end
+
+    # ========================================
+    # ジェネレーター
+    # ========================================
+
+    def generate_controller(name, actions)
+      @controller_name = name.downcase
+      @controller_class = name.split(/[-_]/).map(&:capitalize).join + "Controller"
+      @actions = actions.empty? ? ["index"] : actions
+
+      say "🎮 Generating controller: #{@controller_class}", :green
+
+      # コントローラーファイル
+      create_file "app/controllers/#{@controller_name}_controller.rb", controller_generator_content
+
+      # ビューファイル
+      @actions.each do |action|
+        empty_directory "app/views/#{@controller_name}"
+        create_file "app/views/#{@controller_name}/#{action}.html.erb", view_generator_content(action)
+      end
+
+      # テストファイル
+      empty_directory "test/controllers"
+      create_file "test/controllers/#{@controller_name}_controller_test.rb", controller_test_generator_content
+
+      say ""
+      say "Add routes to config/routes.rb:", :yellow
+      @actions.each do |action|
+        say "  get \"/#{@controller_name}/#{action}\", to: \"#{@controller_name}##{action}\""
+      end
+      say ""
+    end
+
+    def generate_model(name, fields)
+      @model_name = name.downcase
+      @model_class = name.split(/[-_]/).map(&:capitalize).join
+      @table_name = @model_name + "s"
+      @fields = parse_fields(fields)
+
+      say "📦 Generating model: #{@model_class}", :green
+
+      # モデルファイル
+      create_file "app/models/#{@model_name}.rb", model_generator_content
+
+      # マイグレーションファイル
+      timestamp = Time.now.strftime("%Y%m%d%H%M%S")
+      empty_directory "db/migrate"
+      create_file "db/migrate/#{timestamp}_create_#{@table_name}.rb", model_migration_content
+
+      # テストファイル
+      empty_directory "test/models"
+      create_file "test/models/#{@model_name}_test.rb", model_test_generator_content
+
+      say ""
+      say "Run migration:", :yellow
+      say "  salvia db:migrate"
+      say ""
+    end
+
+    def generate_migration(name, fields)
+      @migration_name = name
+      @migration_class = name.split(/[-_]/).map(&:capitalize).join
+      @fields = parse_fields(fields)
+
+      say "📝 Generating migration: #{@migration_class}", :green
+
+      timestamp = Time.now.strftime("%Y%m%d%H%M%S")
+      empty_directory "db/migrate"
+      create_file "db/migrate/#{timestamp}_#{name.downcase}.rb", migration_generator_content
+
+      say ""
+      say "Run migration:", :yellow
+      say "  salvia db:migrate"
+      say ""
+    end
+
+    def parse_fields(fields)
+      fields.map do |field|
+        parts = field.split(":")
+        { name: parts[0], type: parts[1] || "string" }
+      end
+    end
+
+    # ジェネレーターコンテンツメソッド
+
+    def controller_generator_content
+      actions_code = @actions.map do |action|
+        <<~RUBY
+          def #{action}
+            # TODO: implement #{action}
+          end
+        RUBY
+      end.join("\n")
+
+      <<~RUBY
+        class #{@controller_class} < ApplicationController
+        #{actions_code.lines.map { |l| "  #{l}" }.join.chomp}
+        end
+      RUBY
+    end
+
+    def view_generator_content(action)
+      <<~ERB
+        <div class="max-w-4xl mx-auto mt-8 px-4">
+          <h1 class="text-2xl font-bold mb-4">#{@controller_class}##{action}</h1>
+          <p class="text-slate-600">Edit this view at <code class="bg-slate-100 px-2 py-1 rounded">app/views/#{@controller_name}/#{action}.html.erb</code></p>
+        </div>
+      ERB
+    end
+
+    def controller_test_generator_content
+      tests = @actions.map do |action|
+        <<~RUBY
+          def test_#{action}
+            get "/#{@controller_name}/#{action}"
+            assert last_response.ok?
+          end
+        RUBY
+      end.join("\n")
+
+      <<~RUBY
+        require_relative "../test_helper"
+
+        class #{@controller_class}Test < Minitest::Test
+        #{tests.lines.map { |l| "  #{l}" }.join.chomp}
+        end
+      RUBY
+    end
+
+    def model_generator_content
+      <<~RUBY
+        class #{@model_class} < ApplicationRecord
+          # Add validations and associations here
+        end
+      RUBY
+    end
+
+    def model_migration_content
+      fields_code = @fields.map do |field|
+        "      t.#{field[:type]} :#{field[:name]}"
+      end.join("\n")
+
+      <<~RUBY
+        class Create#{@table_name.capitalize} < ActiveRecord::Migration[7.0]
+          def change
+            create_table :#{@table_name} do |t|
+        #{fields_code}
+              t.timestamps
+            end
+          end
+        end
+      RUBY
+    end
+
+    def model_test_generator_content
+      <<~RUBY
+        require_relative "../test_helper"
+
+        class #{@model_class}Test < Minitest::Test
+          def test_create
+            # TODO: implement test
+          end
+        end
+      RUBY
+    end
+
+    def migration_generator_content
+      if @migration_name.start_with?("add_")
+        # add_X_to_Y pattern
+        match = @migration_name.match(/add_(.+)_to_(.+)/)
+        if match
+          table = match[2]
+          fields_code = @fields.map do |field|
+            "    add_column :#{table}, :#{field[:name]}, :#{field[:type]}"
+          end.join("\n")
+
+          return <<~RUBY
+            class #{@migration_class} < ActiveRecord::Migration[7.0]
+              def change
+            #{fields_code}
+              end
+            end
+          RUBY
+        end
+      end
+
+      # Generic migration
+      <<~RUBY
+        class #{@migration_class} < ActiveRecord::Migration[7.0]
+          def change
+            # TODO: implement migration
+          end
+        end
+      RUBY
+    end
+
+    # ========================================
+    # ユーティリティメソッド
+    # ========================================
+
     def check_deno_installed!
       unless deno_installed?
         say "❌ Deno is not installed.", :red
@@ -260,18 +514,27 @@ module Salvia
       # アプリディレクトリ
       empty_directory "#{@app_name}/app/controllers"
       empty_directory "#{@app_name}/app/models"
-      empty_directory "#{@app_name}/app/views/layouts"
-      empty_directory "#{@app_name}/app/views/home"
-      empty_directory "#{@app_name}/app/components"
-      empty_directory "#{@app_name}/app/islands"
+      
+      unless @template == "api"
+        empty_directory "#{@app_name}/app/views/layouts"
+        empty_directory "#{@app_name}/app/views/home"
+        empty_directory "#{@app_name}/app/components"
+      end
+      
+      if @include_islands
+        empty_directory "#{@app_name}/app/islands"
+      end
+      
       empty_directory "#{@app_name}/app/assets/stylesheets"
 
       # 設定
       empty_directory "#{@app_name}/config"
       empty_directory "#{@app_name}/config/environments"
 
-      # データベース
-      empty_directory "#{@app_name}/db/migrate"
+      # データベース（minimal以外）
+      unless @template == "minimal"
+        empty_directory "#{@app_name}/db/migrate"
+      end
 
       # ログ
       empty_directory "#{@app_name}/log"
@@ -294,8 +557,10 @@ module Salvia
       # config/routes.rb
       create_file "#{@app_name}/config/routes.rb", routes_rb_content
 
-      # config/database.yml
-      create_file "#{@app_name}/config/database.yml", database_yml_content
+      # config/database.yml (unless minimal)
+      unless @template == "minimal"
+        create_file "#{@app_name}/config/database.yml", database_yml_content
+      end
 
       # config/environments
       create_file "#{@app_name}/config/environments/development.rb", development_config_content
@@ -307,7 +572,10 @@ module Salvia
       # テスト
       empty_directory "#{@app_name}/test"
       create_file "#{@app_name}/test/test_helper.rb", test_helper_content
-      create_file "#{@app_name}/test/controllers/home_controller_test.rb", home_controller_test_content
+      
+      unless @template == "minimal"
+        create_file "#{@app_name}/test/controllers/home_controller_test.rb", home_controller_test_content
+      end
 
       # tailwind.config.js
       create_file "#{@app_name}/tailwind.config.js", tailwind_config_content
@@ -320,39 +588,47 @@ module Salvia
       # ApplicationController
       create_file "#{@app_name}/app/controllers/application_controller.rb", application_controller_content
 
-      # HomeController
-      create_file "#{@app_name}/app/controllers/home_controller.rb", home_controller_content
+      # HomeController（minimal以外）
+      unless @template == "minimal"
+        create_file "#{@app_name}/app/controllers/home_controller.rb", home_controller_content
+      end
 
-      # ApplicationRecord
-      create_file "#{@app_name}/app/models/application_record.rb", application_record_content
+      # ApplicationRecord（minimal以外）
+      unless @template == "minimal"
+        create_file "#{@app_name}/app/models/application_record.rb", application_record_content
+      end
 
-      # レイアウト
-      create_file "#{@app_name}/app/views/layouts/application.html.erb", layout_content
-
-      # ホームビュー
-      create_file "#{@app_name}/app/views/home/index.html.erb", home_index_content
+      # ビュー（API/minimal以外）
+      unless @template == "api" || @template == "minimal"
+        create_file "#{@app_name}/app/views/layouts/application.html.erb", layout_content
+        create_file "#{@app_name}/app/views/home/index.html.erb", home_index_content
+      end
 
       # Tailwind ソース CSS
       create_file "#{@app_name}/app/assets/stylesheets/application.tailwind.css", tailwind_css_content
     end
 
     def create_public_assets
-      # app.js
+      # アプリケーション JS
       create_file "#{@app_name}/public/assets/javascripts/app.js", app_js_content
 
-      # islands.js
-      create_file "#{@app_name}/public/assets/javascripts/islands.js", islands_js_content
+      # Islands JS（ハイドレーション）- Islands を含む場合のみ
+      if @include_islands
+        create_file "#{@app_name}/public/assets/javascripts/islands.js", islands_js_content
+      end
 
-      # Tailwind CSS placeholder
+      # Tailwind CSS プレースホルダー
       create_file "#{@app_name}/public/assets/stylesheets/tailwind.css", "/* Run 'salvia css:build' to generate */\n"
 
-      # Error pages
+      # エラーページ
       create_file "#{@app_name}/public/404.html", error_404_content
       create_file "#{@app_name}/public/500.html", error_500_content
 
-      # SSR build script
-      create_file "#{@app_name}/bin/build_ssr.ts", build_ssr_ts_content
-      empty_directory "#{@app_name}/vendor/server"
+      # SSR ビルドスクリプト - Islands を含む場合のみ
+      if @include_islands
+        create_file "#{@app_name}/bin/build_ssr.ts", build_ssr_ts_content
+        empty_directory "#{@app_name}/vendor/server"
+      end
     end
 
     # ファイルコンテンツメソッド

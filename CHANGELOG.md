@@ -8,8 +8,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### In Progress
-- Interactive CLI (`salvia new` with prompts)
 - TypeScript type generation (`salvia types:generate`)
+
+---
+
+## [0.8.0] - 2025-12-09
+
+> **"CLI UX Enhancement"** - Modern developer experience
+
+### ✨ Interactive CLI
+- `salvia new` now supports interactive prompts
+- Template selection: Full app / API only / Minimal
+- Islands opt-in during app generation
+- `--skip-prompts` flag for CI/automation
+- Added `tty-prompt` dependency
+
+### 🛠️ Code Generators
+- `salvia generate controller NAME [actions]` - Generate controller with views and tests
+- `salvia generate model NAME [fields]` - Generate model with migration and tests
+- `salvia generate migration NAME [fields]` - Generate migration file
+- Short alias: `salvia g controller posts index show`
+
+### 🏝️ Islands Improvements
+- Islands are now opt-in during `salvia new`
+- `bin/build_ssr.ts` only generated when Islands enabled
+- Cleaner project structure for non-Islands apps
 
 ---
 

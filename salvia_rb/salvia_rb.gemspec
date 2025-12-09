@@ -8,8 +8,8 @@ Gem::Specification.new do |spec|
   spec.authors = ["Salvia Contributors"]
   spec.email = []
 
-  spec.summary = "小さくて理解しやすい Ruby MVC フレームワーク"
-  spec.description = "HTMX × Tailwind × ActiveRecord を前提にした、シンプルで明快な Ruby Web フレームワーク。Smart Rendering で HTMX との連携もスムーズ。"
+  spec.summary = "A small, understandable Ruby MVC framework"
+  spec.description = "A simple and clear Ruby web framework with ERB, SSR Islands, Tailwind, and ActiveRecord. No Node.js required."
   spec.homepage = "https://github.com/salvia-rb/salvia"
   spec.license = "MIT"
   spec.required_ruby_version = ">= 3.1.0"
@@ -44,6 +44,7 @@ Gem::Specification.new do |spec|
 
   # CLI
   spec.add_dependency "thor", "~> 1.3"
+  spec.add_dependency "tty-prompt", "~> 0.23"
 
   # Auto-loading
   spec.add_dependency "zeitwerk", "~> 2.6"
@@ -60,8 +61,5 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "rake", "~> 13.0"
   spec.add_development_dependency "minitest", "~> 5.0"
   spec.add_development_dependency "sqlite3", "~> 1.6"
-  
-  # SSR Benchmark dependencies (optional)
   spec.add_development_dependency "quickjs", "~> 0.1"
-  spec.add_development_dependency "wasmtime", "~> 14.0"
 end

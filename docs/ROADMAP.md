@@ -69,38 +69,30 @@ Salvia.rb fills the gap between "Rails is too heavy" and "Sinatra is too light."
 - [x] Removed outdated Japanese documentation
 - [x] Updated CHANGELOG
 
+### Phase 7: CLI UX Enhancement (v0.8.0) ✅
+
+- [x] Interactive `salvia new` with TTY::Prompt
+- [x] Templates: Full app / API only / Minimal
+- [x] Islands opt-in during generation
+- [x] `salvia dev` command (server + CSS watch + SSR watch)
+- [x] Code generators: controller, model, migration
+- [x] `salvia g` short alias
+
 ---
 
 ## Current Phase
 
-### Phase 7: CLI UX Enhancement (v0.8.0)
-
-> **"Modern developer experience"**
-
-#### Interactive CLI
-- [ ] `salvia new` with prompts (template selection)
-- [ ] Templates: Full app / API only / Minimal
-- [ ] Islands opt-in during generation
-
-#### Development Workflow
-- [ ] `salvia dev` command (server + file watcher)
-- [ ] Auto-rebuild Islands on change
-- [ ] Better log output (colors, emoji)
-
-#### Code Generators
-- [ ] `salvia generate controller NAME`
-- [ ] `salvia generate model NAME`
-- [ ] `salvia generate migration NAME`
-
----
-
-## Future Phases
-
 ### Phase 8: TypeScript Support (v0.9.0)
+
+> **"Type-safe frontend development"**
 
 - [ ] `salvia types:generate` - Generate TypeScript types from ActiveRecord models
 - [ ] `salvia client:generate` - Generate API client from routes
 - [ ] TypeScript support in Islands
+
+---
+
+## Future Phases
 
 ### Phase 9: Advanced Features (v0.10.0)
 

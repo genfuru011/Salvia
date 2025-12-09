@@ -30,6 +30,19 @@ gem install salvia_rb
 
 ```bash
 salvia new myapp
+```
+
+Interactive prompts will ask:
+- **Template**: Full app / API only / Minimal
+- **Islands**: Include SSR Islands (Preact components)
+
+Or skip prompts:
+```bash
+salvia new myapp --template=full --islands
+salvia new myapp --template=api --skip-prompts
+```
+
+```bash
 cd myapp
 bundle install
 ```
@@ -62,6 +75,45 @@ myapp/
 ├── public/              # Static files
 └── test/                # Tests
 ```
+
+---
+
+## Code Generators
+
+### Generate Controller
+
+```bash
+salvia generate controller posts index show create
+# or short form
+salvia g controller posts index show create
+```
+
+Creates:
+- `app/controllers/posts_controller.rb`
+- `app/views/posts/index.html.erb`
+- `app/views/posts/show.html.erb`
+- `app/views/posts/create.html.erb`
+- `test/controllers/posts_controller_test.rb`
+
+### Generate Model
+
+```bash
+salvia g model post title:string body:text published:boolean
+```
+
+Creates:
+- `app/models/post.rb`
+- `db/migrate/YYYYMMDDHHMMSS_create_posts.rb`
+- `test/models/post_test.rb`
+
+### Generate Migration
+
+```bash
+salvia g migration add_user_id_to_posts user_id:integer
+```
+
+Creates:
+- `db/migrate/YYYYMMDDHHMMSS_add_user_id_to_posts.rb`
 
 ---
 
@@ -561,18 +613,37 @@ server {
 ## CLI Reference
 
 ```bash
-salvia new APP_NAME      # Create new application
+# App generation
+salvia new APP_NAME      # Create new application (interactive)
+salvia new APP_NAME --template=full --islands  # With options
+salvia new APP_NAME --skip-prompts  # Non-interactive
+
+# Code generators
+salvia generate controller NAME [actions]  # Generate controller
+salvia generate model NAME [fields]        # Generate model
+salvia generate migration NAME [fields]    # Generate migration
+salvia g controller posts index show       # Short form
+
+# Development
 salvia server (s)        # Start development server
 salvia console (c)       # Start IRB console
+salvia dev               # Server + CSS watch + SSR watch
 salvia routes            # List all routes
+
+# Database
 salvia db:create         # Create database
 salvia db:drop           # Drop database
 salvia db:migrate        # Run migrations
 salvia db:rollback       # Rollback last migration
 salvia db:setup          # Create and migrate
+
+# Assets
 salvia css:build         # Build Tailwind CSS
 salvia css:watch         # Watch and build CSS
-salvia islands:build     # Build SSR Islands bundle
+salvia ssr:build         # Build SSR Islands bundle
+salvia ssr:watch         # Watch and rebuild Islands
+
+# Info
 salvia version           # Show version
 ```
 
