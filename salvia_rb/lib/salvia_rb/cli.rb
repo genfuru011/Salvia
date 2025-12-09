@@ -597,6 +597,11 @@ module Salvia
       create_file "#{@app_name}/Dockerfile", dockerfile_content
       create_file "#{@app_name}/docker-compose.yml", docker_compose_content
       create_file "#{@app_name}/.dockerignore", dockerignore_content
+
+      # Deno 設定ファイル (SSR ビルド用)
+      if @include_islands
+        create_file "#{@app_name}/deno.json", deno_json_content
+      end
     end
 
     def create_app_files
@@ -619,9 +624,9 @@ module Salvia
         create_file "#{@app_name}/app/views/home/index.html.erb", home_index_content
       end
 
-      # Islands コンポーネント
+      # Islands コンポーネント (JSX)
       if @include_islands
-        create_file "#{@app_name}/app/islands/Counter.js", counter_island_content
+        create_file "#{@app_name}/app/islands/Counter.jsx", counter_island_content
       end
 
       # Tailwind ソース CSS
@@ -1221,47 +1226,63 @@ module Salvia
     end
 
     def counter_island_content
-      <<~JS
-        // Counter Island - インタラクティブカウンター
-        import { h, render, hydrate } from 'https://esm.sh/preact@10.19.3';
-        import { useState } from 'https://esm.sh/preact@10.19.3/hooks';
-        import htm from 'https://esm.sh/htm@3.1.1';
-
-        const html = htm.bind(h);
+      <<~JSX
+        // Counter Island - インタラクティブカウンター (JSX)
+        import { h, render, hydrate } from 'preact';
+        import { useState } from 'preact/hooks';
 
         export default function Counter({ initialCount = 0 }) {
           const [count, setCount] = useState(initialCount);
 
-          return html`
+          return (
             <div class="p-6 bg-white rounded-lg shadow-md">
               <h3 class="text-lg font-semibold mb-3 text-salvia-700">🏝️ Counter Island</h3>
-              <p class="text-4xl font-bold text-salvia-600 mb-4">\${count}</p>
+              <p class="text-4xl font-bold text-salvia-600 mb-4">{count}</p>
               <div class="flex gap-2 justify-center">
                 <button
-                  onClick=\${() => setCount(count - 1)}
+                  onClick={() => setCount(count - 1)}
                   class="px-4 py-2 bg-slate-200 rounded hover:bg-slate-300 transition"
                 >−</button>
                 <button
-                  onClick=\${() => setCount(0)}
+                  onClick={() => setCount(0)}
                   class="px-4 py-2 bg-slate-100 rounded hover:bg-slate-200 transition"
                 >Reset</button>
                 <button
-                  onClick=\${() => setCount(count + 1)}
+                  onClick={() => setCount(count + 1)}
                   class="px-4 py-2 bg-salvia-500 text-white rounded hover:bg-salvia-600 transition"
                 >+</button>
               </div>
             </div>
-          `;
+          );
         }
 
         // Salvia mount function
         export function mount(element, props, { hydrate: shouldHydrate } = {}) {
-          const vnode = html`<\${Counter} ...\${props} />`;
+          const vnode = <Counter {...props} />;
           shouldHydrate ? hydrate(vnode, element) : render(vnode, element);
         }
 
         export { Counter };
-      JS
+      JSX
+    end
+
+    def deno_json_content
+      <<~JSON
+        {
+          "compilerOptions": {
+            "jsx": "react-jsx",
+            "jsxImportSource": "preact"
+          },
+          "imports": {
+            "preact": "https://esm.sh/preact@10.19.3",
+            "preact/": "https://esm.sh/preact@10.19.3/"
+          },
+          "tasks": {
+            "build": "deno run --allow-all $(salvia build_script) 2>/dev/null || deno run --allow-all build_ssr.ts",
+            "watch": "deno run --allow-all $(salvia build_script) --watch 2>/dev/null || deno run --allow-all build_ssr.ts --watch"
+          }
+        }
+      JSON
     end
 
     def tailwind_css_content
