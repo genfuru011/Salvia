@@ -196,7 +196,8 @@ module Salvia
       
       say "🏝️  Building Island components...", :green
       
-      cmd = "deno run --allow-all bin/build_ssr.ts"
+      script_path = build_script_path
+      cmd = "deno run --allow-all #{script_path}"
       cmd += " --verbose" if options[:verbose]
       
       success = system(cmd)
@@ -217,7 +218,8 @@ module Salvia
       
       say "👀 Watching Island components...", :green
       
-      cmd = "deno run --allow-all bin/build_ssr.ts --watch"
+      script_path = build_script_path
+      cmd = "deno run --allow-all #{script_path} --watch"
       cmd += " --verbose" if options[:verbose]
       
       exec cmd
@@ -237,7 +239,7 @@ module Salvia
       # Deno SSR watch in background
       deno_pid = nil
       if deno_installed?
-        deno_pid = spawn("deno run --allow-all bin/build_ssr.ts --watch",
+        deno_pid = spawn("deno run --allow-all #{build_script_path} --watch",
                          out: "/dev/null", err: [:child, :out])
         say "🏝️  SSR watch started (PID: #{deno_pid})", :blue
       else
@@ -501,6 +503,11 @@ module Salvia
       system("which deno > /dev/null 2>&1")
     end
 
+    # gem 内蔵のビルドスクリプトパスを返す
+    def build_script_path
+      File.expand_path("../../../assets/scripts/build_ssr.ts", __FILE__)
+    end
+
     def require_app_environment
       env_file = File.join(Dir.pwd, "config", "environment.rb")
       unless File.exist?(env_file)
@@ -527,9 +534,9 @@ module Salvia
       
       empty_directory "#{@app_name}/app/assets/stylesheets"
 
-      # 設定
+      # 設定 (最小構成)
       empty_directory "#{@app_name}/config"
-      empty_directory "#{@app_name}/config/environments"
+      # empty_directory "#{@app_name}/config/environments"  # オプション
 
       # データベース（minimal以外）
       unless @template == "minimal"
@@ -548,23 +555,23 @@ module Salvia
       # Gemfile
       create_file "#{@app_name}/Gemfile", gemfile_content
 
-      # config.ru
+      # config.ru (ゼロコンフィグ - たった3行)
       create_file "#{@app_name}/config.ru", config_ru_content
 
-      # config/environment.rb
-      create_file "#{@app_name}/config/environment.rb", environment_rb_content
-
-      # config/routes.rb
+      # config/routes.rb (これだけ必須)
       create_file "#{@app_name}/config/routes.rb", routes_rb_content
 
-      # config/database.yml (unless minimal)
+      # config/environment.rb (アプリ起動ポイント)
+      create_file "#{@app_name}/config/environment.rb", environment_rb_content
+
+      # config/database.yml (オプション - なくても動作)
       unless @template == "minimal"
         create_file "#{@app_name}/config/database.yml", database_yml_content
       end
 
-      # config/environments
-      create_file "#{@app_name}/config/environments/development.rb", development_config_content
-      create_file "#{@app_name}/config/environments/production.rb", production_config_content
+      # config/environments (オプション - カスタマイズ用)
+      # create_file "#{@app_name}/config/environments/development.rb", development_config_content
+      # create_file "#{@app_name}/config/environments/production.rb", production_config_content
 
       # Rakefile
       create_file "#{@app_name}/Rakefile", rakefile_content
@@ -582,6 +589,11 @@ module Salvia
 
       # .gitignore
       create_file "#{@app_name}/.gitignore", gitignore_content
+
+      # Docker (本番環境用)
+      create_file "#{@app_name}/Dockerfile", dockerfile_content
+      create_file "#{@app_name}/docker-compose.yml", docker_compose_content
+      create_file "#{@app_name}/.dockerignore", dockerignore_content
     end
 
     def create_app_files
@@ -604,6 +616,11 @@ module Salvia
         create_file "#{@app_name}/app/views/home/index.html.erb", home_index_content
       end
 
+      # Islands コンポーネント
+      if @include_islands
+        create_file "#{@app_name}/app/islands/Counter.js", counter_island_content
+      end
+
       # Tailwind ソース CSS
       create_file "#{@app_name}/app/assets/stylesheets/application.tailwind.css", tailwind_css_content
     end
@@ -624,9 +641,8 @@ module Salvia
       create_file "#{@app_name}/public/404.html", error_404_content
       create_file "#{@app_name}/public/500.html", error_500_content
 
-      # SSR ビルドスクリプト - Islands を含む場合のみ
+      # SSR 用ディレクトリ - Islands を含む場合のみ
       if @include_islands
-        create_file "#{@app_name}/bin/build_ssr.ts", build_ssr_ts_content
         empty_directory "#{@app_name}/vendor/server"
       end
     end
@@ -637,8 +653,14 @@ module Salvia
         source "https://rubygems.org"
 
         gem "salvia_rb"
-        gem "puma"
         gem "sqlite3"
+
+        # Web サーバー
+        gem "puma"    # 開発環境用 (スレッドベース)
+        gem "falcon"  # 本番環境用 (async/fork、Linux/Docker推奨)
+
+        # 本番環境用データベース (Docker/PostgreSQL)
+        gem "pg", "~> 1.6"
 
         group :development do
           gem "debug"
@@ -648,28 +670,10 @@ module Salvia
 
     def config_ru_content
       <<~RUBY
-        require_relative "config/environment"
-
-        use Rack::Static,
-          urls: ["/assets"],
-          root: "public",
-          header_rules: [
-            [:all, { "cache-control" => "public, max-age=31536000" }]
-          ]
-
-        # Islands 用 (app/islands を /islands として公開)
-        use Rack::Static,
-          urls: ["/islands"],
-          root: "app"
-
-        use Rack::Session::Cookie,
-          key: "_#{@app_name}_session",
-          secret: ENV.fetch("SESSION_SECRET") { SecureRandom.hex(64) }
-
-        use Rack::Protection, use: [:authenticity_token, :cookie_tossing, :form_token, :remote_referrer, :session_hijacking]
-
-        # ロギング
-        use Rack::CommonLogger, Salvia.logger
+        # Salvia - ゼロコンフィグで動作
+        # すべての設定は Application.new 内で自動処理されます
+        require "bundler/setup"
+        require "salvia_rb"
 
         run Salvia::Application.new
       RUBY
@@ -677,33 +681,32 @@ module Salvia
 
     def environment_rb_content
       <<~RUBY
+        # 環境固有の設定（オプション）
+        #
+        # このファイルは任意です。Salvia はゼロコンフィグで動作します。
+        # カスタマイズが必要な場合のみ編集してください。
+        #
+        # require "bundler/setup"
+        # require "salvia_rb"
+        #
+        # Salvia.configure do |config|
+        #   config.ssr_bundle_path = "vendor/server/ssr_bundle.js"
+        # end
+      RUBY
+    end
+
+    def environment_rb_content
+      <<~RUBY
+        # frozen_string_literal: true
+
         require "bundler/setup"
         require "salvia_rb"
 
-        # Set application root
+        # アプリケーション初期化
         Salvia.root = File.expand_path("..", __dir__)
+        Salvia.env = ENV.fetch("RACK_ENV", "development")
 
-        # Application configuration
-        Salvia.configure do |config|
-          # config.ssr_bundle_path = "vendor/server/ssr_bundle.js"
-        end
-
-        # Setup database
-        Salvia::Database.setup!
-
-        # Load environment config
-        Salvia.load_config
-
-        # Zeitwerk autoloader
-        loader = Zeitwerk::Loader.new
-        loader.push_dir(File.join(Salvia.root, "app", "controllers"))
-        loader.push_dir(File.join(Salvia.root, "app", "models"))
-        loader.push_dir(File.join(Salvia.root, "app", "components"))
-        loader.enable_reloading if Salvia.development?
-        loader.setup
-        Salvia.app_loader = loader
-
-        # Load routes
+        # ルートを読み込み
         require_relative "routes"
       RUBY
     end
@@ -722,6 +725,19 @@ module Salvia
 
     def database_yml_content
       <<~YAML
+        # データベース設定（オプション）
+        #
+        # このファイルは任意です。なくても Salvia は以下の規約で動作します:
+        #   development: db/development.sqlite3
+        #   test: db/test.sqlite3
+        #   production: DATABASE_URL 環境変数、または db/production.sqlite3
+        #
+        # PostgreSQL を使う場合のみ本番環境を設定してください:
+        #
+        # production:
+        #   adapter: postgresql
+        #   url: <%= ENV["DATABASE_URL"] %>
+
         default: &default
           adapter: sqlite3
           pool: 5
@@ -736,15 +752,22 @@ module Salvia
           database: db/test.sqlite3
 
         production:
-          adapter: postgresql
-          url: <%= ENV["DATABASE_URL"] %>
+          <<: *default
+          database: db/production.sqlite3
+          # または PostgreSQL:
+          # adapter: postgresql
+          # url: <%= ENV["DATABASE_URL"] %>
       YAML
     end
 
     def rakefile_content
       <<~RUBY
-        require_relative "config/environment"
-        require "active_record"
+        # Salvia Rakefile - ゼロコンフィグ
+        require "bundler/setup"
+        require "salvia_rb"
+
+        # アプリケーションルートを設定
+        Salvia.root = File.expand_path(__dir__)
 
         namespace :db do
           desc "データベースを作成"
@@ -759,11 +782,13 @@ module Salvia
 
           desc "マイグレーションを実行"
           task :migrate do
+            Salvia::Database.setup!
             Salvia::Database.migrate!
           end
 
           desc "直前のマイグレーションをロールバック"
           task :rollback do
+            Salvia::Database.setup!
             Salvia::Database.rollback!
           end
 
@@ -850,8 +875,146 @@ module Salvia
         # 一時ファイル
         /tmp/
 
+        # ビルド出力
+        /public/assets/stylesheets/tailwind.css
+        /vendor/server/
+        /vendor/client/
+
         # OS ファイル
         .DS_Store
+
+        # IDE
+        .idea/
+        .vscode/
+      TEXT
+    end
+
+    def dockerfile_content
+      # アプリ名からベース名のみを抽出
+      safe_app_name = File.basename(@app_name).gsub(/[^a-zA-Z0-9_-]/, "_").downcase
+
+      <<~DOCKERFILE
+        # Salvia Production Dockerfile
+        # Falcon (async server) + YJIT enabled
+        FROM ruby:3.2.9-slim
+
+        # 環境変数
+        ENV RUBY_YJIT_ENABLE=1
+        ENV RACK_ENV=production
+        ENV BUNDLE_WITHOUT=development:test
+        ENV BUNDLE_DEPLOYMENT=1
+
+        # システム依存パッケージ
+        RUN apt-get update -qq && \\
+            apt-get install -y --no-install-recommends \\
+            build-essential \\
+            libpq-dev \\
+            nodejs \\
+            curl \\
+            && rm -rf /var/lib/apt/lists/*
+
+        # 作業ディレクトリ
+        WORKDIR /app
+
+        # Gemfile コピーと依存関係インストール
+        COPY Gemfile Gemfile.lock ./
+        RUN bundle install --jobs 4 --retry 3
+
+        # アプリケーションコード
+        COPY . .
+
+        # アセットのビルド (Tailwind CSS)
+        RUN bundle exec rake css:build || true
+
+        # 非 root ユーザーで実行
+        RUN useradd -m -s /bin/bash appuser && \\
+            chown -R appuser:appuser /app
+        USER appuser
+
+        # ポート公開
+        EXPOSE 9292
+
+        # Falcon で起動 (YJIT 有効)
+        CMD ["bundle", "exec", "falcon", "serve", "--bind", "http://0.0.0.0:9292", "--count", "4"]
+      DOCKERFILE
+    end
+
+    def docker_compose_content
+      # アプリ名からベース名のみを抽出
+      safe_app_name = File.basename(@app_name).gsub(/[^a-zA-Z0-9_-]/, "_").downcase
+
+      <<~YAML
+        # Salvia Docker Compose Configuration
+        # Production environment with PostgreSQL
+
+        services:
+          db:
+            image: postgres:15-alpine
+            volumes:
+              - postgres_data:/var/lib/postgresql/data
+            environment:
+              POSTGRES_DB: #{safe_app_name}_production
+              POSTGRES_USER: #{safe_app_name}
+              POSTGRES_PASSWORD: \${POSTGRES_PASSWORD:-changeme}
+            healthcheck:
+              test: ["CMD-SHELL", "pg_isready -U #{safe_app_name}"]
+              interval: 5s
+              timeout: 5s
+              retries: 5
+
+          app:
+            build: .
+            ports:
+              - "9292:9292"
+            environment:
+              RACK_ENV: production
+              DATABASE_URL: postgres://#{safe_app_name}:\${POSTGRES_PASSWORD:-changeme}@db:5432/#{safe_app_name}_production
+              SESSION_SECRET: \${SESSION_SECRET:-generate_a_secure_secret_here}
+              RUBY_YJIT_ENABLE: "1"
+            depends_on:
+              db:
+                condition: service_healthy
+            # ヘルスチェック
+            healthcheck:
+              test: ["CMD", "curl", "-f", "http://localhost:9292/"]
+              interval: 30s
+              timeout: 10s
+              retries: 3
+
+        volumes:
+          postgres_data:
+      YAML
+    end
+
+    def dockerignore_content
+      <<~TEXT
+        # Git
+        .git
+        .gitignore
+
+        # ドキュメント
+        *.md
+        docs/
+
+        # 開発用ファイル
+        .env.local
+        .env.development
+
+        # テスト
+        test/
+        spec/
+
+        # ログとデータベース
+        log/
+        db/*.sqlite3
+
+        # 一時ファイル
+        tmp/
+        .DS_Store
+
+        # Bundler (Docker 内で再インストール)
+        vendor/bundle/
+        .bundle/
 
         # IDE
         .idea/
@@ -912,6 +1075,74 @@ module Salvia
     end
 
     def home_index_content
+      if @include_islands
+        home_index_with_islands_content
+      else
+        home_index_basic_content
+      end
+    end
+
+    def home_index_with_islands_content
+      <<~ERB
+        <div class="max-w-2xl mx-auto mt-16 px-4">
+          <div class="text-center">
+            <h1 class="text-4xl font-bold text-salvia-700 mb-4">
+              🌿 Salvia へようこそ
+            </h1>
+            <p class="text-lg text-slate-600 mb-8">
+              小さくて理解しやすい Ruby MVC フレームワーク
+            </p>
+
+            <!-- SSR Islands Demo -->
+            <div class="mb-8">
+              <h2 class="text-xl font-semibold mb-4">🏝️ SSR Islands Demo</h2>
+              <div class="flex justify-center">
+                <%= island "Counter", initialCount: 0 %>
+              </div>
+              <p class="text-xs text-slate-500 mt-2">
+                ↑ Preact で動くインタラクティブコンポーネント
+              </p>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-6 text-left">
+              <h2 class="text-xl font-semibold mb-4">はじめに</h2>
+
+              <div class="space-y-3 text-sm">
+                <div class="flex items-start gap-3">
+                  <span class="bg-salvia-100 text-salvia-700 rounded-full w-6 h-6 flex items-center justify-center flex-shrink-0">1</span>
+                  <div>
+                    <code class="bg-slate-100 px-2 py-1 rounded">config/routes.rb</code>
+                    <p class="text-slate-600 mt-1">ルーティングを定義</p>
+                  </div>
+                </div>
+
+                <div class="flex items-start gap-3">
+                  <span class="bg-salvia-100 text-salvia-700 rounded-full w-6 h-6 flex items-center justify-center flex-shrink-0">2</span>
+                  <div>
+                    <code class="bg-slate-100 px-2 py-1 rounded">app/controllers/</code>
+                    <p class="text-slate-600 mt-1">コントローラーを追加</p>
+                  </div>
+                </div>
+
+                <div class="flex items-start gap-3">
+                  <span class="bg-salvia-100 text-salvia-700 rounded-full w-6 h-6 flex items-center justify-center flex-shrink-0">3</span>
+                  <div>
+                    <code class="bg-slate-100 px-2 py-1 rounded">app/islands/</code>
+                    <p class="text-slate-600 mt-1">Islands コンポーネントを追加</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <p class="mt-8 text-sm text-slate-500">
+              <code class="bg-slate-100 px-2 py-0.5 rounded">app/views/home/index.html.erb</code> を編集してこのページを変更
+            </p>
+          </div>
+        </div>
+      ERB
+    end
+
+    def home_index_basic_content
       <<~ERB
         <div class="max-w-2xl mx-auto mt-16 px-4">
           <div class="text-center">
@@ -946,7 +1177,7 @@ module Salvia
                   <span class="bg-salvia-100 text-salvia-700 rounded-full w-6 h-6 flex items-center justify-center flex-shrink-0">3</span>
                   <div>
                     <code class="bg-slate-100 px-2 py-1 rounded">app/views/</code>
-                    <p class="text-slate-600 mt-1">ERB + HTMX でビューを作成</p>
+                    <p class="text-slate-600 mt-1">ERB でビューを作成</p>
                   </div>
                 </div>
               </div>
@@ -958,6 +1189,50 @@ module Salvia
           </div>
         </div>
       ERB
+    end
+
+    def counter_island_content
+      <<~JS
+        // Counter Island - インタラクティブカウンター
+        import { h, render, hydrate } from 'https://esm.sh/preact@10.19.3';
+        import { useState } from 'https://esm.sh/preact@10.19.3/hooks';
+        import htm from 'https://esm.sh/htm@3.1.1';
+
+        const html = htm.bind(h);
+
+        export default function Counter({ initialCount = 0 }) {
+          const [count, setCount] = useState(initialCount);
+
+          return html`
+            <div class="p-6 bg-white rounded-lg shadow-md">
+              <h3 class="text-lg font-semibold mb-3 text-salvia-700">🏝️ Counter Island</h3>
+              <p class="text-4xl font-bold text-salvia-600 mb-4">\${count}</p>
+              <div class="flex gap-2 justify-center">
+                <button
+                  onClick=\${() => setCount(count - 1)}
+                  class="px-4 py-2 bg-slate-200 rounded hover:bg-slate-300 transition"
+                >−</button>
+                <button
+                  onClick=\${() => setCount(0)}
+                  class="px-4 py-2 bg-slate-100 rounded hover:bg-slate-200 transition"
+                >Reset</button>
+                <button
+                  onClick=\${() => setCount(count + 1)}
+                  class="px-4 py-2 bg-salvia-500 text-white rounded hover:bg-salvia-600 transition"
+                >+</button>
+              </div>
+            </div>
+          `;
+        }
+
+        // Salvia mount function
+        export function mount(element, props, { hydrate: shouldHydrate } = {}) {
+          const vnode = html`<\${Counter} ...\${props} />`;
+          shouldHydrate ? hydrate(vnode, element) : render(vnode, element);
+        }
+
+        export { Counter };
+      JS
     end
 
     def tailwind_css_content
@@ -1026,6 +1301,10 @@ module Salvia
     def development_config_content
       <<~RUBY
         # Development configuration
+        #
+        # 推奨サーバー: Puma (スレッドベース、macOS との互換性良好)
+        #   bundle exec puma -p 9292
+        #
         Salvia.logger = Logger.new(STDOUT)
         Salvia.logger.level = Logger::DEBUG
       RUBY
@@ -1034,6 +1313,19 @@ module Salvia
     def production_config_content
       <<~RUBY
         # Production configuration
+        #
+        # 推奨サーバー: Falcon (async/fork、高パフォーマンス)
+        #   bundle exec falcon serve --bind http://0.0.0.0:9292
+        #
+        # 注意: macOS + PostgreSQL 環境では Falcon は fork の問題があります。
+        #       本番環境では Docker (Linux) を使用してください。
+        #
+        # Docker での起動:
+        #   docker-compose up --build
+        #
+        # YJIT の有効化 (Ruby 3.2+):
+        #   export RUBY_YJIT_ENABLE=1
+        #
         log_dir = File.join(Salvia.root, "log")
         Dir.mkdir(log_dir) unless Dir.exist?(log_dir)
 
@@ -1043,147 +1335,9 @@ module Salvia
     end
 
     def islands_js_content
-      <<~JS
-        // Salvia Islands - Client-side hydration
-        import { h, render, hydrate } from 'https://esm.sh/preact@10.19.3';
-        import htm from 'https://esm.sh/htm@3.1.1';
-
-        const html = htm.bind(h);
-
-        // Mount Island components
-        document.addEventListener('DOMContentLoaded', async () => {
-          const islands = document.querySelectorAll('[data-island]');
-          
-          for (const island of islands) {
-            const name = island.dataset.island;
-            const props = JSON.parse(island.dataset.props || '{}');
-            
-            try {
-              // Dynamic import from /islands/
-              const module = await import(`/islands/${name}.js`);
-              const Component = module[name] || module.default;
-              
-              if (Component) {
-                // Hydrate if SSR content exists, otherwise render
-                if (island.innerHTML.trim()) {
-                  hydrate(html`<\${Component} ...\${props} />`, island);
-                } else {
-                  render(html`<\${Component} ...\${props} />`, island);
-                }
-                console.log(`🏝️ Island mounted: \${name}`);
-              } else {
-                console.error(`Island component \${name} not found in module`);
-              }
-            } catch (error) {
-              console.error(`Failed to load island: \${name}`, error);
-            }
-          }
-        });
-      JS
-    end
-
-    def build_ssr_ts_content
-      <<~TS
-        #!/usr/bin/env -S deno run --allow-all
-        /**
-         * Salvia Island SSR Build Script
-         * 
-         * 使用方法:
-         *   deno run --allow-all bin/build_ssr.ts
-         *   deno run --allow-all bin/build_ssr.ts --watch
-         */
-
-        import * as esbuild from "https://deno.land/x/esbuild@v0.24.2/mod.js";
-        import { denoPlugins } from "jsr:@luca/esbuild-deno-loader@0.11";
-
-        const ISLANDS_DIR = "./app/islands";
-        const OUTPUT_FILE = "./vendor/server/ssr_bundle.js";
-        const WATCH_MODE = Deno.args.includes("--watch");
-        const VERBOSE = Deno.args.includes("--verbose");
-
-        async function findIslandFiles(): Promise<string[]> {
-          const files: string[] = [];
-          try {
-            for await (const entry of Deno.readDir(ISLANDS_DIR)) {
-              if (entry.isFile && (entry.name.endsWith(".tsx") || entry.name.endsWith(".jsx") || entry.name.endsWith(".js"))) {
-                files.push(`\${ISLANDS_DIR}/\${entry.name}`);
-              }
-            }
-          } catch {
-            console.log("📁 app/islands ディレクトリが見つかりません。スキップします。");
-          }
-          return files;
-        }
-
-        async function build() {
-          const entryPoints = await findIslandFiles();
-          
-          if (entryPoints.length === 0) {
-            console.log("⚠️  Island コンポーネントが見つかりません。");
-            return;
-          }
-
-          if (VERBOSE) {
-            console.log("🔍 ビルド対象:", entryPoints);
-          }
-
-          // SSR 用のバンドルを生成
-          const result = await esbuild.build({
-            entryPoints,
-            bundle: true,
-            format: "esm",
-            outfile: OUTPUT_FILE,
-            platform: "neutral",
-            plugins: [...denoPlugins()],
-            external: [],
-            define: {
-              "typeof window": '"undefined"',
-            },
-            banner: {
-              js: `// Salvia SSR Bundle - Generated at \${new Date().toISOString()}
-        globalThis.SalviaSSR = globalThis.SalviaSSR || {};`,
-            },
-            footer: {
-              js: `
-        // Export all components to globalThis.SalviaSSR
-        // Components are automatically registered`,
-            },
-          });
-
-          if (result.errors.length > 0) {
-            console.error("❌ ビルドエラー:", result.errors);
-          } else {
-            console.log(\`✅ SSR バンドル生成完了: \${OUTPUT_FILE}\`);
-          }
-        }
-
-        async function watch() {
-          console.log("👀 Island コンポーネントの変更を監視中...");
-          
-          const watcher = Deno.watchFs(ISLANDS_DIR);
-          let debounceTimer: number | undefined;
-          
-          for await (const event of watcher) {
-            if (event.kind === "modify" || event.kind === "create") {
-              clearTimeout(debounceTimer);
-              debounceTimer = setTimeout(async () => {
-                console.log("🔄 変更を検出、リビルド中...");
-                await build();
-              }, 100);
-            }
-          }
-        }
-
-        // メイン実行
-        console.log("🏝️  Salvia Island SSR Builder");
-        await build();
-
-        if (WATCH_MODE) {
-          await watch();
-        } else {
-          await esbuild.stop();
-        }
-      TS
+      # gem assets からコピー
+      assets_path = File.expand_path("../../../assets/javascripts/islands.js", __FILE__)
+      File.read(assets_path)
     end
   end
 end
