@@ -51,8 +51,17 @@ Gem::Specification.new do |spec|
   # CSS (Node.js free)
   spec.add_dependency "tailwindcss-ruby", "~> 3.4"
 
+  # SSR Engines (optional - users choose one)
+  # QuickJS Native: gem 'quickjs'
+  # QuickJS Wasm:   gem 'wasmtime'
+  # Deno:           install deno CLI
+
   # Development dependencies
   spec.add_development_dependency "rake", "~> 13.0"
   spec.add_development_dependency "minitest", "~> 5.0"
   spec.add_development_dependency "sqlite3", "~> 1.6"
+  
+  # SSR Benchmark dependencies (optional)
+  spec.add_development_dependency "quickjs", "~> 0.1"
+  spec.add_development_dependency "wasmtime", "~> 14.0"
 end

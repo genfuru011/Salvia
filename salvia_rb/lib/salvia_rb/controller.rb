@@ -86,7 +86,15 @@ module Salvia
         dirname = File.dirname(template)
         basename = File.basename(template)
         unless basename.start_with?("_")
-          template = (dirname == ".") ? "_#{basename}" : File.join(dirname, "_#{basename}")
+          basename = "_#{basename}"
+        end
+        
+        # ディレクトリ指定がない場合は現在のコントローラディレクトリを使用
+        if dirname == "."
+          controller_dir = self.class.name.sub(/Controller$/, "").downcase
+          template = File.join(controller_dir, basename)
+        else
+          template = File.join(dirname, basename)
         end
         
         layout = false
@@ -127,15 +135,26 @@ module Salvia
     # 別の URL にリダイレクト
     #
     # @param url [String] リダイレクト先 URL
-    # @param status [Integer] HTTP ステータスコード（デフォルト: 302）
-    def redirect_to(url, status: 302)
+    # @param status [Integer] HTTP ステータスコード（デフォルト: 自動判定）
+    #   POST/PATCH/DELETE からのリダイレクトは 303 See Other を使用
+    #   GET/HEAD からのリダイレクトは 302 Found を使用
+    def redirect_to(url, status: nil)
       @rendered = true
+      
+      # ステータスコードの自動判定
+      # POST/PATCH/DELETE からのリダイレクトは 303 (See Other) を使用
+      # これにより、ブラウザは必ず GET でリダイレクト先にアクセスする
+      if status.nil?
+        status = %w[POST PATCH PUT DELETE].include?(request.request_method) ? 303 : 302
+      end
+      
       response.status = status
-      response["Location"] = url
+      response["location"] = url
+      response["content-type"] = "text/html; charset=utf-8"
 
       # HTMX リクエストには HX-Redirect ヘッダーを使用
       if htmx_request?
-        response["HX-Redirect"] = url
+        response["hx-redirect"] = url
       end
     end
 
@@ -152,6 +171,11 @@ module Salvia
     # CSRF トークンを取得
     def csrf_token
       session[:csrf]
+    end
+
+    # CSRF トークン用の input タグを生成
+    def csrf_input_tag
+      %(<input type="hidden" name="authenticity_token" value="#{csrf_token}">)
     end
 
     # CSRF トークン用の meta タグを生成

@@ -4,15 +4,16 @@
 >
 > 小さくて理解しやすい Ruby MVC フレームワーク
 
-HTMX × Tailwind × ActiveRecord を前提にした、シンプルで明快な Ruby Web フレームワークです。
+**SSR Islands Architecture** × **HTMX** × **Tailwind** × **ActiveRecord** を組み合わせた、シンプルで明快な Ruby Web フレームワークです。
 
 ## 特徴
 
 - **サーバーレンダリング (HTML) ファースト** - JSON API ではなく HTML を返す
+- **🏝️ SSR Islands Architecture** - Preact コンポーネントを QuickJS でサーバーサイドレンダリング
 - **Smart Rendering** - HTMX リクエストを自動検出してレイアウトを除外
 - **Rails ライクな DSL** - 馴染みのある `resources`, `root to:` などのルーティング
 - **ActiveRecord 統合** - Rails と同じ感覚でモデルを扱える
-- **Node.js 不要** - `tailwindcss-ruby` で CSS をビルド
+- **Node.js 不要** - QuickJS で SSR、Deno でビルド（本番は Node 不要）
 
 ## インストール
 
@@ -32,6 +33,9 @@ bundle install
 salvia db:setup
 salvia css:build
 
+# Islands を使う場合: SSR バンドルをビルド
+deno run -A bin/build_ssr.ts
+
 # サーバー起動
 salvia server
 ```
@@ -48,11 +52,20 @@ myapp/
 │   │   └── home_controller.rb
 │   ├── models/
 │   │   └── application_record.rb
-│   └── views/
-│       ├── layouts/
-│       │   └── application.html.erb
-│       └── home/
-│           └── index.html.erb
+│   ├── views/
+│   │   ├── layouts/
+│   │   │   └── application.html.erb
+│   │   └── home/
+│   │       └── index.html.erb
+│   └── islands/                # 🏝️ Island コンポーネント
+│       ├── Counter.jsx
+│       └── TodoList.jsx
+├── bin/
+│   └── build_ssr.ts            # Deno ビルドスクリプト
+├── vendor/server/
+│   └── ssr_bundle.js           # SSR バンドル
+├── public/assets/javascripts/
+│   └── islands_bundle.js       # クライアントバンドル
 ├── config/
 │   ├── database.yml
 │   ├── environment.rb
@@ -113,6 +126,60 @@ end
     <% end %>
   </div>
 </div>
+```
+
+## 🏝️ SSR Islands
+
+Salvia の Islands Architecture はサーバーサイドレンダリング (SSR) をサポートしています。
+
+### Island コンポーネントの作成
+
+```jsx
+// app/islands/Counter.jsx
+import { h } from "preact";
+import { useState } from "preact/hooks";
+
+export function Counter({ initialCount = 0 }) {
+  const [count, setCount] = useState(initialCount);
+
+  return (
+    <div className="p-4 border rounded">
+      <p className="text-2xl font-bold">{count}</p>
+      <button
+        onClick={() => setCount(count + 1)}
+        className="px-4 py-2 bg-blue-500 text-white rounded"
+      >
+        +1
+      </button>
+    </div>
+  );
+}
+```
+
+### ERB での使用
+
+```erb
+<!-- app/views/home/index.html.erb -->
+<h1>カウンターデモ</h1>
+
+<%# SSR + Client Hydration %>
+<%= island "Counter", { initialCount: 10 } %>
+```
+
+### SSR バンドルのビルド
+
+```bash
+# Deno でビルド（SSR バンドル + クライアントバンドル）
+deno run -A bin/build_ssr.ts
+```
+
+### 仕組み
+
+```
+1. SSR: QuickJS で Preact コンポーネントをレンダリング (0.3ms/render)
+2. HTML: レンダリング結果を ERB に埋め込み
+3. Hydrate: クライアントで Preact hydrate() を実行
+4. Interactive: クリックや入力が動作するように
 ```
 
 ## CLI コマンド

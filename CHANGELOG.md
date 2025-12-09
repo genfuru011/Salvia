@@ -7,33 +7,49 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
-- Initial project structure and documentation
-- `Note/Idea.md` - Framework concept and design document
-- `ROADMAP.md` - Development roadmap with phased milestones
-- `CHANGELOG.md` - Change tracking (this file)
-
 ### In Progress
-- Testing and validation of v0.1.0 features
+- TypeScript 型定義生成 (`salvia types:generate`)
+- API クライアント生成 (`salvia client:generate`)
 
 ---
 
-## [0.5.0] - Unreleased
+## [0.5.0] - 2025-01-XX
 
-### Added
-- **Salvia Islands**: Added support for Island Architecture with `Salvia::ImportMap` and `island` helper.
-  - Added `config/importmap.rb` generation.
-  - Added `app/islands` directory support.
-  - Added `island` helper for mounting Preact components.
-- **View Components**: Added `Salvia::Component` and `component` helper for reusable UI components.
-- **Form Helpers**: Added `form_tag` and `form_close` helpers with CSRF protection and method override support.
-- **HTMX Helpers**: Added `htmx_link_to`, `htmx_form`, `htmx_trigger`, and `htmx_request?` helpers in `Salvia::Helpers::Htmx`.
-- **Tag Helpers**: Added `tag` and `link_to` helpers in `Salvia::Helpers::Tag`.
-- **Render Options**: Added support for Rails-like option arguments (`plain:`, `json:`, `partial:`) in `render`.
+> **"SSR Islands Architecture"** - Node.js 不要でサーバーサイドレンダリング
+
+### 🏝️ SSR Islands Architecture
+- **SSR Engine**: QuickJS ベースの Micro-SSR Engine を実装
+  - Preact コンポーネントをサーバーサイドでレンダリング (0.3ms/render)
+  - Deno + esbuild で SSR バンドル & クライアントバンドルを生成
+  - 本番環境で Node.js 不要
+- **`island` ヘルパー**: ERB テンプレートで Island コンポーネントをマウント
+  - `<%= island "Counter", { initialCount: 10 } %>`
+  - SSR された HTML + クライアントサイドの hydration
+- **Import Maps**: `config/importmap.rb` で ESM インポートを管理
+
+### 🔌 Plugin System
+- **HTMX プラグイン化**: HTMX がオプショナルプラグインに
+  - `config/environment.rb` で `Salvia.use :htmx` で有効化
+  - コアは ERB + Islands のみに依存
+- **`Salvia::Plugins::Base`**: カスタムプラグインの基底クラス
+- **Inspector プラグイン**: 開発用デバッグツール
+
+### 🧩 View Components & Helpers
+- **View Components**: `Salvia::Component` と `component` ヘルパー
+- **Form Helpers**: `form_tag`, `form_close` (CSRF 対応, method override)
+- **HTMX Helpers**: `htmx_link_to`, `htmx_form`, `htmx_trigger`
+- **Tag Helpers**: `tag`, `link_to` in `Salvia::Helpers::Tag`
+- **Render Options**: `plain:`, `json:`, `partial:` オプション対応
+
+### 🔧 Rack 3.x 互換性
+- **ヘッダーの小文字化**: `Content-Type` → `content-type`, `Location` → `location`
+- **303 See Other**: POST/PATCH/DELETE 後のリダイレクトに 303 を使用
+- **HX-Redirect**: HTMX リダイレクト用ヘッダーも小文字 (`hx-redirect`)
 
 ### Fixed
-- Fixed duplicate output issue when using nested `render` calls in views.
-- Fixed `partial:` option to automatically prepend `_` to the filename.
+- ERB の HTML エスケープ問題を修正 (`html_safe` サポート)
+- ネストした `render` 呼び出しでの重複出力を修正
+- `partial:` オプションで自動的にファイル名に `_` を付加
 
 ## [0.4.0] - 2025-12-08
 

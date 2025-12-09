@@ -25,18 +25,54 @@ loader.setup
 
 require "logger"
 
+# プラグインシステム
+require_relative "salvia_rb/plugins/base"
+require_relative "salvia_rb/plugins/htmx"
+
 module Salvia
   class Error < StandardError; end
 
+  # 設定クラス
+  class Configuration
+    attr_accessor :plugins, :ssr_engine, :ssr_bundle_path, :island_inspector
+
+    def initialize
+      @plugins = []
+      @ssr_engine = :hybrid
+      @ssr_bundle_path = "vendor/server/ssr_bundle.js"
+      @island_inspector = nil # nil = auto (development のみ)
+    end
+
+    # HTMX プラグインが有効かどうか
+    def htmx_enabled?
+      plugins.include?(:htmx)
+    end
+
+    # Island Inspector が有効かどうか
+    def island_inspector?
+      return @island_inspector unless @island_inspector.nil?
+      Salvia.development?
+    end
+  end
+
   class << self
     attr_accessor :root, :env, :app_loader, :logger
+
+    def config
+      @config ||= Configuration.new
+    end
 
     def importmap
       @importmap ||= ImportMap.new
     end
 
     def configure
-      yield self if block_given?
+      yield config if block_given?
+      
+      # プラグインを有効化
+      config.plugins.each do |plugin_name|
+        Plugins::Base.enable(plugin_name)
+      end
     end
 
     def logger

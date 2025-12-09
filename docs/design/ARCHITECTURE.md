@@ -219,7 +219,86 @@ Salvia::Assets.resolve(path)  # 論理パス -> ハッシュ付きパス
 
 ---
 
-### 7. Salvia::Test
+### 7. SSR Islands Architecture (v0.5.0)
+
+**役割:** Preact コンポーネントのサーバーサイドレンダリング
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                        Build Time (Deno)                            │
+│  ┌──────────────────┐    ┌─────────────────┐    ┌───────────────┐  │
+│  │  app/islands/*.jsx│───▶│   esbuild       │───▶│ SSR Bundle    │  │
+│  │                   │    │   (bundler)     │    │ (QuickJS)     │  │
+│  │                   │    │                 │    ├───────────────┤  │
+│  │                   │    │                 │───▶│ Client Bundle │  │
+│  │                   │    │                 │    │ (Browser)     │  │
+│  └──────────────────┘    └─────────────────┘    └───────────────┘  │
+└─────────────────────────────────────────────────────────────────────┘
+                                  │
+                                  ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                      Runtime (Ruby + QuickJS)                       │
+│                                                                     │
+│  1. ERB: <%= island "Counter", { initial: 10 } %>                   │
+│                         │                                           │
+│                         ▼                                           │
+│  2. QuickJS: SSR.renderToString("Counter", props) → HTML (0.3ms)   │
+│                         │                                           │
+│                         ▼                                           │
+│  3. Output: <div data-island="Counter" data-props="{...}">          │
+│                <div class="counter">10</div>                        │
+│             </div>                                                  │
+│                                                                     │
+└─────────────────────────────────────────────────────────────────────┘
+                                  │
+                                  ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                        Client (Browser)                             │
+│                                                                     │
+│  1. Load islands_bundle.js (Preact + Components)                    │
+│  2. Find all [data-island] elements                                 │
+│  3. hydrate(Component, props, container)                            │
+│  4. → Interactive Island!                                           │
+│                                                                     │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+**SSR Engine (QuickJS Hybrid):**
+```ruby
+# lib/salvia_rb/ssr/adapters/quickjs_hybrid.rb
+class QuickJSHybrid
+  def render(component_name, props = {})
+    js_code = "SSR.renderToString('#{component_name}', #{props.to_json})"
+    @runtime.eval(js_code)  # 0.3ms/render
+  end
+end
+```
+
+**island ヘルパー:**
+```ruby
+# lib/salvia_rb/helpers/island.rb
+def island(name, props = {})
+  html = Salvia::SSR.render(name, props)
+  %(<div data-island="#{name}" data-props="#{escape_html(props.to_json)}">#{html}</div>).html_safe
+end
+```
+
+**ファイル構成:**
+```
+myapp/
+├── app/islands/                    # Island コンポーネント (Preact/JSX)
+│   ├── Counter.jsx
+│   ├── TodoItem.jsx
+│   └── TodoList.jsx
+├── bin/build_ssr.ts                # Deno ビルドスクリプト
+├── vendor/server/ssr_bundle.js     # SSR 用バンドル (QuickJS で実行)
+└── public/assets/javascripts/
+    └── islands_bundle.js           # クライアント用バンドル (hydrate)
+```
+
+---
+
+### 8. Salvia::Test
 
 **役割:** テスト支援機能
 
@@ -234,7 +313,42 @@ include Salvia::Test::ControllerHelper
 
 ---
 
-### 8. CLI (Thor)
+### 9. Plugin System (v0.5.0)
+
+**役割:** 機能の着脱可能なプラグイン化
+
+```ruby
+# lib/salvia_rb/plugins/base.rb
+module Salvia::Plugins
+  class Base
+    def self.inherited(subclass)
+      Salvia.plugins << subclass
+    end
+    
+    def setup(app) end
+    def teardown(app) end
+  end
+end
+
+# lib/salvia_rb/plugins/htmx.rb
+class Salvia::Plugins::Htmx < Salvia::Plugins::Base
+  def setup(app)
+    # HTMX ヘルパーを有効化
+    Salvia::Controller.include(Salvia::Helpers::Htmx)
+  end
+end
+```
+
+**使用方法:**
+```ruby
+# config/environment.rb
+Salvia.use :htmx       # HTMX プラグインを有効化
+Salvia.use :inspector  # 開発用デバッグツール
+```
+
+---
+
+### 10. CLI (Thor)
 
 **役割:** コマンドラインインターフェース
 
@@ -413,15 +527,14 @@ myapp/
 
 ## Future Architecture (Planned)
 
-### Phase 4: Advanced Features
-- HTMX Helpers
-- View Components
+### Phase 5: TypeScript Support
+- `salvia types:generate` - ActiveRecord から TypeScript 型定義を生成
+- `salvia client:generate` - ルーティングから API クライアントを生成
 
-### Phase 5: Islands Architecture
-```erb
-<!-- Hydrate React components in ERB -->
-<%= island "Counter", { initial: 0 } %>
-```
+### v1.0.0: Stable Release
+- Getting Started ガイド
+- API リファレンス
+- デプロイガイド
 
 ---
 
@@ -431,12 +544,13 @@ myapp/
 |---------|--------|-------|---------|--------|
 | Size | Tiny | Large | Tiny | Medium |
 | Learning Curve | Low | High | Low | Medium |
-| HTMX Support | Built-in | Addon | Manual | Manual |
+| HTMX Support | Plugin | Addon | Manual | Manual |
+| SSR Islands | Built-in | No | No | No |
 | ORM | ActiveRecord | ActiveRecord | Choice | ROM |
 | Auto-loading | Zeitwerk | Zeitwerk | Manual | Zeitwerk |
 | Node.js Required | No | Optional | No | Optional |
 
 ---
 
-*最終更新: 2025-01*
+*最終更新: 2025-01 (v0.5.0)*
 

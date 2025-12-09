@@ -20,11 +20,18 @@ module Salvia
     end
 
     desc "new APP_NAME", "新しい Salvia アプリケーションを作成"
+    method_option :htmx, type: :boolean, default: false, desc: "HTMX プラグインを有効化"
+    method_option :ssr, type: :boolean, default: true, desc: "Island SSR を有効化"
     def new(app_name)
       @app_name = app_name
       @app_class_name = app_name.split(/[-_]/).map(&:capitalize).join
+      @use_htmx = options[:htmx]
+      @use_ssr = options[:ssr]
 
       say "🌿 Salvia アプリを作成中: #{@app_name}...", :green
+      say "   HTMX: #{@use_htmx ? '有効' : '無効'}", :cyan
+      say "   SSR: #{@use_ssr ? '有効' : '無効'}", :cyan
+      say ""
 
       # ディレクトリ構造を作成
       create_directory_structure
@@ -146,7 +153,104 @@ module Salvia
       say "Salvia #{Salvia::VERSION}"
     end
 
+    # SSR コマンド
+    desc "ssr:build", "Island コンポーネントを SSR 用にビルド"
+    map "ssr:build" => :ssr_build
+    method_option :verbose, aliases: "-v", type: :boolean, default: false, desc: "詳細ログを出力"
+    def ssr_build
+      check_deno_installed!
+      
+      say "🏝️  Island コンポーネントをビルド中...", :green
+      
+      cmd = "deno run --allow-all bin/build_ssr.ts"
+      cmd += " --verbose" if options[:verbose]
+      
+      success = system(cmd)
+      
+      if success
+        say "✅ SSR ビルド完了！", :green
+      else
+        say "❌ SSR ビルドに失敗しました", :red
+        exit 1
+      end
+    end
+
+    desc "ssr:watch", "Island コンポーネントの変更を監視してリビルド"
+    map "ssr:watch" => :ssr_watch
+    method_option :verbose, aliases: "-v", type: :boolean, default: false, desc: "詳細ログを出力"
+    def ssr_watch
+      check_deno_installed!
+      
+      say "👀 Island コンポーネントの変更を監視中...", :green
+      
+      cmd = "deno run --allow-all bin/build_ssr.ts --watch"
+      cmd += " --verbose" if options[:verbose]
+      
+      exec cmd
+    end
+
+    desc "dev", "開発サーバー + SSR ウォッチを同時に起動"
+    method_option :port, aliases: "-p", type: :numeric, default: 9292, desc: "ポート番号"
+    method_option :host, aliases: "-b", type: :string, default: "localhost", desc: "バインドするホスト"
+    def dev
+      require_app_environment
+      
+      say "🚀 Salvia 開発モードを起動中...", :green
+      say "   Server: http://#{options[:host]}:#{options[:port]}", :cyan
+      say "   SSR Watch: 有効", :cyan
+      say ""
+      
+      # Deno SSR ウォッチをバックグラウンドで起動
+      deno_pid = nil
+      if deno_installed?
+        deno_pid = spawn("deno run --allow-all bin/build_ssr.ts --watch",
+                         out: "/dev/null", err: [:child, :out])
+        say "🏝️  SSR ウォッチ起動 (PID: #{deno_pid})", :blue
+      else
+        say "⚠️  Deno が見つかりません。SSR ビルドはスキップされます。", :yellow
+      end
+      
+      # 終了時に Deno プロセスも終了
+      at_exit do
+        if deno_pid
+          Process.kill("TERM", deno_pid) rescue nil
+          Process.wait(deno_pid) rescue nil
+        end
+      end
+      
+      # Tailwind CSS ウォッチもバックグラウンドで起動
+      tailwind_pid = spawn("bundle exec tailwindcss -i ./app/assets/stylesheets/application.tailwind.css -o ./public/assets/stylesheets/tailwind.css --watch",
+                           out: "/dev/null", err: [:child, :out])
+      say "🎨 CSS ウォッチ起動 (PID: #{tailwind_pid})", :blue
+      
+      at_exit do
+        Process.kill("TERM", tailwind_pid) rescue nil
+        Process.wait(tailwind_pid) rescue nil
+      end
+      
+      say ""
+      
+      # Ruby サーバーを起動
+      exec "bundle exec rackup -p #{options[:port]} -o #{options[:host]}"
+    end
+
     private
+
+    def check_deno_installed!
+      unless deno_installed?
+        say "❌ Deno がインストールされていません。", :red
+        say ""
+        say "インストール方法:", :yellow
+        say "  curl -fsSL https://deno.land/install.sh | sh"
+        say ""
+        say "または: https://deno.land", :yellow
+        exit 1
+      end
+    end
+
+    def deno_installed?
+      system("which deno > /dev/null 2>&1")
+    end
 
     def require_app_environment
       env_file = File.join(Dir.pwd, "config", "environment.rb")
@@ -241,8 +345,10 @@ module Salvia
     end
 
     def create_public_assets
-      # HTMX - プレースホルダーを作成（ユーザーが実際のファイルをダウンロード）
-      create_file "#{@app_name}/public/assets/javascripts/htmx.min.js", htmx_placeholder_content
+      # HTMX - プラグイン有効時のみ
+      if @use_htmx
+        create_file "#{@app_name}/public/assets/javascripts/htmx.min.js", htmx_placeholder_content
+      end
 
       # app.js
       create_file "#{@app_name}/public/assets/javascripts/app.js", app_js_content
@@ -257,9 +363,17 @@ module Salvia
       create_file "#{@app_name}/public/404.html", error_404_content
       create_file "#{@app_name}/public/500.html", error_500_content
 
-      say ""
-      say "⚠️  HTMX を手動でダウンロードしてください:", :yellow
-      say "   curl -o #{@app_name}/public/assets/javascripts/htmx.min.js https://unpkg.com/htmx.org@1.9.10/dist/htmx.min.js"
+      # SSR 有効時は build_ssr.ts も作成
+      if @use_ssr
+        create_file "#{@app_name}/bin/build_ssr.ts", build_ssr_ts_content
+        empty_directory "#{@app_name}/vendor/server"
+      end
+
+      if @use_htmx
+        say ""
+        say "⚠️  HTMX を手動でダウンロードしてください:", :yellow
+        say "   curl -o #{@app_name}/public/assets/javascripts/htmx.min.js https://unpkg.com/htmx.org@1.9.10/dist/htmx.min.js"
+      end
     end
 
     # ファイルコンテンツメソッド
@@ -307,12 +421,19 @@ module Salvia
     end
 
     def environment_rb_content
+      htmx_config = @use_htmx ? "\n  config.plugins << :htmx" : ""
+      ssr_config = @use_ssr ? "\n  config.ssr_engine = :hybrid" : "\n  config.ssr_engine = nil"
+      
       <<~RUBY
         require "bundler/setup"
         require "salvia_rb"
 
         # アプリケーションルートを設定
         Salvia.root = File.expand_path("..", __dir__)
+
+        # アプリケーション設定
+        Salvia.configure do |config|#{htmx_config}#{ssr_config}
+        end
 
         # データベース設定を読み込み
         Salvia::Database.setup!
@@ -515,6 +636,8 @@ module Salvia
     end
 
     def layout_content
+      htmx_script = @use_htmx ? "\n      <script src=\"/assets/javascripts/htmx.min.js\" defer></script>" : ""
+      
       <<~ERB
         <!DOCTYPE html>
         <html lang="ja">
@@ -527,10 +650,13 @@ module Salvia
           <%= importmap_tags %>
 
           <link rel="stylesheet" href="/assets/stylesheets/tailwind.css">
-
-          <script src="/assets/javascripts/htmx.min.js" defer></script>
+#{htmx_script}
           <script type="module" src="/assets/javascripts/app.js"></script>
           <script type="module" src="/assets/javascripts/islands.js"></script>
+
+          <% if Salvia.development? && Salvia.config.island_inspector? %>
+            <%= island_inspector_tags %>
+          <% end %>
         </head>
         <body class="min-h-screen bg-slate-50 text-slate-900">
           <%= yield %>
@@ -674,25 +800,21 @@ module Salvia
 
     def development_config_content
       <<~RUBY
-        Salvia.configure do |config|
-          # 開発環境の設定
-          config.logger = Logger.new(STDOUT)
-          config.logger.level = Logger::DEBUG
-        end
+        # 開発環境の設定
+        Salvia.logger = Logger.new(STDOUT)
+        Salvia.logger.level = Logger::DEBUG
       RUBY
     end
 
     def production_config_content
       <<~RUBY
-        Salvia.configure do |config|
-          # 本番環境の設定
-          # log ディレクトリがない場合は作成
-          log_dir = File.join(Salvia.root, "log")
-          Dir.mkdir(log_dir) unless Dir.exist?(log_dir)
+        # 本番環境の設定
+        # log ディレクトリがない場合は作成
+        log_dir = File.join(Salvia.root, "log")
+        Dir.mkdir(log_dir) unless Dir.exist?(log_dir)
 
-          config.logger = Logger.new(File.join(log_dir, "production.log"))
-          config.logger.level = Logger::INFO
-        end
+        Salvia.logger = Logger.new(File.join(log_dir, "production.log"))
+        Salvia.logger.level = Logger::INFO
       RUBY
     end
 
@@ -741,6 +863,110 @@ module Salvia
           }
         });
       JS
+    end
+
+    def build_ssr_ts_content
+      <<~TS
+        #!/usr/bin/env -S deno run --allow-all
+        /**
+         * Salvia Island SSR Build Script
+         * 
+         * 使用方法:
+         *   deno run --allow-all bin/build_ssr.ts
+         *   deno run --allow-all bin/build_ssr.ts --watch
+         */
+
+        import * as esbuild from "https://deno.land/x/esbuild@v0.24.2/mod.js";
+        import { denoPlugins } from "jsr:@luca/esbuild-deno-loader@0.11";
+
+        const ISLANDS_DIR = "./app/islands";
+        const OUTPUT_FILE = "./vendor/server/ssr_bundle.js";
+        const WATCH_MODE = Deno.args.includes("--watch");
+        const VERBOSE = Deno.args.includes("--verbose");
+
+        async function findIslandFiles(): Promise<string[]> {
+          const files: string[] = [];
+          try {
+            for await (const entry of Deno.readDir(ISLANDS_DIR)) {
+              if (entry.isFile && (entry.name.endsWith(".tsx") || entry.name.endsWith(".jsx") || entry.name.endsWith(".js"))) {
+                files.push(`\${ISLANDS_DIR}/\${entry.name}`);
+              }
+            }
+          } catch {
+            console.log("📁 app/islands ディレクトリが見つかりません。スキップします。");
+          }
+          return files;
+        }
+
+        async function build() {
+          const entryPoints = await findIslandFiles();
+          
+          if (entryPoints.length === 0) {
+            console.log("⚠️  Island コンポーネントが見つかりません。");
+            return;
+          }
+
+          if (VERBOSE) {
+            console.log("🔍 ビルド対象:", entryPoints);
+          }
+
+          // SSR 用のバンドルを生成
+          const result = await esbuild.build({
+            entryPoints,
+            bundle: true,
+            format: "esm",
+            outfile: OUTPUT_FILE,
+            platform: "neutral",
+            plugins: [...denoPlugins()],
+            external: [],
+            define: {
+              "typeof window": '"undefined"',
+            },
+            banner: {
+              js: `// Salvia SSR Bundle - Generated at \${new Date().toISOString()}
+        globalThis.SalviaSSR = globalThis.SalviaSSR || {};`,
+            },
+            footer: {
+              js: `
+        // Export all components to globalThis.SalviaSSR
+        // Components are automatically registered`,
+            },
+          });
+
+          if (result.errors.length > 0) {
+            console.error("❌ ビルドエラー:", result.errors);
+          } else {
+            console.log(\`✅ SSR バンドル生成完了: \${OUTPUT_FILE}\`);
+          }
+        }
+
+        async function watch() {
+          console.log("👀 Island コンポーネントの変更を監視中...");
+          
+          const watcher = Deno.watchFs(ISLANDS_DIR);
+          let debounceTimer: number | undefined;
+          
+          for await (const event of watcher) {
+            if (event.kind === "modify" || event.kind === "create") {
+              clearTimeout(debounceTimer);
+              debounceTimer = setTimeout(async () => {
+                console.log("🔄 変更を検出、リビルド中...");
+                await build();
+              }, 100);
+            }
+          }
+        }
+
+        // メイン実行
+        console.log("🏝️  Salvia Island SSR Builder");
+        await build();
+
+        if (WATCH_MODE) {
+          await watch();
+        } else {
+          await esbuild.stop();
+        }
+      TS
     end
   end
 end

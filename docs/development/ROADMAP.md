@@ -130,7 +130,7 @@ Salvia における HTMX は、**Rails における Hotwire (Turbo/Stimulus)** �
 
 ---
 
-## Phase 4: Rich UI & Advanced Features (v0.5.0)
+## Phase 4: Rich UI & Advanced Features (v0.5.0) ✅
 
 よりリッチな UI と高度な機能のサポート。
 
@@ -144,27 +144,39 @@ Salvia における HTMX は、**Rails における Hotwire (Turbo/Stimulus)** �
 - [x] Tailwind クラスのカプセル化支援
 - [x] UI プリセット（Button, Card, Modal）
 
-### Advanced Features
-- [ ] WebSocket サポート（ActionCable 的な機能）
-- [ ] バックグラウンドジョブ統合ガイド (Sidekiq / Solid Queue)
-- [ ] マルチテナント対応ガイド
+### Plugin System
+- [x] `Salvia::Plugins::Base` - プラグイン基底クラス
+- [x] HTMX をオプショナルプラグインに
+- [x] Inspector プラグイン（開発用デバッグツール）
+
+### SSR Islands Architecture
+- [x] **QuickJS SSR Engine** - 0.3ms/render の高速 SSR
+- [x] **Deno + esbuild** - SSR バンドル & クライアントバンドル生成
+- [x] **`island` ヘルパー** - ERB で Preact コンポーネントをマウント
+- [x] **Import Maps** - `config/importmap.rb` で ESM インポート管理
+- [x] **Client Hydration** - SSR された HTML をクライアントで hydrate
+
+### Rack 3.x 互換性
+- [x] ヘッダーの小文字化（`Content-Type` → `content-type`）
+- [x] POST/PATCH/DELETE 後のリダイレクトに 303 See Other
+- [x] HTMX リダイレクトヘッダーも小文字 (`hx-redirect`)
 
 ---
 
-## Phase 5: Salvia Islands (v0.6.0) ✅
+## Phase 5: TypeScript Support (v0.6.0)
 
-> **"HTML ファーストを維持しながら、必要な部分だけリッチに"**
-> Node.js 不要で Island Architecture を実現する。
-
-### Core Islands
-- [x] Import Maps 自動生成・管理
-- [x] `island` ビューヘルパー
-- [x] Preact + HTM 統合
+> **"型安全なフロントエンド開発"**
+> ActiveRecord モデルから TypeScript 型定義を自動生成。
 
 ### TypeScript Support (Client)
 - [ ] `salvia types:generate` - ActiveRecord から TypeScript 型定義を生成
 - [ ] `salvia client:generate` - ルーティングから API クライアントを生成
 - [ ] esm.sh を利用したビルドレス TypeScript 実行環境の整備
+
+### Advanced Features
+- [ ] WebSocket サポート（ActionCable 的な機能）
+- [ ] バックグラウンドジョブ統合ガイド (Sidekiq / Solid Queue)
+- [ ] マルチテナント対応ガイド
 
 ---
 
@@ -190,12 +202,12 @@ v1.0 以降の拡張機能。
 - [ ] 管理画面ジェネレーター (Salvia Admin)
 
 
-## 🏝️ Salvia Islands (Concept)
+## 🏝️ SSR Islands Architecture (Implemented in v0.5.0) ✅
 
 > **"HTML ファーストを維持しながら、必要な部分だけリッチに"**
 >
-> Node.js 不要で Island Architecture を実現する革命的アプローチ。
-> Phase 5 (v0.6.0) での実装を目指します。
+> Node.js 不要で Island Architecture を実現。
+> QuickJS で SSR、Deno でビルド、本番は Ruby のみで動作。
 
 ### コンセプト
 
