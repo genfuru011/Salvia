@@ -7,46 +7,76 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### In Progress
+### Planned
 - TypeScript type generation (`salvia types:generate`)
+- WebSocket support guide
+- Background job integration guide
 
 ---
 
-## [0.8.0] - 2025-12-09
+## [0.1.0] - 2025-12-10
 
-> **"CLI UX Enhancement"** - Modern developer experience
+> **"Initial Public Release"** - Zero-config Ruby MVC with SSR Islands
 
-### ✨ Interactive CLI
-- `salvia new` now supports interactive prompts
-- Template selection: Full app / API only / Minimal
-- Islands opt-in during app generation
-- `--skip-prompts` flag for CI/automation
-- Added `tty-prompt` dependency
+### 🚀 Zero Configuration
+- **Auto-setup**: `Salvia::Application.new` configures everything automatically
+- **3-line config.ru**: Minimal boilerplate to start
+- **`Salvia.run!`**: One-liner startup with environment-aware server selection
+- **Environment-aware servers**: Puma (dev) / Falcon (prod) auto-selection
 
-### 🛠️ Code Generators
-- `salvia generate controller NAME [actions]` - Generate controller with views and tests
-- `salvia generate model NAME [fields]` - Generate model with migration and tests
-- `salvia generate migration NAME [fields]` - Generate migration file
-- Short alias: `salvia g controller posts index show`
+### 🏝️ SSR Islands Architecture
+- **QuickJS SSR Engine**: Server-side render Preact components (0.3ms/render)
+- **`island` helper**: Mount Preact components in ERB templates
+- **Client hydration**: SSR HTML + client-side hydration
+- **Counter component**: Included as example in generated apps
 
-### 🏝️ Islands Improvements
-- Islands are now opt-in during `salvia new`
-- `bin/build_ssr.ts` only generated when Islands enabled
-- Cleaner project structure for non-Islands apps
+### 🎯 Core Framework
+- **`Salvia::Application`**: Rack application entry point
+- **`Salvia::Router`**: Rails-like DSL (`root`, `resources`, `get`, `post`, etc.)
+- **`Salvia::Controller`**: Base class with `render`, `params`, `redirect_to`
+- **ERB templates**: Layout + partial support (Tilt + Erubi)
+- **ActiveRecord integration**: Database connection management
 
----
+### 🔧 CLI (`salvia` command)
+- `salvia new APP_NAME` - Interactive app generation with templates
+- `salvia server` / `salvia s` - Start server (environment-aware)
+- `salvia dev` - Server + CSS watch + SSR watch
+- `salvia console` / `salvia c` - IRB console with app loaded
+- `salvia db:*` - Database commands (create, migrate, rollback, setup)
+- `salvia css:build/watch` - Tailwind CSS compilation
+- `salvia ssr:build/watch` - SSR bundle building
+- `salvia generate` / `salvia g` - Code generators (controller, model, migration)
+- `salvia routes` - Display registered routes
 
-## [0.7.0] - 2025-12-09
+### 🐳 Docker Support
+- **Auto-generated Dockerfile**: Multi-stage build for production
+- **docker-compose.yml**: Ready for development and production
+- **.dockerignore**: Optimized for Ruby apps
 
-> **"Documentation Consolidation"** - Simplified and unified documentation
+### 🔒 Security
+- **CSRF protection**: Rack::Protection middleware and helpers
+- **Flash messages**: `flash` and `flash.now` support
+- **Session management**: Cookie-based sessions
+
+### 📦 Gem Internal Assets
+- **build_ssr.ts**: Deno build script embedded in gem
+- **islands.js**: Client-side hydration script
+- **No bin/ folder needed**: All scripts internal to gem
+
+### 🎨 Styling
+- **Tailwind CSS**: Configuration with custom Salvia theme
+- **`tailwindcss-ruby`**: No Node.js required for CSS
 
 ### 📚 Documentation
-- Consolidated `docs/` to 3 files:
-  - `ARCHITECTURE.md` - Internal architecture and design
-  - `GUIDE.md` - Usage guide and security best practices
-  - `ROADMAP.md` - Development roadmap
-- Removed outdated Japanese documentation
-- All documentation now in English
+- Comprehensive README with quick start
+- Architecture documentation
+- Usage guide with security best practices
+- Development roadmap
+
+---
+
+[Unreleased]: https://github.com/genfuru011/Salvia/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/genfuru011/Salvia/releases/tag/v0.1.0
 
 ### Removed
 - `docs/design/` directory (merged into ARCHITECTURE.md)

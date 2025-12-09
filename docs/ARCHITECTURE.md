@@ -401,7 +401,9 @@ myapp/
 | ORM | ActiveRecord | ActiveRecord | Choice | ROM |
 | Auto-loading | Zeitwerk | Zeitwerk | Manual | Zeitwerk |
 | Node.js Required | No | Optional | No | Optional |
+| Zero Config | Yes | No | No | No |
+| Docker Ready | Auto-gen | Manual | Manual | Manual |
 
 ---
 
-*Last updated: 2025-12 (v0.7.0)*
+*Last updated: 2025-12-10 (v0.1.0)*

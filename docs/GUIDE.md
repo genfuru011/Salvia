@@ -45,6 +45,7 @@ salvia new myapp --template=api --skip-prompts
 ```bash
 cd myapp
 bundle install
+salvia ssr:build  # Build SSR bundle (requires Deno)
 ```
 
 ### Start the Server
@@ -56,6 +57,25 @@ salvia s
 ```
 
 Visit `http://localhost:9292`
+
+### Zero Configuration
+
+Salvia works with minimal setup:
+
+```ruby
+# config.ru (3 lines!)
+require "salvia_rb"
+Salvia.configure { |c| c.root = __dir__ }
+run Salvia::Application.new
+```
+
+### One-liner Mode
+
+```ruby
+# app.rb
+require "salvia_rb"
+Salvia.run!  # Auto-selects server: Puma (dev) or Falcon (prod)
+```
 
 ### Project Structure
 
@@ -73,6 +93,8 @@ myapp/
 ├── db/
 │   └── migrate/         # Database migrations
 ├── public/              # Static files
+├── Dockerfile           # Auto-generated
+├── docker-compose.yml   # Auto-generated
 └── test/                # Tests
 ```
 
@@ -625,7 +647,7 @@ salvia generate migration NAME [fields]    # Generate migration
 salvia g controller posts index show       # Short form
 
 # Development
-salvia server (s)        # Start development server
+salvia server (s)        # Start server (Puma dev / Falcon prod)
 salvia console (c)       # Start IRB console
 salvia dev               # Server + CSS watch + SSR watch
 salvia routes            # List all routes
@@ -649,4 +671,24 @@ salvia version           # Show version
 
 ---
 
-*Last updated: 2025-12 (v0.7.0)*
+## Docker
+
+Generated apps include Docker support out of the box:
+
+```bash
+# Build and run with docker compose
+docker compose up
+
+# Production build
+docker build -t myapp .
+docker run -p 9292:9292 -e RACK_ENV=production myapp
+```
+
+The generated `Dockerfile` uses:
+- Multi-stage build for smaller image
+- Falcon server for production
+- Pre-built SSR bundle
+
+---
+
+*Last updated: 2025-12-10 (v0.1.0)*

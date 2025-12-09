@@ -8,6 +8,7 @@
 
 Salvia.rb fills the gap between "Rails is too heavy" and "Sinatra is too light."
 
+- **Zero configuration** - Works out of the box, customizable when needed
 - **Server-rendered HTML first**
 - **SSR Islands** for rich UI when needed (No Node.js required)
 - **Tailwind CSS** for modern styling
@@ -15,74 +16,51 @@ Salvia.rb fills the gap between "Rails is too heavy" and "Sinatra is too light."
 
 ---
 
-## Completed Phases
+## Current Version: v0.1.0 ✅
 
-### Phase 0: Foundation (v0.1.0) ✅
+> **"Initial Public Release"** - Published to RubyGems.org
 
-- [x] `Salvia::Application` - Rack application base class
+### Core Framework
+- [x] `Salvia::Application` - Zero-config Rack application
 - [x] `Salvia::Router` - Rails-like DSL routing (Mustermann)
-- [x] `Salvia::Controller` - Request/response handling base class
+- [x] `Salvia::Controller` - Request/response handling
 - [x] `render` method - ERB template rendering
 - [x] Layout + partial support
 - [x] `Salvia::Database` - ActiveRecord connection management
 
-### Phase 1: Developer Experience (v0.2.0) ✅
+### Zero Configuration
+- [x] Auto-setup with `Salvia::Application.new`
+- [x] 3-line `config.ru`
+- [x] `Salvia.run!` one-liner startup
+- [x] Environment-aware servers (Puma dev / Falcon prod)
 
-- [x] Zeitwerk auto-loading
-- [x] Code reloading in development
-- [x] Custom error pages (404, 500)
-- [x] Rack 3.0 compatibility
-
-### Phase 2: Security & Stability (v0.3.0) ✅
-
-- [x] CSRF protection (Rack::Protection)
-- [x] Session management (flash messages)
-- [x] Routing enhancement (nested resources, named routes)
-
-### Phase 3: Production Ready (v0.4.0) ✅
-
-- [x] Asset digest (cache busting)
-- [x] Environment configuration (`config/environments/*.rb`)
-- [x] Logging (`Salvia.logger`)
-- [x] Testing support (`Salvia::Test::ControllerHelper`)
-
-### Phase 4: SSR Islands Architecture (v0.5.0) ✅
-
+### SSR Islands Architecture
 - [x] QuickJS SSR Engine (0.3ms/render)
 - [x] `island` helper for Preact components
 - [x] Client hydration
-- [x] Plugin system
-- [x] View components
-- [x] Rack 3.x full compatibility
+- [x] Counter component as example
 
-### Phase 5: Architecture Simplification (v0.6.0) ✅
+### Developer Experience
+- [x] Zeitwerk auto-loading
+- [x] Code reloading in development
+- [x] Custom error pages (404, 500)
+- [x] Interactive CLI with TTY::Prompt
+- [x] Code generators (controller, model, migration)
 
-- [x] Removed HTMX plugin and helpers
-- [x] Removed Import Map system
-- [x] Consolidated SSR to single QuickJS engine
-- [x] CLI English-ized
-- [x] Simplified configuration
+### Security
+- [x] CSRF protection (Rack::Protection)
+- [x] Session management (flash messages)
 
-### Phase 6: Documentation (v0.7.0) ✅
-
-- [x] Consolidated docs to 3 files (ARCHITECTURE, GUIDE, ROADMAP)
-- [x] Removed outdated Japanese documentation
-- [x] Updated CHANGELOG
-
-### Phase 7: CLI UX Enhancement (v0.8.0) ✅
-
-- [x] Interactive `salvia new` with TTY::Prompt
-- [x] Templates: Full app / API only / Minimal
-- [x] Islands opt-in during generation
-- [x] `salvia dev` command (server + CSS watch + SSR watch)
-- [x] Code generators: controller, model, migration
-- [x] `salvia g` short alias
+### Docker
+- [x] Auto-generated Dockerfile
+- [x] docker-compose.yml
+- [x] .dockerignore
 
 ---
 
-## Current Phase
+## Next Phase
 
-### Phase 8: TypeScript Support (v0.9.0)
+### Phase 1: TypeScript Support (v0.2.0)
 
 > **"Type-safe frontend development"**
 
@@ -94,7 +72,7 @@ Salvia.rb fills the gap between "Rails is too heavy" and "Sinatra is too light."
 
 ## Future Phases
 
-### Phase 9: Advanced Features (v0.10.0)
+### Phase 2: Advanced Features (v0.3.0)
 
 - [ ] WebSocket support guide
 - [ ] Background job integration guide (Sidekiq / Solid Queue)
@@ -158,4 +136,4 @@ salvia-core (gem)
 
 ---
 
-*Last updated: 2025-12 (v0.7.0)*
+*Last updated: 2025-12-10 (v0.1.0)*
