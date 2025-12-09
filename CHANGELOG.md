@@ -8,48 +8,78 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### In Progress
-- TypeScript 型定義生成 (`salvia types:generate`)
-- API クライアント生成 (`salvia client:generate`)
+- Interactive CLI (`salvia new` with prompts)
+- TypeScript type generation (`salvia types:generate`)
 
 ---
 
-## [0.5.0] - 2025-01-XX
+## [0.7.0] - 2025-12-09
 
-> **"SSR Islands Architecture"** - Node.js 不要でサーバーサイドレンダリング
+> **"Documentation Consolidation"** - Simplified and unified documentation
+
+### 📚 Documentation
+- Consolidated `docs/` to 3 files:
+  - `ARCHITECTURE.md` - Internal architecture and design
+  - `GUIDE.md` - Usage guide and security best practices
+  - `ROADMAP.md` - Development roadmap
+- Removed outdated Japanese documentation
+- All documentation now in English
+
+### Removed
+- `docs/design/` directory (merged into ARCHITECTURE.md)
+- `docs/development/` directory (merged into GUIDE.md, ROADMAP.md)
+- `docs/security/` directory (merged into GUIDE.md)
+- `docs/meta/` directory (no longer needed)
+
+---
+
+## [0.6.0] - 2025-12-09
+
+> **"Architecture Simplification"** - Focused, streamlined framework
+
+### 🗑️ Removed
+- HTMX plugin and helpers (framework-agnostic now)
+- Import Map system
+- Unused SSR adapters (quickjs_native, quickjs_wasm, deno)
+- Benchmark directory
+
+### 🔧 Refactored
+- SSR consolidated to single QuickJS engine
+- CLI English-ized (all messages and descriptions)
+- Configuration simplified (removed ssr_engine, htmx options)
+
+### 📁 File Structure
+- `ssr/adapters/quickjs_hybrid.rb` → `ssr/quickjs.rb`
+
+---
+
+## [0.5.0] - 2025-12-09
+
+> **"SSR Islands Architecture"** - Server-side rendering without Node.js
 
 ### 🏝️ SSR Islands Architecture
-- **SSR Engine**: QuickJS ベースの Micro-SSR Engine を実装
-  - Preact コンポーネントをサーバーサイドでレンダリング (0.3ms/render)
-  - Deno + esbuild で SSR バンドル & クライアントバンドルを生成
-  - 本番環境で Node.js 不要
-- **`island` ヘルパー**: ERB テンプレートで Island コンポーネントをマウント
-  - `<%= island "Counter", { initialCount: 10 } %>`
-  - SSR された HTML + クライアントサイドの hydration
-- **Import Maps**: `config/importmap.rb` で ESM インポートを管理
+- **SSR Engine**: QuickJS-based Micro-SSR Engine (0.3ms/render)
+- **`island` helper**: Mount Preact components in ERB templates
+- **Client hydration**: SSR HTML + client-side hydration
 
 ### 🔌 Plugin System
-- **HTMX プラグイン化**: HTMX がオプショナルプラグインに
-  - `config/environment.rb` で `Salvia.use :htmx` で有効化
-  - コアは ERB + Islands のみに依存
-- **`Salvia::Plugins::Base`**: カスタムプラグインの基底クラス
-- **Inspector プラグイン**: 開発用デバッグツール
+- **`Salvia::Plugins::Base`**: Base class for custom plugins
+- **Inspector plugin**: Development debug tools
 
 ### 🧩 View Components & Helpers
-- **View Components**: `Salvia::Component` と `component` ヘルパー
-- **Form Helpers**: `form_tag`, `form_close` (CSRF 対応, method override)
-- **HTMX Helpers**: `htmx_link_to`, `htmx_form`, `htmx_trigger`
+- **View Components**: `Salvia::Component` and `component` helper
+- **Form Helpers**: `form_tag`, `form_close` (CSRF, method override)
 - **Tag Helpers**: `tag`, `link_to` in `Salvia::Helpers::Tag`
-- **Render Options**: `plain:`, `json:`, `partial:` オプション対応
+- **Render Options**: `plain:`, `json:`, `partial:` options
 
-### 🔧 Rack 3.x 互換性
-- **ヘッダーの小文字化**: `Content-Type` → `content-type`, `Location` → `location`
-- **303 See Other**: POST/PATCH/DELETE 後のリダイレクトに 303 を使用
-- **HX-Redirect**: HTMX リダイレクト用ヘッダーも小文字 (`hx-redirect`)
+### 🔧 Rack 3.x Compatibility
+- Lowercase headers (`content-type`, `location`)
+- 303 See Other for POST/PATCH/DELETE redirects
 
 ### Fixed
-- ERB の HTML エスケープ問題を修正 (`html_safe` サポート)
-- ネストした `render` 呼び出しでの重複出力を修正
-- `partial:` オプションで自動的にファイル名に `_` を付加
+- ERB HTML escaping (`html_safe` support)
+- Nested `render` call duplicate output
+- Partial filename auto-prefix with `_`
 
 ## [0.4.0] - 2025-12-08
 

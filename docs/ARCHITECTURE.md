@@ -1,6 +1,6 @@
 # Salvia.rb Architecture
 
-> フレームワークの内部構造と設計思想
+> Internal architecture and design philosophy of the framework
 
 ---
 
@@ -38,7 +38,7 @@
 ┌─────────────────────────────────────────────────────────────┐
 │                   Salvia::Controller                        │
 │  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌─────────────┐  │
-│  │  params  │  │  render  │  │ redirect │  │ htmx_request│  │
+│  │  params  │  │  render  │  │ redirect │  │   session   │  │
 │  └──────────┘  └──────────┘  └──────────┘  └─────────────┘  │
 └─────────────────────────────────────────────────────────────┘
                               │
@@ -56,7 +56,6 @@
                               ▼
 ┌─────────────────────────────────────────────────────────────┐
 │                       HTML Response                         │
-│                  (+ HTMX for partial updates)               │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -66,35 +65,32 @@
 
 ### 1. Salvia::Application
 
-**役割:** Rack アプリケーションのエントリーポイント
+**Role:** Rack application entry point
 
 ```ruby
-# lib/salvia_rb/application.rb
 class Application
   def call(env)
     request = Rack::Request.new(env)
     response = Rack::Response.new
-
-    handle_request(request, response)  # → Router → Controller
+    handle_request(request, response)
     response.finish
   end
 end
 ```
 
-**責務:**
-- Rack インターフェースの実装 (`call(env)`)
-- Router への dispatch
-- エラーハンドリング（開発/本番）
-- 404/500 ページの生成
+**Responsibilities:**
+- Implements Rack interface (`call(env)`)
+- Dispatches to Router
+- Error handling (development/production)
+- 404/500 page generation
 
 ---
 
 ### 2. Salvia::Router
 
-**役割:** URL パターンマッチングとコントローラーへのルーティング
+**Role:** URL pattern matching and routing to controllers
 
 ```ruby
-# lib/salvia_rb/router.rb
 Router.draw do
   root to: "home#index"
   get "/posts/:id", to: "posts#show"
@@ -102,31 +98,22 @@ Router.draw do
 end
 ```
 
-**設計ポイント:**
+**Design:**
 
-| 項目 | 実装 |
-|------|------|
-| パターンマッチ | Mustermann (`:rails` type) |
+| Item | Implementation |
+|------|----------------|
+| Pattern Matching | Mustermann (`:rails` type) |
 | DSL | `root`, `get`, `post`, `resources` |
-| シングルトン | `Router.instance` でグローバルアクセス |
-| ルート構造 | `Route` Struct (method, pattern, controller, action) |
-
-**ルート解決フロー:**
-```
-1. request.request_method + request.path_info を取得
-2. 登録されたルートを順番に走査
-3. Mustermann.match? でパターンマッチ
-4. マッチしたら [ControllerClass, action, params] を返す
-```
+| Singleton | Global access via `Router.instance` |
+| Route Structure | `Route` Struct (method, pattern, controller, action) |
 
 ---
 
 ### 3. Salvia::Controller
 
-**役割:** リクエスト処理とレスポンス生成
+**Role:** Request processing and response generation
 
 ```ruby
-# lib/salvia_rb/controller.rb
 class PostsController < Salvia::Controller
   def show
     @post = Post.find(params["id"])
@@ -135,93 +122,40 @@ class PostsController < Salvia::Controller
 end
 ```
 
-**主要メソッド:**
+**Key Methods:**
 
-| メソッド | 説明 |
-|----------|------|
-| `params` | URL パラメータ + クエリ/ボディパラメータの統合 |
-| `render(template, locals:, layout:, status:)` | ERB テンプレートのレンダリング |
-| `render_partial(template, locals:)` | パーシャルのレンダリング（レイアウトなし） |
-| `redirect_to(url, status:)` | リダイレクト（HTMX 対応） |
-| `htmx_request?` | HTMX リクエスト判定 |
-| `htmx_trigger(event, detail)` | HTMX イベントトリガー |
-
----
-
-### 4. Smart Rendering（HTMX 推奨、オプショナル）
-
-**コンセプト:** HTMX リクエストを自動判定してレイアウトの有無を切り替え（HTMX がなくても動作）
-
-```
-┌──────────────────────────────────────────────────────────┐
-│                    render("posts/show")                   │
-└──────────────────────────────────────────────────────────┘
-                            │
-                            ▼
-              ┌─────────────────────────┐
-              │   htmx_request?         │
-              │   (HX-Request header)   │
-              └─────────────────────────┘
-                     │           │
-                    YES          NO
-                     │           │
-                     ▼           ▼
-          ┌──────────────┐  ┌──────────────────┐
-          │ Partial Only │  │ Layout + Content │
-          │ (no layout)  │  │ (full page)      │
-          └──────────────┘  └──────────────────┘
-```
-
-**判定ロジック:**
-```ruby
-def determine_layout(layout_option, template)
-  return false if layout_option == false          # 明示的に無効化
-  return false if template.start_with?("_")       # パーシャル
-  return false if htmx_request?                   # HTMX リクエスト
-  layout_option || default_layout                 # デフォルトレイアウト
-end
-```
+| Method | Description |
+|--------|-------------|
+| `params` | Merged URL + query/body parameters |
+| `render(template, locals:, layout:, status:)` | ERB template rendering |
+| `render_partial(template, locals:)` | Partial rendering (no layout) |
+| `redirect_to(url, status:)` | Redirect response |
+| `session` | Session hash |
+| `flash` | Flash messages |
 
 ---
 
-### 5. Salvia::Database
+### 4. Salvia::Database
 
-**役割:** ActiveRecord の接続管理
+**Role:** ActiveRecord connection management
 
 ```ruby
-# lib/salvia_rb/database.rb
-Database.setup!      # 接続確立
-Database.migrate!    # マイグレーション実行
-Database.create!     # DB 作成
-Database.drop!       # DB 削除
+Database.setup!      # Establish connection
+Database.migrate!    # Run migrations
+Database.create!     # Create database
+Database.drop!       # Drop database
 ```
 
-**対応アダプタ:**
-- SQLite3 (デフォルト)
+**Supported Adapters:**
+- SQLite3 (default)
 - PostgreSQL
 - MySQL
 
 ---
 
-### 6. Salvia::Assets
+### 5. SSR Islands Architecture
 
-**役割:** アセット管理とキャッシュバスティング
-
-```ruby
-# lib/salvia_rb/assets.rb
-Salvia::Assets.manifest_path  # マニフェストファイルのパス
-Salvia::Assets.resolve(path)  # 論理パス -> ハッシュ付きパス
-```
-
-**機能:**
-- `assets:precompile`: アセットのハッシュ化とマニフェスト生成
-- `asset_path`: 環境に応じたパス解決（開発: そのまま, 本番: マニフェスト参照）
-
----
-
-### 7. SSR Islands Architecture (v0.5.0)
-
-**役割:** Preact コンポーネントのサーバーサイドレンダリング
+**Role:** Server-side rendering of Preact components with QuickJS
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
@@ -255,7 +189,7 @@ Salvia::Assets.resolve(path)  # 論理パス -> ハッシュ付きパス
 ┌─────────────────────────────────────────────────────────────────────┐
 │                        Client (Browser)                             │
 │                                                                     │
-│  1. Load islands_bundle.js (Preact + Components)                    │
+│  1. Load islands.js (Preact + Components)                           │
 │  2. Find all [data-island] elements                                 │
 │  3. hydrate(Component, props, container)                            │
 │  4. → Interactive Island!                                           │
@@ -263,10 +197,10 @@ Salvia::Assets.resolve(path)  # 論理パス -> ハッシュ付きパス
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
-**SSR Engine (QuickJS Hybrid):**
+**SSR Engine (QuickJS):**
 ```ruby
-# lib/salvia_rb/ssr/adapters/quickjs_hybrid.rb
-class QuickJSHybrid
+# lib/salvia_rb/ssr/quickjs.rb
+class QuickJS
   def render(component_name, props = {})
     js_code = "SSR.renderToString('#{component_name}', #{props.to_json})"
     @runtime.eval(js_code)  # 0.3ms/render
@@ -274,217 +208,149 @@ class QuickJSHybrid
 end
 ```
 
-**island ヘルパー:**
+**island Helper:**
 ```ruby
-# lib/salvia_rb/helpers/island.rb
 def island(name, props = {})
   html = Salvia::SSR.render(name, props)
   %(<div data-island="#{name}" data-props="#{escape_html(props.to_json)}">#{html}</div>).html_safe
 end
 ```
 
-**ファイル構成:**
-```
-myapp/
-├── app/islands/                    # Island コンポーネント (Preact/JSX)
-│   ├── Counter.jsx
-│   ├── TodoItem.jsx
-│   └── TodoList.jsx
-├── bin/build_ssr.ts                # Deno ビルドスクリプト
-├── vendor/server/ssr_bundle.js     # SSR 用バンドル (QuickJS で実行)
-└── public/assets/javascripts/
-    └── islands_bundle.js           # クライアント用バンドル (hydrate)
-```
-
 ---
 
-### 8. Salvia::Test
+### 6. CLI (Thor)
 
-**役割:** テスト支援機能
-
-```ruby
-# lib/salvia_rb/test.rb
-include Salvia::Test::ControllerHelper
-```
-
-**機能:**
-- `rack-test` のラッパー
-- コントローラーテスト用のヘルパーメソッド (`get`, `post`, `last_response` 等)
-
----
-
-### 9. Plugin System (v0.5.0)
-
-**役割:** 機能の着脱可能なプラグイン化
-
-```ruby
-# lib/salvia_rb/plugins/base.rb
-module Salvia::Plugins
-  class Base
-    def self.inherited(subclass)
-      Salvia.plugins << subclass
-    end
-    
-    def setup(app) end
-    def teardown(app) end
-  end
-end
-
-# lib/salvia_rb/plugins/htmx.rb
-class Salvia::Plugins::Htmx < Salvia::Plugins::Base
-  def setup(app)
-    # HTMX ヘルパーを有効化
-    Salvia::Controller.include(Salvia::Helpers::Htmx)
-  end
-end
-```
-
-**使用方法:**
-```ruby
-# config/environment.rb
-Salvia.use :htmx       # HTMX プラグインを有効化
-Salvia.use :inspector  # 開発用デバッグツール
-```
-
----
-
-### 10. CLI (Thor)
-
-**役割:** コマンドラインインターフェース
+**Role:** Command-line interface
 
 ```
 salvia
-├── new APP_NAME      # アプリ生成
-├── server (s)        # サーバー起動
-├── console (c)       # IRB 起動
-├── db:create         # DB 作成
-├── db:drop           # DB 削除
-├── db:migrate        # マイグレーション
-├── db:rollback       # ロールバック
+├── new APP_NAME      # Generate app
+├── server (s)        # Start server
+├── console (c)       # Start IRB
+├── db:create         # Create database
+├── db:drop           # Drop database
+├── db:migrate        # Run migrations
+├── db:rollback       # Rollback migration
 ├── db:setup          # create + migrate
-├── css:build         # Tailwind ビルド
-├── css:watch         # Tailwind ウォッチ
-├── routes            # ルート一覧
-└── version           # バージョン表示
+├── css:build         # Tailwind build
+├── css:watch         # Tailwind watch
+├── islands:build     # Build SSR bundle
+├── routes            # List routes
+└── version           # Show version
 ```
 
 ---
 
 ## Design Principles
 
-### 1. 明示性 > 暗黙性
+### 1. Explicitness > Implicitness
 
-Rails の「設定より規約」とは異なり、Salvia は明示的な記述を重視します：
+Unlike Rails' "convention over configuration", Salvia values explicit code:
 
 ```ruby
-# Salvia: 明示的に render を呼ぶ
+# Salvia: explicit render call
 def index
   @posts = Post.all
-  render "posts/index"  # 明示的
+  render "posts/index"  # explicit
 end
 ```
 
-### 2. シンプルさ > 機能性
+### 2. Simplicity > Features
 
-- メタプログラミングを最小限に
-- コードを読めば動作がわかる
-- 「魔法」より「理解しやすさ」
+- Minimal metaprogramming
+- Code behavior is obvious from reading
+- "Understanding" over "magic"
 
-### 3. HTML ファースト
+### 3. HTML First
 
-- JSON API ではなく HTML を返す
-- HTMX で部分更新
-- SPA の複雑さを避ける
+- Return HTML, not JSON API
+- Use SSR Islands for rich UI when needed
+- Avoid SPA complexity
 
-### 4. 依存の最小化
+### 4. Minimal Dependencies
 
-| 依存 | 用途 | 理由 |
-|------|------|------|
-| rack | HTTP 抽象化 | 標準的な Ruby Web インターフェース |
-| mustermann | ルーティング | Sinatra で実績あり |
-| tilt + erubi | テンプレート | 軽量で高速 |
-| activerecord | ORM | Ruby のデファクトスタンダード |
-| thor | CLI | 使いやすい CLI DSL |
-| zeitwerk | オートローダー | Rails 標準、信頼性高 |
-| tailwindcss-ruby | CSS | Node.js 不要 |
+| Dependency | Purpose | Reason |
+|------------|---------|--------|
+| rack | HTTP abstraction | Standard Ruby web interface |
+| mustermann | Routing | Battle-tested in Sinatra |
+| tilt + erubi | Templating | Lightweight and fast |
+| activerecord | ORM | Ruby de facto standard |
+| thor | CLI | Easy-to-use CLI DSL |
+| zeitwerk | Autoloader | Rails standard, reliable |
+| quickjs | SSR | Fast JS execution in Ruby |
 
 ---
 
-## Gem ソースコード構造 (salvia_rb/)
+## Gem Source Structure
 
 ```
 salvia_rb/
 ├── exe/
-│   └── salvia                    # CLI エントリーポイント
+│   └── salvia                    # CLI entry point
 ├── lib/
-│   ├── salvia_rb.rb              # メインモジュール（依存関係の読み込み）
+│   ├── salvia_rb.rb              # Main module
 │   └── salvia_rb/
-│       ├── version.rb            # バージョン定義
-│       ├── router.rb             # ルーティング DSL（Mustermann）
-│       ├── controller.rb         # コントローラー基底クラス
-│       ├── application.rb        # Rack アプリケーション
-│       ├── database.rb           # ActiveRecord 接続管理
-│       ├── assets.rb             # アセット管理
-│       ├── test.rb               # テスト支援
-│       └── cli.rb                # Thor CLI（コマンド定義 + テンプレート生成）
-├── salvia_rb.gemspec             # Gem 定義（依存関係）
-├── Gemfile                       # 開発用依存関係
-├── Rakefile                      # Gem ビルド/テストタスク
-├── README.md                     # Gem ドキュメント
-└── LICENSE.txt                   # MIT ライセンス
+│       ├── version.rb            # Version definition
+│       ├── router.rb             # Routing DSL (Mustermann)
+│       ├── controller.rb         # Controller base class
+│       ├── application.rb        # Rack application
+│       ├── database.rb           # ActiveRecord connection
+│       ├── assets.rb             # Asset management
+│       ├── flash.rb              # Flash messages
+│       ├── test.rb               # Test support
+│       ├── cli.rb                # Thor CLI
+│       ├── ssr.rb                # SSR entry point
+│       ├── ssr/
+│       │   └── quickjs.rb        # QuickJS SSR engine
+│       └── helpers/
+│           ├── tag.rb            # Tag helpers
+│           ├── island.rb         # Island helper
+│           └── component.rb      # Component helper
+└── salvia_rb.gemspec
 ```
-
-### 各ファイルの役割
-
-| ファイル | 行数 | 役割 |
-|----------|------|------|
-| `cli.rb` | ~500 | アプリ生成、サーバー起動、DB/CSS コマンド |
-| `controller.rb` | ~180 | Smart Rendering、render、params、HTMX ヘルパー |
-| `router.rb` | ~120 | DSL ルーティング、Mustermann パターンマッチ |
-| `database.rb` | ~120 | ActiveRecord 接続、マイグレーション管理 |
-| `application.rb` | ~170 | Rack アプリ、エラーハンドリング、404/500 |
-| `salvia_rb.rb` | ~50 | モジュール設定、依存関係読み込み |
 
 ---
 
-## 生成されるアプリの構造 (Generated App)
+## Generated App Structure
 
 ```
 myapp/
 ├── app/
-│   ├── controllers/           # コントローラー
+│   ├── controllers/
 │   │   ├── application_controller.rb
-│   │   └── posts_controller.rb
-│   ├── models/                # ActiveRecord モデル
-│   │   ├── application_record.rb
-│   │   └── post.rb
-│   └── views/                 # ERB テンプレート
-│       ├── layouts/
-│       │   └── application.html.erb
-│       └── posts/
-│           ├── index.html.erb
-│           ├── show.html.erb
-│           └── _post.html.erb  # パーシャル
+│   │   └── home_controller.rb
+│   ├── models/
+│   │   └── application_record.rb
+│   ├── views/
+│   │   ├── layouts/
+│   │   │   └── application.html.erb
+│   │   └── home/
+│   │       └── index.html.erb
+│   ├── islands/                  # Preact components (optional)
+│   │   └── Counter.jsx
+│   └── components/               # ERB components (optional)
 ├── config/
-│   ├── database.yml           # DB 設定
-│   ├── environment.rb         # 初期化
-│   ├── environments/          # 環境別設定
+│   ├── database.yml
+│   ├── environment.rb
+│   ├── environments/
 │   │   ├── development.rb
 │   │   └── production.rb
-│   └── routes.rb              # ルーティング
+│   └── routes.rb
 ├── db/
-│   └── migrate/               # マイグレーションファイル
+│   └── migrate/
 ├── public/
 │   └── assets/
 │       ├── javascripts/
-│       │   └── htmx.min.js
+│       │   └── islands.js
 │       └── stylesheets/
 │           └── tailwind.css
-├── test/                      # テスト
-│   ├── test_helper.rb
-│   └── controllers/
-│       └── home_controller_test.rb
-├── config.ru                  # Rack 設定
+├── test/
+├── bin/
+│   └── build_ssr.ts              # Deno build script (if Islands)
+├── vendor/
+│   └── server/
+│       └── ssr_bundle.js         # SSR bundle (if Islands)
+├── config.ru
 ├── Gemfile
 ├── Rakefile
 └── tailwind.config.js
@@ -497,8 +363,9 @@ myapp/
 ```
 1. HTTP Request arrives
    └─▶ config.ru
-       └─▶ Rack::Static (静的ファイル)
-       └─▶ Rack::Session (セッション)
+       └─▶ Rack::Static (static files)
+       └─▶ Rack::Session (session)
+       └─▶ Rack::Protection (security)
        └─▶ Salvia::Application#call
 
 2. Routing
@@ -509,32 +376,18 @@ myapp/
 3. Controller Processing
    └─▶ controller = ControllerClass.new(request, response, params)
    └─▶ controller.process(action)
-       └─▶ Before actions (future)
        └─▶ Action method
        └─▶ render / redirect_to
 
 4. View Rendering
    └─▶ Tilt.new(template_path)
    └─▶ template.render(self, locals)
-   └─▶ Layout wrapping (unless HTMX/partial)
+   └─▶ Layout wrapping (unless partial)
 
 5. Response
    └─▶ response.finish
    └─▶ [status, headers, body]
 ```
-
----
-
-## Future Architecture (Planned)
-
-### Phase 5: TypeScript Support
-- `salvia types:generate` - ActiveRecord から TypeScript 型定義を生成
-- `salvia client:generate` - ルーティングから API クライアントを生成
-
-### v1.0.0: Stable Release
-- Getting Started ガイド
-- API リファレンス
-- デプロイガイド
 
 ---
 
@@ -544,7 +397,6 @@ myapp/
 |---------|--------|-------|---------|--------|
 | Size | Tiny | Large | Tiny | Medium |
 | Learning Curve | Low | High | Low | Medium |
-| HTMX Support | Plugin | Addon | Manual | Manual |
 | SSR Islands | Built-in | No | No | No |
 | ORM | ActiveRecord | ActiveRecord | Choice | ROM |
 | Auto-loading | Zeitwerk | Zeitwerk | Manual | Zeitwerk |
@@ -552,5 +404,4 @@ myapp/
 
 ---
 
-*最終更新: 2025-01 (v0.5.0)*
-
+*Last updated: 2025-12 (v0.7.0)*

@@ -399,7 +399,6 @@ module Salvia
             puts "[SSR DEBUG] #{msg}" if ENV["DEBUG"]
           end
         end
-      end
     end
   end
 end
