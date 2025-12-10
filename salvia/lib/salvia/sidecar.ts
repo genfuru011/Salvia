@@ -67,19 +67,31 @@ async function bundle(entryPoint: string, externals: string[] = [], format: "esm
       const globalExternalsPlugin = {
         name: "global-externals",
         setup(build: any) {
-          const filter = new RegExp(`^(${Object.keys(globalExternals).map(k => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join("|")})$`);
-          build.onResolve({ filter }, (args: any) => {
-            if (externals.includes(args.path)) {
-              return { path: args.path, namespace: "global-externals" };
-            }
-            return null;
+          // フレームワーク本体 (preact/react)
+          build.onResolve({ filter: /^framework$/ }, (args: any) => {
+            return { path: args.path, namespace: "global-external" };
           });
-          build.onLoad({ filter: /.*/, namespace: "global-externals" }, (args: any) => {
-            const globalVar = globalExternals[args.path];
-            return {
-              contents: `module.exports = ${globalVar};`,
-              loader: "js"
-            };
+          // Hooks (preact/hooks)
+          build.onResolve({ filter: /^framework\/hooks$/ }, (args: any) => {
+            return { path: args.path, namespace: "global-external" };
+          });
+          // JSX Runtime
+          build.onResolve({ filter: /^framework\/jsx-runtime$/ }, (args: any) => {
+            return { path: args.path, namespace: "global-external" };
+          });
+
+          build.onLoad({ filter: /.*/, namespace: "global-external" }, (args: any) => {
+            // ここでグローバル変数へのマッピングを行う
+            // TODO: React対応時に分岐が必要になる可能性があるが、
+            // 現状は Preact 前提で window.Preact にマッピングする。
+            // 将来的には deno.json の設定を見て動的に変えることも検討。
+            if (args.path === "framework") return { contents: "module.exports = globalThis.Preact;", loader: "js" };
+            if (args.path === "framework/hooks") return { contents: "module.exports = globalThis.PreactHooks;", loader: "js" };
+            // jsx-runtime は通常グローバルには露出しないが、Preactの場合は本体に含まれることが多い
+            // ここでは簡易的に Preact 本体に逃がすか、個別に定義するか。
+            // 一旦 Preact 本体と同じ扱いにする。
+            if (args.path === "framework/jsx-runtime") return { contents: "module.exports = globalThis.Preact;", loader: "js" };
+            return null;
           });
         },
       };
@@ -98,8 +110,10 @@ async function bundle(entryPoint: string, externals: string[] = [], format: "esm
       globalName: globalName || undefined,
       platform: "neutral",
       external: actualExternals,
-      jsx: "automatic",
-      jsxImportSource: "preact",
+    // 3. JSX Runtime (Automatic)
+    // deno.json の "framework/jsx-runtime" エイリアスを使用
+    jsx: "react-jsx",
+    jsxImportSource: "framework",
     });
 
     if (result.errors.length > 0) {

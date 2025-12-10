@@ -22,29 +22,43 @@ const handler = async (request: Request): Promise<Response> => {
       // But esbuild doesn't support this out of the box for IIFE with externals.
       // We can use a plugin to rewrite imports to globals if they are in externals list.
       
-      const globalExternalsPlugin = {
-        name: 'global-externals',
-        setup(build: any) {
-          build.onResolve({ filter: /.*/ }, (args: any) => {
-            if (externals && externals.includes(args.path)) {
-              return { path: args.path, namespace: 'global-externals' };
-            }
-          });
-          
-          build.onLoad({ filter: /.*/, namespace: 'global-externals' }, (args: any) => {
-            let globalVar = `globalThis['${args.path}']`;
-            if (args.path === "preact") globalVar = "globalThis.preact";
-            if (args.path === "preact/hooks") globalVar = "globalThis.preactHooks";
-            if (args.path === "preact/jsx-runtime") globalVar = "globalThis.jsxRuntime";
-            if (args.path === "preact-render-to-string") globalVar = "globalThis.renderToString";
-            
-            return {
-              contents: `module.exports = ${globalVar};`,
-              loader: 'js',
-            };
-          });
-        },
-      };
+        // 4. Global Externals (for IIFE format)
+        // ブラウザで実行される際、これらのモジュールはバンドルせず、
+        // グローバル変数 (window.Preact など) から取得するようにする。
+        // これにより、クライアントサイドでの重複ロードを防ぎ、キャッシュを効かせる。
+        plugins: [
+          {
+            name: "global-externals",
+            setup(build: any) {
+              // フレームワーク本体 (preact/react)
+              build.onResolve({ filter: /^framework$/ }, (args: any) => {
+                return { path: args.path, namespace: "global-external" };
+              });
+              // Hooks (preact/hooks)
+              build.onResolve({ filter: /^framework\/hooks$/ }, (args: any) => {
+                return { path: args.path, namespace: "global-external" };
+              });
+              // JSX Runtime
+              build.onResolve({ filter: /^framework\/jsx-runtime$/ }, (args: any) => {
+                return { path: args.path, namespace: "global-external" };
+              });
+
+              build.onLoad({ filter: /.*/, namespace: "global-external" }, (args: any) => {
+                // ここでグローバル変数へのマッピングを行う
+                // TODO: React対応時に分岐が必要になる可能性があるが、
+                // 現状は Preact 前提で window.Preact にマッピングする。
+                // 将来的には deno.json の設定を見て動的に変えることも検討。
+                if (args.path === "framework") return { contents: "module.exports = globalThis.Preact;", loader: "js" };
+                if (args.path === "framework/hooks") return { contents: "module.exports = globalThis.PreactHooks;", loader: "js" };
+                // jsx-runtime は通常グローバルには露出しないが、Preactの場合は本体に含まれることが多い
+                // ここでは簡易的に Preact 本体に逃がすか、個別に定義するか。
+                // 一旦 Preact 本体と同じ扱いにする。
+                if (args.path === "framework/jsx-runtime") return { contents: "module.exports = globalThis.Preact;", loader: "js" };
+                return null;
+              });
+            },
+          },
+        ],
 
       const externalizePlugin = {
         name: 'externalize-deps',
@@ -64,6 +78,8 @@ const handler = async (request: Request): Promise<Response> => {
       ];
       
       if (isIIFE) {
+        // IIFEの場合は、globalExternalsPlugin を使う
+        // ただし、denoPlugins よりも前に配置して、framework などの解決を横取りする
         plugins.unshift(globalExternalsPlugin);
       } else {
         plugins.unshift(externalizePlugin);
@@ -79,8 +95,10 @@ const handler = async (request: Request): Promise<Response> => {
         plugins: plugins,
         external: [], // We handle externals manually with plugins
         write: false, // Return in memory
-        jsx: "automatic",
-        jsxImportSource: "preact",
+    // 3. JSX Runtime (Automatic)
+    // deno.json の "framework/jsx-runtime" エイリアスを使用
+    jsx: "react-jsx",
+    jsxImportSource: "framework",
         minify: false, // Keep it readable for debugging
       });
 
