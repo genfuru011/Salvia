@@ -279,3 +279,18 @@ Salvia is now fully compatible with Rails API mode, supporting the "Full JSX" ar
 - Fixed `vendor_setup.ts` to use named imports for `h` and `Fragment` to ensure they are available globally.
 - Verified SSR rendering for `/todos`.
 - Verified JIT compilation of islands.
+
+### Verification Results (2025-12-10)
+
+#### Rails API App
+- **SSR**: Verified. `curl http://localhost:3000/todos` returns rendered HTML.
+- **Asset Serving (JIT)**: Verified. `curl -I http://localhost:3000/salvia/assets/islands/Counter.js` returns 200 OK.
+- **Integration**: `Salvia::Railtie` correctly inserts `Salvia::DevServer` in development.
+
+#### Sinatra App
+- **SSR**: Verified. `curl http://localhost:4567/todos` returns rendered HTML.
+- **Asset Serving (JIT)**: Verified. `curl -I http://localhost:4567/salvia/assets/islands/TodoList.js` returns 200 OK.
+- **Integration**: Manual `use Salvia::DevServer` in `app.rb` works correctly.
+
+#### Conclusion
+The integration of `Salvia::DevServer` and the JIT architecture works correctly in both Rails and Sinatra environments. The changes are safe and do not introduce regressions.
