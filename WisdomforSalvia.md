@@ -407,3 +407,70 @@ Salvia は、**「Ruby で開発する楽しさ」** を損なうことなく、
 
 **"Write Ruby, Render JSX, Deliver HTML."**
 これが Salvia の真髄です。
+
+### 5. Rails API モード × Salvia: The Sweet Spot
+
+「Rails API モードでいいのでは？」という直感は、**完全に正しい**です。
+Salvia を「Full JSX/TSX」スタイル（ERBless）で採用する場合、Rails の役割は劇的に変化し、API モードとの相性が抜群になります。
+
+#### A. "Internal API" パターン
+
+通常、Rails API モードは JSON を返しますが、Salvia と組み合わせることで「HTML を返す API サーバー」として振る舞います。
+
+**従来の Rails API + SPA:**
+1.  Browser -> GET / (Empty HTML)
+2.  Browser -> GET /api/posts (JSON)
+3.  Browser -> Render
+
+**Salvia + Rails API:**
+1.  Browser -> GET /posts
+2.  Rails (API Mode) -> DB Fetch -> **Salvia Render** -> HTML
+3.  Browser -> Render (即座に完了)
+
+#### B. 実装イメージ: "Headless Rails" with "Salvia Head"
+
+ActionView や Sprockets/Propshaft を完全に排除し、Rails を純粋な「データフェッチャー」として扱います。
+
+```ruby
+# config/application.rb
+module MyApp
+  class Application < Rails::Application
+    config.api_only = true # APIモード有効化
+    # Salviaのために必要なミドルウェアだけ戻す（Cookies/Session等）
+    config.middleware.use ActionDispatch::Cookies
+    config.middleware.use ActionDispatch::Session::CookieStore
+  end
+end
+
+# app/controllers/posts_controller.rb
+class PostsController < ActionController::API
+  # HTMLレンダリング用のヘルパーをinclude
+  include Salvia::Rails::ControllerHelper
+
+  def index
+    # 1. データ取得 (ActiveRecord)
+    posts = Post.includes(:author).all
+    
+    # 2. シリアライズ不要！オブジェクトをそのまま渡す
+    # (Salvia内部でJSON化され、JSXのPropsになります)
+    render html: render_island("pages/PostsIndex", { 
+      posts: posts.as_json(include: :author),
+      current_user: current_user
+    })
+  end
+end
+```
+
+#### C. この構成のメリット
+
+1.  **オーバーヘッドの排除**:
+    ActionView のレンダリングパイプラインを通らないため、非常に高速です。
+2.  **Double Fetching の撲滅**:
+    SPA でありがちな「初期表示のためのデータフェッチ」が不要になります。データは最初から HTML に埋め込まれています。
+3.  **メンタルモデルの統一**:
+    バックエンドエンジニアは「データを集めて渡すだけ」、フロントエンドエンジニアは「Props を受け取って表示するだけ」。API 定義書も Swagger も不要です。
+4.  **段階的な移行**:
+    既存の Rails アプリの一部だけをこのパターンに置き換えることも可能です。
+
+**結論:**
+Rails API モード + Salvia は、**「サーバーサイドの堅牢性」と「SPA の開発体験」を両立させる、最も無駄のないアーキテクチャ** と言えます。
