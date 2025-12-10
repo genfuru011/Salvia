@@ -311,3 +311,22 @@ The integration of `Salvia::DevServer` and the JIT architecture works correctly 
     1.  Added `preact/jsx-runtime` to externals in `Salvia::DevServer`.
     2.  Modified `sidecar.ts` to inject a custom `externalizePlugin` *before* `denoPlugins`. This plugin forces paths matching the externals list to be treated as external, bypassing Deno resolution.
 - **Result**: Components now correctly import Preact from the import map, sharing the same instance as the hydration script.
+
+### 4. JSR (JavaScript Registry) Analysis
+
+**Is JSR the best choice?**
+Yes, for utility libraries and Deno-native modules.
+
+**Pros:**
+- **Native TypeScript**: No separate `@types/` packages needed.
+- **Fast**: Optimized for modern runtimes.
+- **Secure**: Token-less publishing from CI.
+- **Cross-runtime**: Works in Node, Deno, Bun, and Browsers (via esm.sh/jsr.io).
+
+**Cons:**
+- **React Ecosystem**: Most React/Preact libraries are still primarily on npm.
+
+**Recommendation:**
+- **Utilities/Helpers**: Use **JSR** (`@std/*`, etc.).
+- **UI/Frameworks**: Use **npm** (`preact`, `framer-motion`).
+- **Salvia Internal**: Move internal helpers to JSR in the future.
