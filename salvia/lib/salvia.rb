@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require_relative "salvia/version"
-require_relative "salvia/assets_middleware"
 
 require "rack"
 require "zeitwerk"
