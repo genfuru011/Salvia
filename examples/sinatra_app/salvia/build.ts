@@ -46,32 +46,27 @@ async function buildCSS() {
     const css = await Deno.readTextFile(CSS_INPUT);
     
     // Load Tailwind config
-    const config = {
-      content: [
-        `${ROOT_DIR}/app/views/**/*.erb`,
-        `${ROOT_DIR}/app/islands/**/*.{js,jsx,tsx}`,
-        `${ROOT_DIR}/public/assets/javascripts/**/*.js`
-      ],
-      theme: {
-        extend: {
-          colors: {
-            'salvia': {
-              50: '#f0f0ff',
-              100: '#e4e4ff',
-              200: '#cdcdff',
-              300: '#a8a8ff',
-              400: '#7c7cff',
-              500: '#6A5ACD',
-              600: '#5a4ab8',
-              700: '#4B0082',
-              800: '#3d006b',
-              900: '#2d0050',
-            }
-          }
+    let config;
+    try {
+      const configPath = `${ROOT_DIR}/tailwind.config.ts`;
+      // Dynamic import needs a file URL
+      const configFile = await import(`file://${await Deno.realPath(configPath)}`);
+      config = configFile.default;
+      if (VERBOSE) console.log("🎨 Loaded tailwind.config.ts");
+    } catch {
+      if (VERBOSE) console.log("ℹ️  tailwind.config.ts not found, using default config.");
+      config = {
+        content: [
+          `${ROOT_DIR}/app/views/**/*.erb`,
+          `${ROOT_DIR}/app/islands/**/*.{js,jsx,tsx}`,
+          `${ROOT_DIR}/public/assets/javascripts/**/*.js`
+        ],
+        theme: {
+          extend: {},
         },
-      },
-      plugins: [],
-    };
+        plugins: [],
+      };
+    }
 
     const result = await postcss([
       tailwindcss(config),

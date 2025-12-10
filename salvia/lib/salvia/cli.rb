@@ -12,7 +12,7 @@ module Salvia
     end
 
     desc "install", "Install Salvia SSR files into your application"
-    method_option :tailwind, type: :boolean, default: false, desc: "Generate Tailwind CSS configuration"
+    method_option :tailwind, type: :boolean, desc: "Generate Tailwind CSS configuration"
     def install
       say "🌿 Installing Salvia SSR...", :green
 
@@ -30,7 +30,13 @@ module Salvia
       
       create_file "salvia/.gitignore", "/server/\n"
 
-      if options[:tailwind]
+      # Tailwind CSS setup
+      install_tailwind = options[:tailwind]
+      if install_tailwind.nil?
+        install_tailwind = yes?("🎨 Do you want to install Tailwind CSS? (y/N)", :yellow)
+      end
+
+      if install_tailwind
         empty_directory "app/assets/stylesheets"
         create_file "app/assets/stylesheets/application.tailwind.css" do
           <<~CSS
@@ -39,7 +45,35 @@ module Salvia
             @tailwind utilities;
           CSS
         end
+        
+        # Create tailwind.config.ts
+        create_file "tailwind.config.ts" do
+          <<~TS
+            import { type Config } from "npm:tailwindcss@3";
+
+            export default {
+              content: [
+                "./app/views/**/*.erb",
+                "./app/islands/**/*.{js,jsx,tsx}",
+                "./public/assets/javascripts/**/*.js"
+              ],
+              theme: {
+                extend: {
+                  colors: {
+                    'salvia': {
+                      500: '#6A5ACD',
+                      600: '#5a4ab8',
+                    }
+                  }
+                },
+              },
+              plugins: [],
+            } satisfies Config;
+          TS
+        end
+        
         say "   - app/assets/stylesheets/ : Tailwind CSS entry point created"
+        say "   - tailwind.config.ts      : Tailwind configuration created"
       end
 
       chmod "salvia/build.ts", 0755
