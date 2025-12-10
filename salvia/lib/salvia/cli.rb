@@ -13,7 +13,27 @@ module Salvia
 
     desc "install", "Install Salvia SSR files into your application"
     def install
-      say "🌿 Installing Salvia SSR...", :green
+      say "🌿 Salvia Installer", :bold
+      say "===================", :bold
+      say ""
+
+      # 1. Select Frontend Framework
+      frontend = ask("1. Which frontend framework do you want to use?", :yellow, limited_to: ["preact", "react", "vue", "solid", "hono"], default: "preact")
+      
+      if frontend != "preact"
+        say "⚠️  Currently only Preact is fully supported in v0.1.0. Falling back to Preact.", :red
+        frontend = "preact"
+      end
+
+      # 2. Select Backend Framework
+      backend = ask("2. Which backend framework are you using?", :yellow, limited_to: ["sinatra", "rails", "hanami", "other"], default: "sinatra")
+
+      # 3. Tailwind CSS
+      install_tailwind = yes?("3. Do you want to install Tailwind CSS (via tailwindcss-ruby)? (y/N)", :yellow)
+
+      say ""
+      say "🚀 Installing Salvia with #{frontend} for #{backend}...", :green
+      say ""
 
       # Create directories
       empty_directory "app/islands"
@@ -29,6 +49,56 @@ module Salvia
       
       create_file "salvia/.gitignore", "/server/\n"
 
+      # Backend Setup
+      case backend
+      when "rails"
+        create_file "config/initializers/salvia.rb" do
+          <<~RUBY
+            Salvia.configure do |config|
+              config.islands_dir = Rails.root.join("app/islands")
+              config.build_dir = Rails.root.join("public/assets")
+              config.ssr_bundle_path = Rails.root.join("salvia/server/ssr_bundle.js")
+            end
+            
+            # Initialize SSR Engine
+            Salvia::SSR.configure(
+              bundle_path: Salvia.config.ssr_bundle_path,
+              development: Rails.env.development?
+            )
+          RUBY
+        end
+        say "   - Created config/initializers/salvia.rb"
+      end
+
+      # Tailwind CSS Setup
+      if install_tailwind
+        # Add tailwindcss-ruby to Gemfile if present
+        if File.exist?("Gemfile")
+          unless File.read("Gemfile").include?("tailwindcss-ruby")
+            append_to_file "Gemfile", "\ngem 'tailwindcss-ruby'\n"
+            say "   - Added 'tailwindcss-ruby' to Gemfile"
+          end
+        end
+
+        empty_directory "app/assets/stylesheets"
+        create_file "app/assets/stylesheets/application.tailwind.css" do
+          <<~CSS
+            @import "tailwindcss";
+
+            @source "../../views/**/*.erb";
+            @source "../../islands/**/*.{js,jsx,tsx}";
+            @source "../../../public/assets/javascripts/**/*.js";
+
+            @theme {
+              --color-salvia-500: #6A5ACD;
+              --color-salvia-600: #5a4ab8;
+            }
+          CSS
+        end
+        
+        say "   - app/assets/stylesheets/ : Tailwind CSS entry point created (v4)"
+      end
+
       chmod "salvia/build.ts", 0755
 
       say ""
@@ -39,7 +109,13 @@ module Salvia
       say ""
       say "Next steps:", :yellow
       say "  1. Install Deno: https://deno.land"
-      say "  2. Run build: salvia build"
+      if install_tailwind
+        say "  2. Run 'bundle install' to install Tailwind"
+        say "  3. Run build: salvia build"
+        say "  4. Watch assets: bundle exec foreman start -f Procfile.dev (recommended)"
+      else
+        say "  2. Run build: salvia build"
+      end
     end
 
     desc "build", "Build Island components for SSR"

@@ -31,11 +31,16 @@ $ bundle install
 
 ### 1. Install SSR files
 
-Run the install command to generate the necessary configuration and directories:
+Run the interactive installer to set up Salvia for your project:
 
 ```bash
 $ bundle exec salvia install
 ```
+
+The installer will ask you about:
+1.  **Frontend Framework**: (Currently Preact is supported)
+2.  **Backend Framework**: (Rails, Sinatra, etc.)
+3.  **Tailwind CSS**: (Installs `tailwindcss-ruby` if requested)
 
 This creates:
 *   `app/islands/` - Directory for your components

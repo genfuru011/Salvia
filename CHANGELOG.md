@@ -13,7 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **SSR Engine**: Standalone Ruby gem (`salvia`) for Server-Side Rendering using QuickJS.
 - **Islands Architecture**: Support for partial hydration using Preact.
 - **Build System**: Deno + esbuild integration for bundling server and client assets.
-- **CLI**: `salvia install`, `salvia build`, and `salvia watch` commands.
+- **CLI**: Interactive installer (`salvia install`) with support for Tailwind CSS and framework selection.
+- **Tailwind CSS**: Optional integration via `tailwindcss-ruby`.
 - **Logging**: `console.log` from JS is forwarded to Ruby logger.
 - **Example**: Sinatra application demonstrating SSR, hydration, and Tailwind.
 
