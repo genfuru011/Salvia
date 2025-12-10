@@ -611,3 +611,5 @@ Salvia のコアロジックは「HTML 文字列を受け取り、SSR して返�
 #### C. The "Universal View Layer" for Ruby
 最終的な目標は、Salvia が **「Ruby のためのユニバーサルな View レイヤー」** になることです。
 バックエンドが何であれ、フロントエンドが何であれ、"Ruby でデータを渡し、JSX で描画する" という体験を統一します。
+
+

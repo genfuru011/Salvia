@@ -14,13 +14,13 @@ import * as esbuild from "https://deno.land/x/esbuild@v0.24.2/mod.js";
 import { denoPlugins } from "jsr:@luca/esbuild-deno-loader@0.11";
 
 // When running via `deno task --config salvia/deno.json`, CWD is `salvia/`.
-// We need to go up one level to access app/ and public/.
+// We need to go up one level to access public/.
 const ROOT_DIR = ".";
 const ISLANDS_DIR = `${ROOT_DIR}/app/islands`;
 const PAGES_DIR = `${ROOT_DIR}/app/pages`;
 const COMPONENTS_DIR = `${ROOT_DIR}/app/components`;
-const SSR_OUTPUT_DIR = `${ROOT_DIR}/salvia/server`;
-const CLIENT_OUTPUT_DIR = `${ROOT_DIR}/public/assets/islands`;
+const SSR_OUTPUT_DIR = `${ROOT_DIR}/server`;
+const CLIENT_OUTPUT_DIR = `${ROOT_DIR}/../public/assets/islands`;
 const WATCH_MODE = Deno.args.includes("--watch");
 const VERBOSE = Deno.args.includes("--verbose");
 

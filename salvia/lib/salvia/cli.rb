@@ -36,9 +36,9 @@ module Salvia
       say ""
 
       # Create directories
-      empty_directory "app/islands"
-      empty_directory "app/pages"
-      empty_directory "app/components"
+      empty_directory "salvia/app/islands"
+      empty_directory "salvia/app/pages"
+      empty_directory "salvia/app/components"
       empty_directory "public/assets/javascripts"
       empty_directory "public/assets/islands"
       empty_directory "salvia"
@@ -57,7 +57,7 @@ module Salvia
         create_file "config/initializers/salvia.rb" do
           <<~RUBY
             Salvia.configure do |config|
-              config.islands_dir = Rails.root.join("app/islands")
+              config.islands_dir = Rails.root.join("salvia/app/islands")
               config.build_dir = Rails.root.join("public/assets")
               config.ssr_bundle_path = Rails.root.join("salvia/server/ssr_bundle.js")
             end
@@ -105,9 +105,9 @@ module Salvia
 
       say ""
       say "✅ Salvia SSR installed!", :green
-      say "   - app/islands/           : Put your interactive Island components here"
-      say "   - app/pages/             : Put your static Server Components here (JS-free)"
-      say "   - app/components/        : Put your shared/static components here"
+      say "   - salvia/app/islands/    : Put your interactive Island components here"
+      say "   - salvia/app/pages/      : Put your static Server Components here (JS-free)"
+      say "   - salvia/app/components/ : Put your shared/static components here"
       say "   - salvia/build.ts        : Build script"
       say "   - salvia/deno.json       : Deno configuration"
       say ""

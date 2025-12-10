@@ -23,7 +23,7 @@ module Salvia
 
     def initialize
       @ssr_bundle_path = "salvia/server/ssr_bundle.js"
-      @islands_dir = "app/islands"
+      @islands_dir = "salvia/app/islands"
       @build_dir = "public/assets"
       @island_inspector = nil
     end
@@ -47,6 +47,14 @@ module Salvia
 
     def configure
       yield config if block_given?
+      
+      # Initialize SSR engine
+      if defined?(Salvia::SSR)
+        Salvia::SSR.configure(
+          bundle_path: config.ssr_bundle_path,
+          development: development?
+        )
+      end
     end
 
     def root

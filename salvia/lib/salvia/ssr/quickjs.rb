@@ -61,7 +61,8 @@ module Salvia
                 if (typeof globalThis.SalviaSSR === 'undefined') {
                   throw new Error('SalviaSSR runtime not loaded. Run: deno run --allow-all bin/build_ssr.ts');
                 }
-                return globalThis.SalviaSSR.render('#{escape_js(component_name)}', #{props.to_json});
+                var res = globalThis.SalviaSSR.render('#{escape_js(component_name)}', #{props.to_json});
+                return JSON.stringify(res);
               } catch (e) {
                 return JSON.stringify({ __ssr_error__: true, message: e.message, stack: e.stack || '' });
               }
@@ -69,11 +70,21 @@ module Salvia
           JS
 
           # Execute JS in QuickJS VM
-          result = eval_js(js_code)
+          result_json = eval_js(js_code)
+          log_debug("Eval result type: #{result_json.class}, value: #{result_json.inspect}")
+          
+          return "" if result_json.nil?
+
+          begin
+            result = JSON.parse(result_json)
+          rescue JSON::ParserError
+            log_error("Failed to parse SSR result: #{result_json}")
+            return ""
+          end
           
           # エラーチェック
-          if result&.start_with?('{"__ssr_error__":true')
-            error_data = JSON.parse(result)
+          if result.is_a?(Hash) && result["__ssr_error__"]
+            error_data = result
             if @development
               return ssr_error_overlay(component_name, error_data)
             else
@@ -83,7 +94,7 @@ module Salvia
             end
           end
           
-          result
+          result.to_s
         end
 
         # バンドルをリロード (開発モードでのホットリロード用)
