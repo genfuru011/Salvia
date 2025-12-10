@@ -35,6 +35,14 @@ const VERBOSE = Deno.args.includes("--verbose");
 
 async function buildCSS() {
   try {
+    // Check if input file exists
+    try {
+      await Deno.stat(CSS_INPUT);
+    } catch {
+      if (VERBOSE) console.log("ℹ️  Tailwind CSS input not found. Skipping CSS build.");
+      return;
+    }
+
     const css = await Deno.readTextFile(CSS_INPUT);
     
     // Load Tailwind config

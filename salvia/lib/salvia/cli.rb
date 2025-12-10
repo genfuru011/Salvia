@@ -12,6 +12,7 @@ module Salvia
     end
 
     desc "install", "Install Salvia SSR files into your application"
+    method_option :tailwind, type: :boolean, default: false, desc: "Generate Tailwind CSS configuration"
     def install
       say "🌿 Installing Salvia SSR...", :green
 
@@ -28,6 +29,18 @@ module Salvia
       copy_file "assets/javascripts/islands.js", "public/assets/javascripts/islands.js"
       
       create_file "salvia/.gitignore", "/server/\n"
+
+      if options[:tailwind]
+        empty_directory "app/assets/stylesheets"
+        create_file "app/assets/stylesheets/application.tailwind.css" do
+          <<~CSS
+            @tailwind base;
+            @tailwind components;
+            @tailwind utilities;
+          CSS
+        end
+        say "   - app/assets/stylesheets/ : Tailwind CSS entry point created"
+      end
 
       chmod "salvia/build.ts", 0755
 

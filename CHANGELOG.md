@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Islands Architecture**: Support for partial hydration using Preact.
 - **Build System**: Deno + esbuild integration for bundling server and client assets.
 - **CLI**: `salvia install`, `salvia build`, and `salvia watch` commands.
-- **Tailwind CSS**: Built-in support for Tailwind CSS compilation.
+- **Tailwind CSS**: Built-in support for Tailwind CSS compilation (optional via `--tailwind`).
 - **Logging**: `console.log` from JS is forwarded to Ruby logger.
 - **Example**: Sinatra application demonstrating SSR, hydration, and Tailwind.
 

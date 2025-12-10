@@ -37,6 +37,12 @@ Run the install command to generate the necessary configuration and directories:
 $ bundle exec salvia install
 ```
 
+To include Tailwind CSS configuration:
+
+```bash
+$ bundle exec salvia install --tailwind
+```
+
 This creates:
 *   `app/islands/` - Directory for your components
 *   `salvia/deno.json` - Deno configuration
