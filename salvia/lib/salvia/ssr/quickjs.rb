@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require "json"
-require "salvia/compiler"
 
 module Salvia
   module SSR
@@ -16,55 +15,34 @@ module Salvia
         @last_build_error = nil
         @development = options.fetch(:development, true)
         
-        # 1. VMインスタンスを作成して保持
         @vm = ::Quickjs::VM.new
         
-        # 2. 初期化スクリプトをロード
         load_console_shim!
+        load_vendor_bundle!
         
-        if @development
-          # JIT Mode
-          # Salvia::Compiler will auto-start the sidecar on first use
-          load_vendor_bundle!
-        else
-          # Production Mode
+        unless @development
           load_ssr_bundle!
         end
         
         mark_initialized!
       end
+      
+      def shutdown!
+        @vm = nil
+        @js_logs = []
+        @initialized = false
+        Salvia::Compiler.shutdown if @development
+      end
 
       def render(component_name, props = {})
+        log_info("[Salvia] Rendering #{component_name}") if @development
         raise Error, "Engine not initialized" unless initialized?
         
-        if @last_build_error && @development
-          return build_error_html(@last_build_error)
-        end
-
         if @development
           render_jit(component_name, props)
         else
           render_production(component_name, props)
         end
-      end
-
-      def reload_bundle!
-        # リロード時はVMを作り直してリセットする
-        @vm = ::Quickjs::VM.new
-        load_console_shim!
-        
-        if @development
-          load_vendor_bundle!
-        else
-          load_ssr_bundle!
-        end
-      end
-      
-      def shutdown!
-        @vm = nil # ガベージコレクションに任せる
-        @js_logs = []
-        @initialized = false
-        Salvia::Compiler.shutdown if @development
       end
 
       private
@@ -109,7 +87,8 @@ module Salvia
                 const Component = SalviaComponent.default;
                 if (!Component) throw new Error("Component default export not found in " + "#{escape_js(component_name)}");
                 const vnode = h(Component, #{props.to_json});
-                return renderToString(vnode);
+                const html = renderToString(vnode);
+                return JSON.stringify(html);
               } catch (e) {
                 return JSON.stringify({ __ssr_error__: true, message: e.message, stack: e.stack || '' });
               }
@@ -118,14 +97,22 @@ module Salvia
           
           result = eval_js(render_script)
           
-          if result&.start_with?('{"__ssr_error__":true')
-            error_data = JSON.parse(result)
-            @last_build_error = error_data['message']
-            return ssr_error_overlay(component_name, error_data)
+          begin
+            parsed = JSON.parse(result)
+            if parsed.is_a?(Hash) && parsed["__ssr_error__"]
+              @last_build_error = parsed['message']
+              return ssr_error_overlay(component_name, parsed)
+            end
+            return parsed
+          rescue JSON::ParserError
+            if result.nil?
+              log_error("Render result is nil")
+              return nil
+            end
+            return result
           end
-          
-          return result
         rescue => e
+          log_error("Render JIT Error: #{e.message}")
           @last_build_error = e.message
           return build_error_html(e.message)
         end
@@ -138,7 +125,8 @@ module Salvia
               if (typeof globalThis.SalviaSSR === 'undefined') {
                 throw new Error('SalviaSSR runtime not loaded.');
               }
-              return globalThis.SalviaSSR.render('#{escape_js(component_name)}', #{props.to_json});
+              const html = globalThis.SalviaSSR.render('#{escape_js(component_name)}', #{props.to_json});
+              return JSON.stringify(html);
             } catch (e) {
               return JSON.stringify({ __ssr_error__: true, message: e.message, stack: e.stack || '' });
             }
@@ -147,12 +135,15 @@ module Salvia
 
         result = eval_js(js_code)
         
-        if result&.start_with?('{"__ssr_error__":true')
-          error_data = JSON.parse(result)
-          return ssr_error_overlay(component_name, error_data)
+        begin
+          parsed = JSON.parse(result)
+          if parsed.is_a?(Hash) && parsed["__ssr_error__"]
+            return ssr_error_overlay(component_name, parsed)
+          end
+          return parsed
+        rescue JSON::ParserError
+          return result
         end
-        
-        result
       end
 
       def eval_js(code)
