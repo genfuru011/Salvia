@@ -407,6 +407,22 @@ salvia/                    # Frontend Root (Deno World)
         └── LikeButton.tsx
 ```
 
+#### 2. Why `salvia/` directory? (なぜ独立しているのか？)
+
+「なぜ `app/javascript` や `app/views` の中ではなく、ルートに `salvia/` を置くのか？」
+
+1.  **Runtimeの分離 (Ruby vs Deno)**
+    *   バックエンドは **Ruby**、フロントエンド（SSR/Build）は **Deno** で動作します。
+    *   `Gemfile` (Ruby) と `deno.json` (TypeScript) という異なるパッケージ管理システムを明確に分けることで、競合を防ぎ、開発体験を向上させます。
+
+2.  **Framework Agnostic (フレームワーク非依存)**
+    *   `salvia/` 以下の構成は、**Rails, Sinatra, Roda, Hanami** どのフレームワークを使っても完全に同一です。
+    *   これにより、将来的にバックエンドのフレームワークを変更しても、View層（Salvia）はそのまま再利用できます。
+
+3.  **高速な開発サイクル**
+    *   フロントエンドの変更検知やビルドは Deno 側で完結します。
+    *   Ruby アプリケーション全体を再起動することなく、View 層だけの高速な HMR (Hot Module Replacement) やリロードが可能になります。
+
 #### 2. The Mechanism (How it works)
 
 このアーキテクチャでは、Ruby の Controller は「JSON を返す API」ではなく、「View コンポーネントを指定して Props を渡す指揮者」になります。
@@ -531,3 +547,50 @@ end
 
 **結論:**
 Rails API モード + Salvia は、**「サーバーサイドの堅牢性」と「SPA の開発体験」を両立させる、最も無駄のないアーキテクチャ** と言えます。
+
+### 7. Deployment Strategy (本番環境へのデプロイ)
+
+Salvia アプリケーションのデプロイは、通常の Rails/Sinatra アプリケーションとほぼ同じですが、ビルドプロセスに Deno が必要になる点が異なります。
+
+#### A. Docker (Recommended)
+マルチステージビルドを利用することで、最終的なイメージサイズを小さく保つことができます。
+
+```dockerfile
+# Stage 1: Build Frontend (Deno)
+FROM denoland/deno:1.39.0 AS frontend
+WORKDIR /app
+COPY salvia/ ./salvia/
+# 依存関係のキャッシュ
+RUN cd salvia && deno cache build.ts
+# ビルド実行 (SSRバンドルとクライアントJSを生成)
+RUN cd salvia && deno task build
+
+# Stage 2: Runtime (Ruby)
+FROM ruby:3.2-slim
+WORKDIR /app
+# Rubyの依存関係インストール
+COPY Gemfile Gemfile.lock ./
+RUN bundle install
+
+# アプリケーションコードのコピー
+COPY . .
+# ビルド成果物をコピー (SSRバンドルとクライアントJS)
+COPY --from=frontend /app/salvia/vendor ./salvia/vendor
+COPY --from=frontend /app/public/assets/islands ./public/assets/islands
+
+# サーバー起動
+CMD ["bundle", "exec", "rails", "server", "-b", "0.0.0.0"]
+```
+
+#### B. Heroku / Render / Fly.io
+ビルドパックを使用するか、ビルドスクリプト内で Deno をインストールします。
+
+**例: Heroku (Buildpack)**
+1. `heroku/ruby` ビルドパックを追加。
+2. `https://github.com/chibat/heroku-buildpack-deno` などを追加。
+3. `assets:precompile` の前（または代わり）に `salvia build` を実行するように設定。
+
+#### C. Runtime Dependency
+本番環境（Runtime）では **Deno は不要** です。
+Salvia は **QuickJS (Ruby Gem)** を使って SSR を行うため、Deno は「ビルド時」にのみ必要です。
+これにより、本番サーバーに Deno をインストールする必要がなく、運用がシンプルになります。
