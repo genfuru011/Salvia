@@ -43,7 +43,8 @@ The installer will ask you about:
 3.  **Tailwind CSS**: (Installs `tailwindcss-ruby` if requested)
 
 This creates:
-*   `app/islands/` - Directory for your components
+*   `app/islands/` - Directory for interactive Island components
+*   `app/components/` - Directory for shared/static components
 *   `salvia/deno.json` - Deno configuration
 *   `salvia/build.ts` - Build script
 *   `public/assets/islands/` - Output directory for client bundles

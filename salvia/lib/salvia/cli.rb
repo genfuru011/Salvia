@@ -37,6 +37,7 @@ module Salvia
 
       # Create directories
       empty_directory "app/islands"
+      empty_directory "app/components"
       empty_directory "public/assets/javascripts"
       empty_directory "public/assets/islands"
       empty_directory "salvia"
@@ -103,7 +104,8 @@ module Salvia
 
       say ""
       say "✅ Salvia SSR installed!", :green
-      say "   - app/islands/           : Put your .jsx components here"
+      say "   - app/islands/           : Put your interactive Island components here"
+      say "   - app/components/        : Put your shared/static components here"
       say "   - salvia/build.ts        : Build script"
       say "   - salvia/deno.json       : Deno configuration"
       say ""

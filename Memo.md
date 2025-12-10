@@ -36,7 +36,7 @@
 
 ## 7. コンポーネントディレクトリと独立性 (User Feedback)
 *   **`components/` の利用**:
-    *   `app/javascript/components/Button.jsx` を作成し、`islands/Counter.jsx` から import して利用することは**可能**です（esbuildが依存関係を解決してバンドルします）。
+    *   `app/components/Button.jsx` を作成し、`islands/Counter.jsx` から import して利用することは**可能**です（esbuildが依存関係を解決してバンドルします）。
     *   これにより、UIパーツ（ボタン、カードなど）を再利用可能なコンポーネントとして定義できます。
 *   **独立した利用 (Freshとの比較)**:
     *   現状、Ruby側から `<%= island "Name" %>` で呼び出せるのは `islands/` ディレクトリ直下のファイルのみです。
@@ -45,7 +45,7 @@
 
 ## 8. 結論 (2025-12-10)
 現状のアーキテクチャ（Islands Architecture）で進める方針で確定。
-- **Islands (`app/javascript/islands/`)**: クライアントサイドでのハイドレーションが必要なコンポーネント（インタラクティブなボタン、カウンターなど）。
-- **Components (`app/javascript/components/`)**: Islandsからインポートして使う、またはSSRのみで使う静的なUIパーツ。これらは単体ではハイドレーションされないが、Islandsの一部として組み込まれれば機能する。
+- **Islands (`app/islands/`)**: クライアントサイドでのハイドレーションが必要なコンポーネント（インタラクティブなボタン、カウンターなど）。
+- **Components (`app/components/`)**: Islandsからインポートして使う、またはSSRのみで使う静的なUIパーツ。これらは単体ではハイドレーションされないが、Islandsの一部として組み込まれれば機能する。
 
 Freshのように「Islandsディレクトリにあるものだけがハイドレーションのエントリーポイントになる」という仕様は、バンドルサイズを抑え、明示的な境界を作る上で理にかなっているため、このまま維持する。
