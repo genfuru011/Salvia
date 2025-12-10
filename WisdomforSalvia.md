@@ -373,6 +373,9 @@ ERB ファイルは一つも存在せず、すべてが TypeScript と JSX で�
 
 #### 1. Directory Structure
 
+デフォルトでは `salvia/` ディレクトリがフロントエンド（Deno）の世界として独立しています。
+これにより、Ruby の `app/` とは明確に分離され、依存関係（import map vs Gemfile）の競合を防ぎます。
+
 ```
 app/
 ├── controllers/           # Ruby: データ取得とビジネスロジック
@@ -383,7 +386,7 @@ app/
 └── views/                 # (Deleted) ERBディレクトリは消滅
     └── (empty)
 
-salvia/                    # Frontend Root
+salvia/                    # Frontend Root (Deno World)
 ├── deno.json              # 依存関係定義 (Import Map)
 └── app/
     ├── pages/             # Server Components (Entry Points)
