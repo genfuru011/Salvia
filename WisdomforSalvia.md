@@ -181,44 +181,44 @@ Salvia が生成した HTML は、Turbo Drive によって SPA のように遷�
 
 ---
 
-### E. Import Map Strategy: deno.json vs Browser Import Map
+### E. Import Map Strategy: deno.json & Browser Import Map
 
 Salvia は、ビルド時と実行時のパフォーマンスを両立させるために、2つの異なるインポート戦略を組み合わせています。
 
 #### 1. Build Time (`deno.json`)
 **役割**: サーバーサイドレンダリング（SSR）のビルド時に Deno が使用します。
-- **設定**: `preact` などのライブラリを `npm:preact` や `esm.sh` にマッピングし、Deno が SSR 用のバンドルを作成できるようにします。
-- **動作**: ここで解決されたライブラリは、サーバー上で HTML を生成するために使われます。
+- **設定**: `salvia/deno.json` の `imports` セクションにライブラリを定義します。
+- **動作**: ここで定義されたライブラリは、サーバー上で HTML を生成するために使われます。
 
 #### 2. Runtime (`<script type="importmap">`)
 **役割**: ブラウザ（クライアントサイド）が実行時に使用します。
-- **設定**: `preact` などを CDN URL（例: `https://esm.sh/preact`）にマッピングします。
+- **設定**: `salvia_import_map` ヘルパーが、`salvia/deno.json` の `imports` を自動的に読み込んで出力します。
 - **メリット**:
-    - **重複排除**: 各 Island ファイルに Preact のコードを含める必要がなくなります。すべての Island が共通の CDN からロードされた Preact を共有します。
-    - **キャッシュ**: ブラウザはライブラリをアプリケーションコードとは独立してキャッシュできるため、再訪問時のロードが高速化します。
-
-#### 関係性
-`salvia_import_map` ヘルパーがブラウザ用のインポートマップを出力します。
-一方、ビルドスクリプト（`build.ts`）では、クライアント用バンドルを作成する際に `external: ["preact", ...]` のように指定し、「このライブラリはバンドルに含めず、ブラウザ環境（インポートマップ）にあるものを使え」と指示します。これにより、**「サーバーではバンドル込み、クライアントでは CDN 参照」** という最適な構成が実現します。
+    - **一元管理**: `deno.json` を編集するだけで、ビルド環境とブラウザ環境の両方に設定が反映されます。
+    - **重複排除**: 各 Island ファイルにライブラリのコードを含める必要がなくなります。
+    - **キャッシュ**: ブラウザはライブラリをアプリケーションコードとは独立してキャッシュできます。
 
 #### カスタマイズ（ライブラリの追加）
-使用するフレームワークやライブラリが増えた場合は、`salvia_import_map` ヘルパーに引数を渡すことで追加できます。
+使用するフレームワークやライブラリが増えた場合は、`salvia/deno.json` の `imports` に追加するだけでOKです。
 
-```erb
-<%= salvia_import_map({
-  "imports" => {
-    "uuid" => "https://esm.sh/uuid@9.0.1",
-    "chart.js" => "https://esm.sh/chart.js@4.4.1"
+```json
+// salvia/deno.json
+{
+  "imports": {
+    "preact": "https://esm.sh/preact@10.19.6",
+    "uuid": "https://esm.sh/uuid@9.0.1"
   }
-}) %>
+}
 ```
+
+これにより、`salvia_import_map` ヘルパーが自動的にこの設定を読み込み、ブラウザに出力します。
 
 ### F. The Road to ERBless (True HTML First)
 
 現在、Salvia は多くの場合 ERB/Slim テンプレートの中で `<%= island ... %>` のように使われています。しかし、Salvia の究極の目標は **"ERBless"** —— つまり、Ruby の View 層（ERB）を完全に排除することです。
 
-#### コンセプト
-Rails の View が Salvia コンポーネントを「部分的に」使うのではなく、Rails の Controller が直接 Salvia のページコンポーネントをレンダリングします。
+#### コンセプト: "Ruby for Logic, JSX for View"
+Next.js の App Router (React Server Components) に非常に近いアーキテクチャですが、「ルーティングとデータ取得は Ruby (Rails/Sinatra) が担当し、View 層だけを JSX が担当する」という点が異なります。
 
 **現在のハイブリッド構成:**
 1. Controller -> `views/posts/index.html.erb`
@@ -229,10 +229,20 @@ Rails の View が Salvia コンポーネントを「部分的に」使うので
 1. Controller -> `render_salvia 'pages/PostsIndex', props: { posts: @posts }`
 2. Salvia -> `<html>`, `<head>`, `<body>` を含むドキュメント全体を生成。
 
-#### メリット
-1. **構文の統一**: すべてを JSX/TSX で記述できます。Ruby (ERB) と JavaScript のコンテキストスイッチがなくなります。
-2. **コンポーネント指向**: レイアウトも単なる「親コンポーネント」になります（`<Layout><Page /></Layout>`）。
-3. **真の Server Components**: 最上位のページコンポーネントは「Server Component」として機能します。コントローラーから渡されたデータを使い、静的な HTML を生成します。インタラクティブな部分（Islands）だけがクライアントで JS としてロードされます。
+#### Next.js App Router との比較
+
+| 機能 | Next.js (App Router) | Salvia (ERBless) |
+| :--- | :--- | :--- |
+| **Routing** | File-system based (`app/page.tsx`) | **Ruby Routes** (`config/routes.rb`) |
+| **Data Fetching** | `async` Server Component | **Ruby Controller** (`@posts = Post.all`) |
+| **Server Components** | Default (React) | **Default** (Preact via QuickJS) |
+| **Client Interactivity** | `"use client"` directive | **Islands Architecture** (`app/islands/`) |
+| **Server Actions** | `"use server"` functions | **Standard HTTP Form POST** |
+
+**Salvia のアプローチの利点:**
+1.  **既存資産の活用**: 複雑なビジネスロジック、認証、DB操作は、成熟した Ruby エコシステム（ActiveRecord, Devise, Pundit）をそのまま使えます。
+2.  **明確な分離**: 「データを用意する人（Ruby）」と「表示する人（JSX）」が明確に分かれます。コンポーネントの中に SQL や API コールが混ざりません。
+3.  **学習コスト**: フロントエンドエンジニアは JSX だけ書けばよく、バックエンドエンジニアは Ruby だけ書けばよいです。繋ぎこみは `props` だけです。
 
 #### 実現方法
 `app/pages/` ディレクトリにページ全体のコンポーネントを配置し、コントローラーから直接それを呼び出すことで、今すぐこのアーキテクチャを実現可能です。`application.html.erb` すらも不要になり、すべてが JSX で完結する世界です。

@@ -48,6 +48,19 @@ module Salvia
           }
         }
 
+        # deno.json から imports を読み込む
+        begin
+          deno_json_path = File.join(Salvia.root, "salvia/deno.json")
+          if File.exist?(deno_json_path)
+            deno_config = JSON.parse(File.read(deno_json_path))
+            if deno_config["imports"]
+              default_map["imports"].merge!(deno_config["imports"])
+            end
+          end
+        rescue => e
+          # 読み込みエラー時は無視
+        end
+
         if additional_map.key?("imports")
           default_map["imports"].merge!(additional_map["imports"])
         end
