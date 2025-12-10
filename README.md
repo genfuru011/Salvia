@@ -77,6 +77,8 @@ If you are using Tailwind CSS, run the Tailwind watcher in a separate terminal:
 $ bundle exec tailwindcss -i app/assets/stylesheets/application.tailwind.css -o public/assets/stylesheets/tailwind.css --watch
 ```
 
+> **Tip**: Use [foreman](https://github.com/ddollar/foreman) to run all processes (server, JS watch, CSS watch) with a single command. See `examples/sinatra_app/Procfile.dev` for an example.
+
 ### 4. Render in Ruby
 
 Use `Salvia::SSR` to render the component in your view (ERB, Slim, etc.):
