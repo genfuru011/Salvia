@@ -2,107 +2,21 @@
 
 ## Supported Versions
 
-現在、以下のバージョンがセキュリティアップデートの対象です:
-
 | Version | Supported          | Status |
 | ------- | ------------------ | ------ |
-| 0.1.x   | :warning: | 開発版 - セキュリティ問題あり |
-| < 0.1.0 | :x: | サポート対象外 |
-
-**⚠️ 重要**: 現在のバージョン (v0.1.0) は本番環境での使用を推奨しません。セキュリティフェーズ (v0.3.0) のリリースをお待ちください。
+| 0.2.x   | :white_check_mark: | Current Stable (SSR Engine) |
+| 0.1.x   | :x: | End of Life (Legacy MVC) |
 
 ## Reporting a Vulnerability
 
-セキュリティ脆弱性を発見した場合は、以下の手順に従ってください:
+Please report vulnerabilities via GitHub Security Advisories.
 
-### 報告方法
+### Known Vulnerabilities
 
-**公開 Issue を作成しないでください。** セキュリティ脆弱性は非公開で報告する必要があります。
-
-1. **GitHub Security Advisories を使用する (推奨)**
-   - リポジトリの "Security" タブに移動
-   - "Report a vulnerability" をクリック
-   - フォームに詳細を記入
-
-2. **または、メンテナーに直接連絡する**
-   - 詳細は後日追加予定
-
-### 報告に含めるべき情報
-
-脆弱性を報告する際は、以下の情報を含めてください:
-
-- **脆弱性の種類** (XSS, CSRF, SQL Injection など)
-- **影響を受けるバージョン**
-- **再現手順** (可能な限り詳細に)
-- **影響範囲** (どのようなデータが危険にさらされるか)
-- **概念実証コード** (PoC) - 可能であれば
-- **推奨される修正方法** - わかる場合
-
-### 例
-
-```markdown
-## 脆弱性の種類
-Cross-Site Scripting (XSS)
-
-## 影響を受けるバージョン
-v0.1.0
-
-## 再現手順
-1. ユーザープロフィールページにアクセス
-2. Bio フィールドに `<script>alert('XSS')</script>` を入力
-3. プロフィールページを表示すると、スクリプトが実行される
-
-## 影響範囲
-ユーザーのセッションが盗まれる可能性があります
-
-## 推奨される修正方法
-ERB テンプレートでエスケープを有効化する
-```
-
-### 対応プロセス
-
-1. **受領確認** - 48時間以内に受領を確認します
-2. **評価** - 1週間以内に脆弱性の評価を行います
-3. **修正開発** - 重大度に応じて修正を開発します
-   - Critical: 即時 (1-3日)
-   - High: 1週間以内
-   - Medium: 2週間以内
-   - Low: 次のマイナーリリース
-4. **リリース** - 修正版をリリースします
-5. **公開** - 修正後、適切な期間を経て詳細を公開します
-
-### セキュリティアドバイザリ
-
-重大なセキュリティ問題が発見され修正された場合、GitHub Security Advisory を通じて公開します。
-
-## Known Vulnerabilities
-
-現在の既知の脆弱性については、[docs/security/SECURITY_ASSESSMENT.md](docs/security/SECURITY_ASSESSMENT.md) を参照してください。
-
-### Critical (緊急対応必要)
-
-- **CSRF 保護の不完全な実装** - v0.1.1 で修正予定
-- **XSS 脆弱性のリスク** - v0.1.1 で修正予定
-- **SQL インジェクション対策の不十分さ** - v0.1.1 で修正予定
-
-### High (v0.3.0 までに対応)
-
-- セッション管理のセキュリティ脆弱性
-- 機密情報のログ出力
-- 安全でないリダイレクト
-- 依存関係の脆弱性管理
+- None known in v0.2.0.
 
 ## Security Best Practices
 
-Salvia.rb を使用する際は、以下のドキュメントを参照してください:
+- Ensure `deno` is installed from a trusted source.
+- Review `app/islands` code as it runs on the server (SSR).
 
-- [セキュリティガイド](docs/security/SECURITY_GUIDE.md)
-- [セキュリティチェックリスト](docs/security/SECURITY_CHECKLIST.md)
-
-## Acknowledgments
-
-セキュリティ脆弱性を報告していただいた方に感謝します。責任ある開示をしていただいた方は、修正後に Credits に掲載させていただきます。
-
----
-
-**最終更新**: 2025-12-08

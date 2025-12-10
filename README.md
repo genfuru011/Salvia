@@ -1,253 +1,100 @@
-<p align="center">
-  <img src="https://img.shields.io/badge/Ruby-3.1+-CC342D?style=flat-square&logo=ruby" alt="Ruby">
-  <img src="https://img.shields.io/badge/License-MIT-blue?style=flat-square" alt="License">
-  <img src="https://img.shields.io/badge/Version-0.1.8-6A5ACD?style=flat-square" alt="Version">
-  <img src="https://img.shields.io/gem/v/salvia_rb?style=flat-square&color=ff6347" alt="Gem">
-</p>
+# Salvia 🌿
 
-# 🌿 Salvia.rb
+> **Ruby Islands Architecture Engine**
 
-> **"Wisdom for Rubyists."**
->
-> A small, understandable Ruby MVC framework
+Salvia is a standalone **Server-Side Rendering (SSR) engine** for Ruby. It brings the **Islands Architecture** to any Rack-based application (Rails, Sinatra, Roda, Hanami) without requiring a Node.js server.
 
-**SSR Islands Architecture** × **Tailwind** × **ActiveRecord** combined into a simple and clear Ruby Web framework.
+<img src="https://img.shields.io/gem/v/salvia?style=flat-square&color=ff6347" alt="Gem">
 
 ## Features
 
-- **🔒 Explicit Configuration** - Required `config/app.rb` & `config/database.yml`
-- **Server-Rendered (HTML) First** - Return HTML, not JSON APIs
-- **🏝️ SSR Islands Architecture** - Server-side render Preact components with QuickJS
-- **Rails-like DSL** - Familiar `resources`, `root to:` routing
-- **ActiveRecord Integration** - Use models like Rails
-- **🐳 Docker Ready** - Auto-generated Dockerfile and docker-compose.yml
-- **No Node.js Required** - QuickJS for SSR, Deno for build
+*   🏝️ **Islands Architecture**: Render interactive components (Preact) only where needed.
+*   🚀 **No Node.js Server**: Uses **QuickJS** embedded in Ruby for fast SSR (0.3ms/render).
+*   🦕 **Deno Build System**: Uses Deno + esbuild for bundling (no Webpack/Vite complexity).
+*   🔌 **Framework Agnostic**: Works with Rails, Sinatra, or any Rack app.
 
 ## Installation
 
+Add this line to your application's Gemfile:
+
 ```ruby
-gem "salvia_rb"
+gem 'salvia'
 ```
 
-## Quick Start
+And then execute:
 
 ```bash
-# Install the gem
-gem install salvia_rb
-
-# Create a new app
-salvia new myapp
-cd myapp
-
-# Setup and start
-bundle install
-salvia ssr:build   # Build SSR bundle (requires Deno)
-salvia server      # Start server (Puma in dev, Falcon in prod)
+$ bundle install
 ```
 
-Open http://localhost:9292 in your browser.
+## Getting Started
 
-### Required configuration (strict)
+### 1. Install SSR files
 
-Salvia 0.1.8+ requires these files:
+Run the install command to generate the necessary configuration and directories:
 
-- `config/routes.rb` — define routes explicitly
-- `config/app.rb` — application settings (set `config.secret_key`)
-- `config/database.yml` — database settings
-- `db/` directory — database files/migrations
-
-Example `config/app.rb`:
-
-```ruby
-Salvia.configure do |config|
-  config.secret_key = ENV["SECRET_KEY"]
-  config.ssr_bundle_path = "vendor/server/ssr_bundle.js"
-  config.cache_templates = Salvia.production?
-end
+```bash
+$ bundle exec salvia install
 ```
 
-## Directory Structure
+This creates:
+*   `app/islands/` - Directory for your components
+*   `deno.json` - Deno configuration
+*   `bin/build_ssr.ts` - Build script
 
-```
-myapp/
-├── app/
-│   ├── controllers/
-│   │   ├── application_controller.rb
-│   │   └── home_controller.rb
-│   ├── models/
-│   │   └── application_record.rb
-│   ├── views/
-│   │   ├── layouts/
-│   │   │   └── application.html.erb
-│   │   └── home/
-│   │       └── index.html.erb
-│   └── islands/                # 🏝️ Island components
-│       └── Counter.jsx
-├── vendor/server/
-│   └── ssr_bundle.js           # SSR bundle (generated)
-├── config/
-│   ├── database.yml
-│   ├── app.rb
-│   └── routes.rb
-├── db/
-│   └── migrate/
-├── public/
-│   └── assets/
-├── config.ru                   # 3 lines!
-├── Gemfile
-├── Dockerfile                  # Auto-generated
-└── docker-compose.yml          # Auto-generated
-```
+### 2. Create a Component
 
-## Routing
-
-```ruby
-# config/routes.rb
-Salvia::Router.draw do
-  root to: "home#index"
-
-  get "/about", to: "pages#about"
-
-  resources :posts, only: [:index, :show, :create]
-end
-```
-
-## Controller
-
-```ruby
-class PostsController < ApplicationController
-  def index
-    @posts = Post.order(created_at: :desc)
-  end
-
-  def create
-    @post = Post.create!(title: params["title"])
-    render "posts/_post", locals: { post: @post }
-  end
-end
-```
-
-## 🏝️ SSR Islands
-
-Salvia's Islands Architecture supports server-side rendering (SSR).
-
-### Create an Island Component
+Create a Preact component in `app/islands/Counter.jsx`:
 
 ```jsx
-// app/islands/Counter.jsx
-import { h } from "preact";
-import { useState } from "preact/hooks";
+import { h } from 'preact';
+import { useState } from 'preact/hooks';
 
-export function Counter({ initialCount = 0 }) {
+export default function Counter({ initialCount = 0 }) {
   const [count, setCount] = useState(initialCount);
-
   return (
-    <div className="p-4 border rounded">
-      <p className="text-2xl font-bold">{count}</p>
-      <button
-        onClick={() => setCount(count + 1)}
-        className="px-4 py-2 bg-blue-500 text-white rounded"
-      >
-        +1
-      </button>
-    </div>
+    <button onClick={() => setCount(count + 1)}>
+      Count: {count}
+    </button>
   );
 }
 ```
 
-### Use in ERB
+### 3. Build Components
 
-```erb
-<!-- app/views/home/index.html.erb -->
-<h1>Counter Demo</h1>
-
-<%# SSR + Client Hydration %>
-<%= island "Counter", { initialCount: 10 } %>
-```
-
-### Build SSR Bundle
+Compile the components for SSR and the browser:
 
 ```bash
-salvia ssr:build
+$ bundle exec salvia build
+# or watch for changes
+$ bundle exec salvia watch
 ```
 
-### How It Works
+### 4. Render in Ruby
 
-```
-1. SSR: Render Preact components with QuickJS (0.3ms/render)
-2. HTML: Embed rendered result in ERB
-3. Hydrate: Client-side Preact hydrate()
-4. Interactive: Clicks and inputs work
-```
+Use `Salvia::SSR` to render the component in your view (ERB, Slim, etc.):
 
-## CLI Commands
-
-| Command | Description |
-|---------|-------------|
-| `salvia new APP_NAME` | Create a new application |
-| `salvia server` / `salvia s` | Start server (Puma dev / Falcon prod) |
-| `salvia dev` | Start server + CSS watch + SSR watch |
-| `salvia console` / `salvia c` | Start IRB console |
-| `salvia db:create` | Create database |
-| `salvia db:migrate` | Run migrations |
-| `salvia db:rollback` | Rollback last migration |
-| `salvia db:setup` | Create database and run migrations |
-| `salvia css:build` | Build Tailwind CSS |
-| `salvia css:watch` | Watch and rebuild CSS |
-| `salvia ssr:build` | Build SSR bundle |
-| `salvia ssr:watch` | Watch and rebuild SSR |
-| `salvia routes` | Display routes |
-| `salvia g controller NAME` | Generate controller |
-| `salvia g model NAME` | Generate model |
-
-## Environment Variables
-
-Salvia automatically loads `.env` files:
-
-```bash
-# Load order (later files override):
-# 1. .env                    - Default values
-# 2. .env.local              - Local overrides (gitignored)
-# 3. .env.{RACK_ENV}         - Environment-specific (.env.production)
+```ruby
+# In your controller or view helper
+html = Salvia::SSR.render("Counter", initialCount: 10)
 ```
 
-```bash
-# .env.example (generated with your app)
-RACK_ENV=development
-SESSION_SECRET=your-secret-here
-DATABASE_URL=sqlite3:db/development.sqlite3
-```
+To make it interactive on the client, you need to mount it. Salvia provides a helper for this (setup required).
 
-## Docker
+## Configuration
 
-Generated apps include Docker support:
-
-```bash
-# Development
-docker compose up
-
-# Production
-docker build -t myapp .
-docker run -p 9292:9292 -e RACK_ENV=production myapp
+```ruby
+Salvia.configure do |config|
+  config.islands_dir = "app/islands"
+  config.build_dir = "public/assets"
+end
 ```
 
 ## Requirements
 
-- Ruby 3.1+
-- Deno (for SSR build)
-- SQLite3 (default) or PostgreSQL/MySQL
+*   Ruby 3.1+
+*   Deno (for building assets only)
 
 ## License
 
-MIT License - See [LICENSE](LICENSE) for details.
-
-## Contributing
-
-Bug reports and pull requests are welcome on [GitHub](https://github.com/genfuru011/Salvia).
-
----
-
-<p align="center">
-  <strong>🌿 Salvia.rb</strong><br>
-  <em>"Simple, like a flower. Solid, like a gem."</em>
-</p>
+The gem is available as open source under the terms of the [MIT License](https://opensource.org/licenses/MIT).

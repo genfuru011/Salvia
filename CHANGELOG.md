@@ -5,12 +5,19 @@ All notable changes to Salvia.rb will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.2.0] - 2025-12-10
 
-### Planned
-- TypeScript type generation (`salvia types:generate`)
-- WebSocket support guide
-- Background job integration guide
+> **"The Great Unbundling"** - Pivot to standalone SSR engine
+
+### 🚀 Major Changes
+- **Pivot**: Redefined Salvia as a standalone SSR engine for Ruby.
+- **Removed**: All MVC components (Router, Controller, Database, Application).
+- **Renamed**: Gem renamed from `salvia_rb` to `salvia`.
+
+### ✨ Features
+- **SSR Engine**: Focused on QuickJS-based rendering.
+- **CLI**: Simplified to `install`, `build`, `watch` commands.
+- **Framework Agnostic**: Can be used with any Rack application.
 
 ---
 
