@@ -7,6 +7,7 @@
     "preact": "https://esm.sh/preact@10.19.3",
     "preact/": "https://esm.sh/preact@10.19.3/"
   },
+  "nodeModulesDir": "auto",
   "tasks": {
     "build": "deno run --allow-all build.ts",
     "watch": "deno run --allow-all build.ts --watch"

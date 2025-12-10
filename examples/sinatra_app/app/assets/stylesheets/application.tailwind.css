@@ -1,3 +1,10 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@source "../../views/**/*.erb";
+@source "../../islands/**/*.{js,jsx,tsx}";
+@source "../../../public/assets/javascripts/**/*.js";
+
+@theme {
+  --color-salvia-500: #6A5ACD;
+  --color-salvia-600: #5a4ab8;
+}
