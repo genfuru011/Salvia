@@ -274,18 +274,18 @@ Next.js などのフレームワークでは、クライアントコンポーネ
 ---
 
 
-### H. Routing: The "Ruby Router" vs "File-based Routing"
+### H. Routing: "Ruby Router" vs "File-based Routing"
 
-Salvia is designed to respect the **Ruby Way**. It does not force a file-based router on you (unlike Next.js). You use the powerful routers of Rails, Sinatra, or Roda.
+Salvia は **"Ruby Way"** を尊重するように設計されています。Next.js のようにファイルベースルーティングを強制することはありません。Rails, Sinatra, Roda といった強力なルーターをそのまま使用します。
 
-However, if you want **Next.js-style File-based Routing**, you can easily implement it with a single "Catch-all" route:
+しかし、もし **Next.js スタイルのファイルベースルーティング** が欲しい場合でも、単一の "Catch-all" ルートを定義するだけで簡単に実現できます。
 
-#### Recipe: File-based Routing in Rails
+#### レシピ: Rails でのファイルベースルーティング
 
 ```ruby
 # config/routes.rb
 Rails.application.routes.draw do
-  # Map all requests to the PagesController
+  # すべてのリクエストを PagesController にマッピング
   match "*path", to: "pages#show", via: :all
   root "pages#show"
 end
@@ -293,22 +293,24 @@ end
 # app/controllers/pages_controller.rb
 class PagesController < ApplicationController
   def show
-    # Map URL path to Component path
-    # e.g. /about -> app/pages/about.jsx
-    # e.g. /blog/post -> app/pages/blog/post.jsx
+    # URL パスをコンポーネントパスにマッピング
+    # 例: /about -> app/pages/about.jsx
+    # 例: /blog/post -> app/pages/blog/post.jsx
     
     path = params[:path] || "index"
+    # パスをキャメルケースのコンポーネント名に変換 (例: "blog/post" -> "BlogPost")
+    # ※ 実際のファイル構成に合わせて調整してください
     component_name = path.split("/").map(&:camelize).join
     
-    # Render the component (Salvia will look in app/pages/)
+    # コンポーネントをレンダリング (Salvia は app/pages/ を探します)
     render html: helpers.island(component_name, params.permit!.to_h)
   end
 end
 ```
 
-This gives you the best of both worlds:
-- **Simple pages** work automatically (File-based).
-- **Complex logic** uses standard Controllers (MVC).
+これにより、両方の長所を活かせます：
+- **単純なページ** は自動的に動作します（ファイルベース）。
+- **複雑なロジック** は標準の Controller を使用します（MVC）。
 
 ## 4. Conclusion: The "Salvia" Experience
 
