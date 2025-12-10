@@ -594,3 +594,20 @@ CMD ["bundle", "exec", "rails", "server", "-b", "0.0.0.0"]
 本番環境（Runtime）では **Deno は不要** です。
 Salvia は **QuickJS (Ruby Gem)** を使って SSR を行うため、Deno は「ビルド時」にのみ必要です。
 これにより、本番サーバーに Deno をインストールする必要がなく、運用がシンプルになります。
+
+### 8. Future Possibilities (未来への展望)
+
+Salvia は現在、Rails/Sinatra と Preact を主要なターゲットとしていますが、そのアーキテクチャは特定のフレームワークに依存しない汎用的なものです。
+
+#### A. Backend Agnostic (あらゆる Ruby フレームワークへ)
+Salvia のコアロジックは「HTML 文字列を受け取り、SSR して返す」という単純なものです。
+したがって、**Roda, Hanami, Cuba, Kamal** など、あらゆる Ruby 製 Web フレームワークに容易に統合可能です。
+「View 層を持たないマイクロフレームワーク」に、Salvia が強力な UI エンジンを提供します。
+
+#### B. Frontend Agnostic (好きな JS フレームワークで)
+現在は Preact (軽量な React 互換) を採用していますが、アーキテクチャ上は **Vue, Svelte, SolidJS** などもサポート可能です。
+`salvia/deno.json` とアダプターを切り替えるだけで、好みのフロントエンド技術を選べる未来を目指しています。
+
+#### C. The "Universal View Layer" for Ruby
+最終的な目標は、Salvia が **「Ruby のためのユニバーサルな View レイヤー」** になることです。
+バックエンドが何であれ、フロントエンドが何であれ、"Ruby でデータを渡し、JSX で描画する" という体験を統一します。
