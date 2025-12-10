@@ -12,7 +12,6 @@ module Salvia
     end
 
     desc "install", "Install Salvia SSR files into your application"
-    method_option :tailwind, type: :boolean, desc: "Generate Tailwind CSS configuration"
     def install
       say "🌿 Installing Salvia SSR...", :green
 
@@ -29,42 +28,6 @@ module Salvia
       copy_file "assets/javascripts/islands.js", "public/assets/javascripts/islands.js"
       
       create_file "salvia/.gitignore", "/server/\n"
-
-      # Tailwind CSS setup
-      install_tailwind = options[:tailwind]
-      if install_tailwind.nil?
-        install_tailwind = yes?("🎨 Do you want to install Tailwind CSS? (y/N)", :yellow)
-      end
-
-      if install_tailwind
-        # Add tailwindcss-ruby to Gemfile if present
-        if File.exist?("Gemfile")
-          append_to_file "Gemfile", "\ngem 'tailwindcss-ruby'\n"
-          say "   - Added 'tailwindcss-ruby' to Gemfile"
-        end
-
-        empty_directory "app/assets/stylesheets"
-        create_file "app/assets/stylesheets/application.tailwind.css" do
-          <<~CSS
-            @import "tailwindcss";
-
-            @source "../../views/**/*.erb";
-            @source "../../islands/**/*.{js,jsx,tsx}";
-            @source "../../../public/assets/javascripts/**/*.js";
-
-            @theme {
-              --color-salvia-500: #6A5ACD;
-              --color-salvia-600: #5a4ab8;
-            }
-          CSS
-        end
-        
-        say "   - app/assets/stylesheets/ : Tailwind CSS entry point created (v4)"
-        say ""
-        say "⚠️  Run 'bundle install' to install Tailwind CSS.", :yellow
-        say "⚠️  To build CSS, run:", :yellow
-        say "   bundle exec tailwindcss -i app/assets/stylesheets/application.tailwind.css -o public/assets/stylesheets/tailwind.css --watch"
-      end
 
       chmod "salvia/build.ts", 0755
 
