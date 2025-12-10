@@ -205,25 +205,31 @@ export function mount(element, props, options) {
       clientEntryPoints.push({ in: wrapperPath, out: file.name });
     }
 
-    await esbuild.build({
-      entryPoints: clientEntryPoints,
-      bundle: true,
-      format: "esm",
-      outdir: CLIENT_OUTPUT_DIR,
-      platform: "browser",
-      plugins: [...denoPlugins({ configPath: `${Deno.cwd()}/deno.json` })],
-      external: [],
-      jsx: "automatic",
-      jsxImportSource: "preact",
-      minify: true,
-      banner: {
-        js: `// Salvia Client Islands - Generated at ${new Date().toISOString()}`,
-      },
-    });
-    
-    // Clean up temp files
-    for (const entry of clientEntryPoints) {
-      await Deno.remove(entry.in);
+    try {
+      await esbuild.build({
+        entryPoints: clientEntryPoints,
+        bundle: true,
+        format: "esm",
+        outdir: CLIENT_OUTPUT_DIR,
+        platform: "browser",
+        plugins: [...denoPlugins({ configPath: `${Deno.cwd()}/deno.json` })],
+        external: [],
+        jsx: "automatic",
+        jsxImportSource: "preact",
+        minify: true,
+        banner: {
+          js: `// Salvia Client Islands - Generated at ${new Date().toISOString()}`,
+        },
+      });
+    } finally {
+      // Clean up temp files
+      for (const entry of clientEntryPoints) {
+        try {
+          await Deno.remove(entry.in);
+        } catch {
+          // Ignore if file doesn't exist
+        }
+      }
     }
     
     console.log(`✅ Client Islands built: ${CLIENT_OUTPUT_DIR}/ (${clientFiles.map(f => f.name).join(", ")})`);
