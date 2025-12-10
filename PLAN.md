@@ -40,9 +40,9 @@ This plan focuses on realizing the "Full JSX/TSX Architecture" where ERB is elim
 ## Phase 5: JIT Architecture (The "Vite-like" Experience)
 **Goal**: Eliminate the need for manual `deno task watch` and achieve JIT compilation.
 
-- [ ] **Step 1: Managed Sidecar Optimization (The "Dream" Features)**
-    - [ ] Implement `Salvia::Sidecar` to manage persistent Deno process.
-    - [ ] Switch `Salvia::Compiler` to communicate via IPC/Socket.
+- [x] **Step 1: Managed Sidecar Optimization (The "Dream" Features)**
+    - [x] Implement `Salvia::Sidecar` to manage persistent Deno process.
+    - [x] Switch `Salvia::Compiler` to communicate via IPC/Socket (Implemented JIT bundling in `Salvia::SSR::QuickJS`).
     - [ ] **Integrate Deno Ecosystem**:
         - [ ] Implement `deno fmt` support for auto-formatting.
         - [ ] Implement `deno check` for background type checking.

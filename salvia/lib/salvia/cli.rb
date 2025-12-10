@@ -47,6 +47,8 @@ module Salvia
       # Note: source_root is 'salvia/', so paths are relative to that
       copy_file "assets/scripts/deno.json", "salvia/deno.json"
       copy_file "assets/scripts/build.ts", "salvia/build.ts"
+      copy_file "assets/scripts/sidecar.ts", "salvia/sidecar.ts"
+      copy_file "assets/scripts/vendor_setup.ts", "salvia/vendor_setup.ts"
       copy_file "assets/javascripts/islands.js", "public/assets/javascripts/islands.js"
       
       create_file "salvia/.gitignore", "/server/\n"
@@ -102,6 +104,7 @@ module Salvia
       end
 
       chmod "salvia/build.ts", 0755
+      chmod "salvia/sidecar.ts", 0755
 
       say ""
       say "✅ Salvia SSR installed!", :green
