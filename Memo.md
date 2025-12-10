@@ -25,10 +25,53 @@
     *   `deno.json` のインポートマップやビルドスクリプト (`build.ts`) が、他のフレームワークのSSRライブラリ（`react-dom/server` など）と正しく連携できるか検証が必要です。
     *   ハイドレーションの仕組みがフレームワークごとに異なるため、`islands.js` の汎用性を高める必要があるかもしれません。
 
-## 5. デプロイメントフロー
-*   **本番環境**:
-    *   サーバーに `deno` ランタイムが必要です。Heroku や Docker 環境でのセットアップガイド（Buildpackなど）が必要です。
-    *   `salvia ssr:build` コマンドと Rails の `assets:precompile` との順序関係や連携フローを確立する必要があります。
+### 4. JIT Architecture & Caching Strategy (Future Roadmap)
+
+ユーザーから提案された「Ruby-driven On-demand Transpilation」アーキテクチャについての分析。
+
+#### 概要
+現状の「事前ビルド (Deno)」から、「JITコンパイル (Ruby + esbuild)」への移行案。
+`rails s` だけで完結し、変更検知 -> 高速トランスパイル -> QuickJS実行 -> HTMLキャッシュ というフローを目指す。
+
+#### 評価: ✅ 非常に正しい方向性
+Salviaの目指す「DXの向上（ビルドコマンド不要）」と「パフォーマンス（HTML First）」に完全に合致する。
+
+#### 現状 (v0.1.0) との比較
+
+**Current Implementation Detail:**
+現状の `salvia/build.ts` は、ビルド時に `import * as esbuild from "https://deno.land/x/esbuild@v0.24.2/mod.js";` を実行し、Deno 上でバンドルを行っています。
+
+**Current Implementation Detail:**
+現状の `salvia/build.ts` は、ビルド時に `import * as esbuild from "https://deno.land/x/esbuild@v0.24.2/mod.js";` を実行し、Deno 上でバンドルを行っています。
+
+| 機能 | 現状 (Current) | 提案 (Future JIT) |
+| :--- | :--- | :--- |
+| **Build** | `deno task build` (事前ビルド) | `esbuild` via Ruby (オンデマンド) |
+| **Watcher** | `deno task watch` (別プロセス) | Rubyがリクエスト時に検知 (不要) |
+| **Transpiler** | Deno (SWC/esbuild) | esbuild (Go binary) |
+| **Dependencies** | `deno.json` (URL Imports) | **課題**: esbuildでのURL解決 |
+| **Caching** | なし (毎回レンダリング) | **HTML Fragment Caching** (Rails.cache) |
+| **SSR Engine** | QuickJS (VM永続化済み) | QuickJS (Bytecode Cache + VM) |
+
+#### 技術的課題: 外部ライブラリの解決 (URL Imports)
+Denoは `https://esm.sh/react` などをネイティブに解決してバンドルできるが、標準の `esbuild` はローカルファイル (`node_modules` 等) を前提としていることが多い。
+SSRバンドルを作る際、外部ライブラリをどう解決するかが最大の壁。
+
+**解決案:**
+1. **Hybrid**: 開発時はDenoを裏で叩く（現状維持だが隠蔽する）。
+2. **Download**: `bin/importmap` のように `vendor/` にダウンロードして esbuild に食わせる。
+3. **Plugins**: esbuild の http-import プラグイン的な機構を Ruby で再現する。
+
+#### 推奨ステップ
+1. **Level 1: HTML Fragment Caching** (今すぐできる)
+   - `Salvia::Helpers::Island` に `Rails.cache` を組み込む。
+   - これだけで本番パフォーマンスは劇的に向上する。
+
+2. **Level 2: JIT Transpilation** (難易度高)
+   - `esbuild` gem の導入。
+   - Deno依存からの脱却（またはDenoを隠蔽）。
+
+このアーキテクチャは **Salvia v0.2.0 以降のコア目標** とすべき。
 
 ## 6. エラーハンドリングの強化
 *   **ハイドレーション不整合**: SSRされたHTMLとクライアントサイドのJSが一致しない場合の挙動とリカバリ。
@@ -95,3 +138,47 @@ Salviaは単なる「RailsでReactを使うツール」ではなく、**「JSX�
 - **Components (`app/components/`)**: Islandsからインポートして使う、またはSSRのみで使う静的なUIパーツ。これらは単体ではハイドレーションされないが、Islandsの一部として組み込まれれば機能する。
 
 Freshのように「Islandsディレクトリにあるものだけがハイドレーションのエントリーポイントになる」という仕様は、バンドルサイズを抑え、明示的な境界を作る上で理にかなっているため、このまま維持する。
+
+## 12. Deno Integration Strategy: Standard IO vs Managed Sidecar
+
+"Vite-like" な爆速開発体験を実現するために、Deno をどう統合すべきか？
+
+| Feature | A. Standard IO (CLI Filter) | B. Managed Sidecar (Worker) |
+| :--- | :--- | :--- |
+| **仕組み** | リクエスト毎に `deno run` を起動し、標準入力でコードを渡し、標準出力で受け取る。 | Rails起動時に `deno run --server` を裏で立ち上げ、Unix Socket/HTTP で通信し続ける。 |
+| **パフォーマンス** | ⚠️ **低〜中**: 毎回 Deno VM の起動とモジュールロード(esbuild等)が発生。数百msのオーバーヘッド。 | 🚀 **高**: VM起動は最初だけ。esbuild インスタンスもメモリに常駐可能。ミリ秒単位の応答。 |
+| **実装難易度** | ✅ **低**: ステートレス。プロセス管理不要。`Open3.capture3` だけで実装可能。 | ⚠️ **高**: プロセスの起動・停止・再起動・ゾンビ化防止・ポート競合管理が必要。 |
+| **キャッシュ** | ディスクキャッシュ (Deno cache) のみ。 | メモリキャッシュ (esbuild rebuild context) が利用可能。 |
+| **安定性** | 非常に高い。1回失敗しても次はクリーンな状態で走る。 | プロセスがクラッシュした場合の復帰処理が必要。 |
+
+### 推奨アプローチ: "Managed Sidecar" (最初から最適解を目指す)
+
+**Phase 1: Managed Sidecar (Persistent Worker)**
+Standard IO (PoC) をスキップし、最初から **Managed Sidecar** パターンで実装します。
+理由:
+1. **圧倒的なパフォーマンス**: esbuild のリビルドコンテキストをメモリに保持できるため、変更検知から再ビルドまでがミリ秒単位で完了します。Standard IO では毎回起動コストがかかり、Viteのような体験には届きません。
+2. **エコシステムのフル活用**: 常駐プロセスであれば、`deno check` (型チェック) や `deno fmt` (整形) をバックグラウンドで効率的に実行できます。
+3. **実装の二度手間を回避**: Standard IO から移行する場合、通信部分のロジックを書き直す必要があります。最初からソケット通信/IPCを前提に設計する方が効率的です。
+
+## 13. Deno Ecosystem: The "Dream Features" (Why Worker is the Future)
+
+Deno Worker (Managed Sidecar) を常駐させておくと、単なるトランスパイル（JIT）以外にも、Deno のエコシステムを使って以下のような「リッチな機能」を Salvia に追加できます。
+
+### A. フォーマッターとリンター (Deno fmt/lint)
+Ruby 側から「この TSX、整形して」と投げるだけで、`deno fmt` の高速なフォーマッターを使えます。Rails の View (TSX) が常に綺麗な状態に保たれます。
+
+### B. 型チェック (TypeScript Check)
+開発中に裏で `deno check` を走らせておき、Rails のログに「⚠️ Home.tsx の 15行目、型が合ってないよ」と警告を出すことができます。Rubyist にとって面倒な `tsc` コマンド設定なしで、型安全性が手に入ります。
+
+### C. JSX の最適化 (Fresh の知見)
+Fresh フレームワークが持っている「アイランドの自動検知」や「不要な JS の削除（Tree Shaking）」などの高度な最適化ロジックを、そのまま Deno 側のコードとして流用できます。
+
+### 結論
+**「Deno Worker (常駐)」一択です。**
+
+*   **パフォーマンス**: プロセス起動コストゼロ、インクリメンタルビルド可。
+*   **エコシステム**: Deno の全能力（fmt, lint, check, http imports）を、Ruby から API 感覚で呼び出せるようになります。
+
+これは単なる「コンパイラ」ではなく、**「Ruby のための、Deno 製の高機能なフロントエンド・サーバー」** を手に入れることを意味します。これが Salvia の最強の武器になります。
+
+## 14. 実装ロードマップ (Revised)

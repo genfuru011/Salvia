@@ -280,7 +280,7 @@ Next.js の App Router (React Server Components) に非常に近いアーキテ�
 3. Salvia -> PostList の HTML を生成して埋め込む
 
 **ERBless (完全版):**
-1. Controller -> `render_salvia 'pages/PostsIndex', props: { posts: @posts }`
+1. Controller -> `render html: helpers.ssr('pages/PostsIndex', posts: @posts)`
 2. Salvia -> `<html>`, `<head>`, `<body>` を含むドキュメント全体を生成。
 
 #### Next.js App Router との比較
@@ -435,7 +435,7 @@ salvia/                    # Frontend Root (Deno World)
     def show
       @post = Post.find(params[:id])
       # ERBの代わりに Salvia コンポーネントをレンダリング
-      render html: helpers.island("posts/Show", post: @post)
+      render html: helpers.ssr("pages/posts/Show", post: @post)
     end
     ```
 3.  **Salvia Engine**:
@@ -526,7 +526,7 @@ class PostsController < ActionController::API
     
     # 2. シリアライズ不要！オブジェクトをそのまま渡す
     # (Salvia内部でJSON化され、JSXのPropsになります)
-    render html: render_island("pages/PostsIndex", { 
+    render html: helpers.ssr("pages/PostsIndex", { 
       posts: posts.as_json(include: :author),
       current_user: current_user
     })
@@ -611,5 +611,34 @@ Salvia のコアロジックは「HTML 文字列を受け取り、SSR して返�
 #### C. The "Universal View Layer" for Ruby
 最終的な目標は、Salvia が **「Ruby のためのユニバーサルな View レイヤー」** になることです。
 バックエンドが何であれ、フロントエンドが何であれ、"Ruby でデータを渡し、JSX で描画する" という体験を統一します。
+
+### J. The Power of Deno Ecosystem (Future Roadmap)
+
+Salvia は将来的に、Deno を単なるビルドツールとしてだけでなく、**「Ruby のための高機能なフロントエンド・サイドカー」** として活用する計画です。
+Rails/Sinatra プロセスの裏で Deno Worker を常駐させることで、以下の機能が実現されます。
+
+1.  **Zero-Config Type Checking**:
+    *   開発中にバックグラウンドで `deno check` が走り、Rails のログに型エラーを表示します。
+    *   `tsconfig.json` の管理は不要です。
+
+2.  **Instant Formatting**:
+    *   `deno fmt` エンジンを利用し、保存時に TSX ファイルを自動整形します。
+
+3.  **Advanced Optimizations**:
+    *   Fresh フレームワークの知見を活かした、高度な Tree Shaking や Island の自動検知が可能になります。
+
+これにより、Rubyist は「Node.js のツールチェーン」を一切意識することなく、最高レベルのフロントエンド開発環境を手に入れることができます。
+
+---
+
+## 10. Conclusion: The "Salvia" Experience
+
+Salvia は、最高の開発体験とパフォーマンスを実現するため、**Managed Sidecar** アプローチを採用します。
+
+1.  **Managed Sidecar (Persistent Worker)**
+    *   Rails/Sinatra が裏で Deno プロセスを常駐させ、Unix Socket/IPC で通信します。
+    *   **メリット**: esbuild のコンテキストをメモリに保持できるため、圧倒的に高速（ミリ秒単位）。
+    *   **エコシステム**: `deno fmt` や `deno check` をバックグラウンドで実行し、Ruby 開発者にモダンなフロントエンド体験を提供します。
+    *   **ゴール**: Vite に匹敵する、あるいはそれを超える「Rubyネイティブな」開発体験を実現します。
 
 

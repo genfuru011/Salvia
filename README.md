@@ -153,6 +153,69 @@ For development, use the watch command to automatically rebuild on changes:
 $ bundle exec salvia watch
 ```
 
+## Full JSX / ERBless Mode (Experimental)
+
+Salvia supports a "True HTML First" architecture where you can replace ERB views entirely with JSX/TSX Server Components.
+
+### 1. Directory Structure
+
+```
+app/
+├── pages/             # Server Components (Entry Points)
+│   └── Home.tsx       # Renders <html>...</html>
+├── components/        # Shared Components
+└── islands/           # Client Components (Interactive)
+```
+
+### 2. Create a Page Component
+
+`app/pages/Home.tsx`:
+
+```tsx
+import { h } from 'preact';
+import Counter from '../islands/Counter.jsx';
+
+export default function Home({ title }) {
+  return (
+    <html>
+      <head>
+        <title>{title}</title>
+        <script type="module" src="/assets/javascripts/islands.js"></script>
+      </head>
+      <body>
+        <h1>{title}</h1>
+        <Counter />
+      </body>
+    </html>
+  );
+}
+```
+
+### 3. Render in Controller
+
+Use the `ssr` helper to render the component as a full HTML page.
+
+**Rails:**
+
+```ruby
+def index
+  render html: helpers.ssr("pages/Home", title: "Hello Salvia")
+end
+```
+
+**Sinatra:**
+
+```ruby
+get '/' do
+  ssr("pages/Home", title: "Hello Salvia")
+end
+```
+
+The `ssr` helper automatically:
+1. Prepends `<!DOCTYPE html>`.
+2. Injects the Import Map configuration into `<head>`.
+3. Renders the component on the server (no JS sent to client for `pages/`).
+
 ## Configuration
 
 ```ruby

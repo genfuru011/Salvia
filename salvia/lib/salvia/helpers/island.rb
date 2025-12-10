@@ -165,6 +165,30 @@ module Salvia
         result.respond_to?(:html_safe) ? result.html_safe : result
       end
       
+      # ページコンポーネントをレンダリングする (Full JSX Architecture用)
+      #
+      # <!DOCTYPE html> を付与し、ルート要素としてレンダリングします。
+      # また、<head> タグが存在する場合、自動的に Import Map を注入します。
+      #
+      # @param name [String] ページコンポーネント名 (例: "pages/Home")
+      # @param props [Hash] プロパティ
+      # @return [String] 完全な HTML 文字列
+      def ssr(name, props = {})
+        # SSR で HTML を生成
+        html = Salvia::SSR.render(name, props)
+        
+        # <head> がある場合、Import Map を自動注入
+        if html.include?("</head>")
+          import_map_html = salvia_import_map
+          html = html.sub("</head>", "#{import_map_html}</head>")
+        end
+        
+        "<!DOCTYPE html>\n" + html
+      end
+      
+      # 後方互換性のため
+      alias_method :salvia_page, :ssr
+
       private
       
       def build_tag(name, options)
