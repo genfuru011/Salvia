@@ -47,6 +47,6 @@ This plan focuses on realizing the "Full JSX/TSX Architecture" where ERB is elim
         - [x] Implement `deno fmt` support (in Sidecar).
         - [x] Implement `deno check` for background type checking.
         - [ ] Implement advanced tree-shaking optimizations.
-- [ ] **Production Strategy**
-    - [ ] Implement `salvia build` for pre-compilation.
-    - [ ] Hybrid runtime (pre-built files in production).
+- [x] **Production Strategy**
+    - [x] Implement `salvia build` for pre-compilation (Verified with new structure).
+    - [x] Hybrid runtime (pre-built files in production).
