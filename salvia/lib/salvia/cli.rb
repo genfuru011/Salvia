@@ -74,6 +74,9 @@ module Salvia
         
         say "   - app/assets/stylesheets/ : Tailwind CSS entry point created"
         say "   - tailwind.config.ts      : Tailwind configuration created"
+        say ""
+        say "⚠️  Don't forget to link the generated CSS in your layout:", :yellow
+        say "   <link rel=\"stylesheet\" href=\"/assets/stylesheets/tailwind.css\">"
       end
 
       chmod "salvia/build.ts", 0755
