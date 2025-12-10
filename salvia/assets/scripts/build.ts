@@ -13,9 +13,9 @@
 import * as esbuild from "https://deno.land/x/esbuild@v0.24.2/mod.js";
 import { denoPlugins } from "jsr:@luca/esbuild-deno-loader@0.11";
 
-// When running via `deno task --config salvia/deno.json`, CWD is `salvia/`.
-// We need to go up one level to access public/.
-const ROOT_DIR = ".";
+// When running via `deno task --config salvia/deno.json`, CWD is usually the project root.
+// But if running from inside salvia/, it's different.
+const ROOT_DIR = Deno.cwd().endsWith("/salvia") ? "." : "salvia";
 const ISLANDS_DIR = `${ROOT_DIR}/app/islands`;
 const PAGES_DIR = `${ROOT_DIR}/app/pages`;
 const COMPONENTS_DIR = `${ROOT_DIR}/app/components`;
