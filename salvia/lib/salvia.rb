@@ -19,12 +19,13 @@ module Salvia
   class Error < StandardError; end
 
   class Configuration
-    attr_accessor :ssr_bundle_path, :island_inspector, :islands_dir, :build_dir
+    attr_accessor :ssr_bundle_path, :island_inspector, :islands_dir, :build_dir, :deno_config_path
 
     def initialize
       @ssr_bundle_path = "salvia/server/ssr_bundle.js"
       @islands_dir = "salvia/app/islands"
       @build_dir = "public/assets"
+      @deno_config_path = "salvia/deno.json"
       @island_inspector = nil
     end
 

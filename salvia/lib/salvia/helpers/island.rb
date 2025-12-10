@@ -183,7 +183,8 @@ module Salvia
           html = html.sub("</head>", "#{import_map_html}</head>")
         end
         
-        "<!DOCTYPE html>\n" + html
+        result = "<!DOCTYPE html>\n" + html
+        result.respond_to?(:html_safe) ? result.html_safe : result
       end
       
       # 後方互換性のため

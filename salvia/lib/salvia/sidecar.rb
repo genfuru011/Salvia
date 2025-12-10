@@ -62,15 +62,17 @@ module Salvia
       false
     end
 
-    def bundle(entry_point, externals: [], format: "esm", global_name: nil)
+    def bundle(entry_point, externals: [], format: "esm", global_name: nil, config_path: nil)
       start unless running?
       
+      resolved_config_path = File.expand_path(config_path || Salvia.config.deno_config_path, Salvia.root)
+
       response = request("bundle", { 
         entryPoint: entry_point, 
         externals: externals,
         format: format,
         globalName: global_name,
-        configPath: File.join(Dir.pwd, "deno.json")
+        configPath: resolved_config_path
       })
       if response["error"]
         raise "Sidecar Bundle Error: #{response["error"]}"

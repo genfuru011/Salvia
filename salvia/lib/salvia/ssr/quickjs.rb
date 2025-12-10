@@ -100,7 +100,7 @@ module Salvia
             end
           end
 
-          @vm.eval_code(js_code)
+          eval_js(js_code)
           
           # Render
           render_script = <<~JS
@@ -159,11 +159,16 @@ module Salvia
         result = @vm.eval_code(code)
         process_console_output
         result
+      rescue => e
+        process_console_output
+        raise e
       end
       
       def load_console_shim!
         shim = generate_console_shim
         @vm.eval_code(shim)
+      rescue => e
+        log_error("Failed to load console shim: #{e.message}")
       end
       
       def load_vendor_bundle!
@@ -175,6 +180,8 @@ module Salvia
         else
           log_warn("vendor_setup.ts not found. JIT mode might fail.")
         end
+      rescue => e
+        log_error("Failed to load vendor bundle: #{e.message}")
       end
       
       def load_ssr_bundle!
@@ -258,6 +265,39 @@ module Salvia
               __salvia_logs__ = [];
               return JSON.stringify(logs);
             };
+
+            // Mock DOM globals for SSR
+            globalThis.window = globalThis;
+            globalThis.self = globalThis;
+            globalThis.addEventListener = function() {};
+            globalThis.removeEventListener = function() {};
+            globalThis.document = {
+              createElement: function() { return {}; },
+              createTextNode: function() { return {}; },
+              addEventListener: function() { },
+              removeEventListener: function() { },
+              head: {},
+              body: {},
+              documentElement: {
+                addEventListener: function() { },
+                removeEventListener: function() { }
+              }
+            };
+            globalThis.HTMLFormElement = class {};
+            globalThis.HTMLElement = class {};
+            globalThis.Element = class {};
+            globalThis.Node = class {};
+            globalThis.Event = class {};
+            globalThis.CustomEvent = class {};
+            globalThis.URL = class { 
+              constructor(url) { this.href = url; } 
+              static createObjectURL() { return ""; }
+              static revokeObjectURL() { }
+            };
+            globalThis.requestAnimationFrame = function(cb) { return setTimeout(cb, 0); };
+            globalThis.cancelAnimationFrame = function(id) { clearTimeout(id); };
+            globalThis.navigator = { userAgent: 'SalviaSSR' };
+            globalThis.location = { href: 'http://localhost' };
           })();
         JS
       end
