@@ -176,6 +176,30 @@ Salvia が生成した HTML は、Turbo Drive によって SPA のように遷�
 
 ---
 
+### E. Why "use server" is Unnecessary
+
+Next.js などのフレームワークでは、クライアントコンポーネントからサーバー側の関数を直接呼び出すために **Server Actions (`"use server"`)** という機能があります。これは実質的に RPC (Remote Procedure Call) です。
+
+**Salvia では、この概念は不要（または既に存在している）です。**
+
+1.  **"Action" は標準の Controller:**
+    Salvia は Rails/Sinatra の上に構築されているため、最強の "Server Action" システムである **HTTP Controller** が既に存在します。
+2.  **HTML Form こそが RPC:**
+    JS の関数をボタンに紐付ける代わりに、標準的な HTML フォームを使います。
+    ```tsx
+    // Salvia View (JSX)
+    <form action="/posts" method="post">
+      <input name="title" class="border" />
+      <button type="submit">Create</button>
+    </form>
+    ```
+3.  **No Magic:**
+    送信ボタンを押すと、標準の POST リクエストが `PostsController#create` に飛びます。Rails が DB を更新し、リダイレクトまたは再レンダリングを行います。Turbo Drive がその遷移を滑らかに処理します。
+4.  **責務の分離:**
+    ロジックは Ruby (Controller/Model) に、表示は JSX (View) に。UI コンポーネントの中にデータベース操作ロジックを混ぜる必要はありません。
+
+---
+
 ## 4. Conclusion: The "Salvia" Experience
 
 Salvia は、**「Ruby で開発する楽しさ」** を損なうことなく、**「現代的なフロントエンドの UX」** を手に入れるための武器です。
