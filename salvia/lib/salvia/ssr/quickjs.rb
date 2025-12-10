@@ -32,8 +32,8 @@ module Salvia
           @last_build_error = nil
           @development = options.fetch(:development, true)
           
-          # JS ステートを初期化
-          @js_state = ""
+          # VMインスタンスを作成して保持
+          @vm = ::Quickjs::VM.new
           
           # console.log 転送用の shim をロード
           load_console_shim!
@@ -89,7 +89,7 @@ module Salvia
 
         # バンドルをリロード (開発モードでのホットリロード用)
         def reload_bundle!
-          @js_state = ""
+          @vm = ::Quickjs::VM.new
           load_console_shim!
           load_ssr_bundle!
         end
@@ -102,7 +102,7 @@ module Salvia
         end
 
         def shutdown!
-          @js_state = ""
+          @vm = nil
           @js_logs = []
           @initialized = false
         end
@@ -118,11 +118,10 @@ module Salvia
         private
 
         def eval_js(code)
-          full_code = @js_state + "\n" + code
-          result = ::Quickjs.eval_code(full_code)
+          result = @vm.eval_code(code)
           
           # console.log の出力を処理
-          process_console_output(result)
+          process_console_output
           
           result
         end
@@ -175,7 +174,7 @@ module Salvia
             })();
           JS
           
-          @js_state += shim
+          @vm.eval_code(shim)
         end
         
         # ビルド済みバンドルをロード
@@ -202,14 +201,14 @@ module Salvia
           end
           
           bundle_content = File.read(bundle_path)
-          @js_state += "\n#{bundle_content}\n"
+          @vm.eval_code(bundle_content)
           
           log_info("Loaded SSR bundle: #{bundle_path} (#{(File.size(bundle_path) / 1024.0).round(1)}KB)")
         end
         
         # console.log の出力を処理
-        def process_console_output(_result)
-          logs_json = ::Quickjs.eval_code(@js_state + "\nglobalThis.__salvia_flush_logs__()")
+        def process_console_output
+          logs_json = @vm.eval_code("globalThis.__salvia_flush_logs__()")
           
           return if logs_json.nil? || logs_json.empty?
           

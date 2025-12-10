@@ -2,6 +2,7 @@ import { h } from 'preact';
 import { useState } from 'preact/hooks';
 
 export default function Counter({ initialCount = 0 }) {
+  console.log("Rendering Counter with:", initialCount);
   const [count, setCount] = useState(initialCount);
   return (
     <div className="p-6 max-w-sm mx-auto bg-white rounded-xl shadow-md flex items-center space-x-4">
