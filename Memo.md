@@ -294,3 +294,12 @@ Salvia is now fully compatible with Rails API mode, supporting the "Full JSX" ar
 
 #### Conclusion
 The integration of `Salvia::DevServer` and the JIT architecture works correctly in both Rails and Sinatra environments. The changes are safe and do not introduce regressions.
+
+### Sinatra Example App Verification (2025-12-11)
+- **Status**: ✅ Success
+- **Details**:
+  - Recreated Sinatra example app from scratch using CLI.
+  - Implemented Todo components with TypeScript interfaces.
+  - Verified SSR output for `/todos`.
+  - Confirmed that `Salvia::Sidecar` works correctly with Sinatra.
+  - Fixed TypeScript errors by adding proper interfaces to components.
