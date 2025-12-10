@@ -182,3 +182,32 @@ Fresh フレームワークが持っている「アイランドの自動検知�
 これは単なる「コンパイラ」ではなく、**「Ruby のための、Deno 製の高機能なフロントエンド・サーバー」** を手に入れることを意味します。これが Salvia の最強の武器になります。
 
 ## 14. 実装ロードマップ (Revised)
+
+## 15. Verification Results (Rails API Mode)
+
+Verified Salvia with a new Rails API application (`examples/rails_api_app`).
+
+### Findings & Fixes
+1.  **Rails API Compatibility**:
+    -   `ActionController::API` does not include helpers by default.
+    -   **Fix**: Explicitly included `Salvia::Helpers` in `ApplicationController` (or ensure Railtie handles it correctly for API mode).
+    -   `render html:` in API mode works but requires `html_safe` string to avoid escaping.
+    -   **Fix**: Updated `ssr` helper to return `html_safe` string.
+
+2.  **SSR & DOM Mocks**:
+    -   Libraries like `@hotwired/turbo` (imported in `vendor_setup.ts`) access DOM globals (`window`, `document`, `HTMLFormElement`, `Event`, `CustomEvent`, `URL`, `requestAnimationFrame`) immediately upon loading.
+    -   QuickJS environment is minimal and lacks these globals, causing SSR to crash with `ReferenceError`.
+    -   **Fix**: Added extensive DOM mocks in `Salvia::SSR::QuickJS#generate_console_shim`.
+
+3.  **Configuration**:
+    -   `deno.json` path resolution was incorrect when running from Rails root (it expected it in root, but `salvia install` puts it in `salvia/`).
+    -   **Fix**: Added `deno_config_path` to `Salvia::Configuration` and updated `Salvia::Sidecar` to resolve it to an absolute path.
+
+4.  **Debugging**:
+    -   Logs from QuickJS were not flushed if an exception occurred during execution.
+    -   **Fix**: Updated `eval_js` to flush logs in `rescue` block.
+
+### Status
+-   ✅ Rails API app renders SSR HTML correctly.
+-   ✅ JIT compilation works via Deno Sidecar.
+-   ✅ Import Maps are injected correctly.
