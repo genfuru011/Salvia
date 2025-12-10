@@ -233,3 +233,33 @@ Verified Salvia with a new Rails API application (`examples/rails_api_app`).
 ### Next Steps
 - Consider adding `Salvia::SSR.render_json` for API responses if needed (though `render html:` is fine for full pages).
 - Add more comprehensive tests for `QuickJS` adapter edge cases.
+
+## Rails API Mode Verification Results (2025-12-10)
+
+### 1. Verification Status
+- **Environment**: Rails 8.0.0 (API Mode) + Salvia (Full JSX Architecture)
+- **Test Case**: Todo App (Props + Controller)
+- **Result**: ✅ Success
+
+### 2. Log Analysis
+The provided logs confirm successful operation:
+
+```
+Started GET "/todos" ...
+Processing by TodosController#index as HTML
+Ancestors: [..., Salvia::Helpers, ..., ActionController::API, ...]
+[Salvia] Rendering Todos/Index
+Completed 200 OK
+```
+
+- **Ancestors**: `Salvia::Helpers` is correctly included in the controller's ancestor chain, enabling the use of the `ssr` helper.
+- **Rendering**: `[Salvia] Rendering Todos/Index` indicates the JIT compilation and SSR execution via QuickJS/Deno Sidecar was successful.
+- **Response**: `Completed 200 OK` confirms the HTML was generated and sent to the client.
+
+### 3. Fixes Implemented
+- **Railtie Update**: Updated `Salvia::Railtie` to automatically include `Salvia::Helpers` in `ActionController::API` (via `:action_controller` hook), eliminating the need for manual inclusion in `ApplicationController`.
+- **DOM Mocks**: Added mocks for `Event`, `CustomEvent`, `URL`, `document.documentElement`, etc., in the QuickJS adapter to support libraries like Turbo and Preact in the SSR environment.
+- **Type Checking**: Configured `deno.json` and `sidecar.ts` to correctly handle type checking and `npm:` specifiers, resolving TS errors during JIT compilation.
+
+### 4. Conclusion
+Salvia is now fully compatible with Rails API mode, supporting the "Full JSX" architecture where Rails handles data/logic (Controllers) and Salvia handles the View layer (JSX/TSX) with SSR.
