@@ -32,14 +32,12 @@ module Salvia
           @last_build_error = nil
           @development = options.fetch(:development, true)
           
-          # VMインスタンスを作成して保持
-          @vm = ::Quickjs::VM.new
+          # バンドルとShimのコードをメモリに保持
+          @console_shim_code = generate_console_shim
+          load_ssr_bundle_content!
           
-          # console.log 転送用の shim をロード
-          load_console_shim!
-          
-          # Deno ビルド済みバンドルをロード
-          load_ssr_bundle!
+          # バンドルバージョン（リロード検知用）
+          @bundle_version = Time.now.to_f
           
           mark_initialized!
         end
@@ -70,6 +68,7 @@ module Salvia
             })()
           JS
 
+          # Execute JS in QuickJS VM
           result = eval_js(js_code)
           
           # エラーチェック
@@ -89,9 +88,8 @@ module Salvia
 
         # バンドルをリロード (開発モードでのホットリロード用)
         def reload_bundle!
-          @vm = ::Quickjs::VM.new
-          load_console_shim!
-          load_ssr_bundle!
+          load_ssr_bundle_content!
+          @bundle_version = Time.now.to_f
         end
         
         # JS ログをフラッシュして取得
@@ -102,7 +100,7 @@ module Salvia
         end
 
         def shutdown!
-          @vm = nil
+          @bundle_content = nil
           @js_logs = []
           @initialized = false
         end
@@ -117,8 +115,25 @@ module Salvia
 
         private
 
+        # スレッドローカルなVMを取得
+        def vm
+          # バージョンが変わっていたらVMを作り直す
+          if Thread.current[:salvia_vm_version] != @bundle_version
+            Thread.current[:salvia_vm] = create_vm
+            Thread.current[:salvia_vm_version] = @bundle_version
+          end
+          Thread.current[:salvia_vm]
+        end
+
+        def create_vm
+          new_vm = ::Quickjs::VM.new
+          new_vm.eval_code(@console_shim_code)
+          new_vm.eval_code(@bundle_content) if @bundle_content
+          new_vm
+        end
+
         def eval_js(code)
-          result = @vm.eval_code(code)
+          result = vm.eval_code(code)
           
           # console.log の出力を処理
           process_console_output
@@ -127,8 +142,8 @@ module Salvia
         end
         
         # console.log/error/warn を Ruby に転送する shim
-        def load_console_shim!
-          shim = <<~JS
+        def generate_console_shim
+          <<~JS
             // Salvia Console Shim - Captures JS logs for Ruby
             (function() {
               var __salvia_logs__ = [];
@@ -173,12 +188,10 @@ module Salvia
               };
             })();
           JS
-          
-          @vm.eval_code(shim)
         end
         
         # ビルド済みバンドルをロード
-        def load_ssr_bundle!
+        def load_ssr_bundle_content!
           bundle_path = options[:bundle_path] || default_bundle_path
           
           unless File.exist?(bundle_path)
@@ -186,6 +199,7 @@ module Salvia
               # 開発モードではバンドルなしでも起動可能（ビルド待ち）
               log_warn("SSR bundle not found: #{bundle_path}")
               log_warn("Run: deno run --allow-all bin/build_ssr.ts")
+              @bundle_content = nil
               return
             else
               raise Error, <<~MSG
@@ -200,15 +214,13 @@ module Salvia
             end
           end
           
-          bundle_content = File.read(bundle_path)
-          @vm.eval_code(bundle_content)
-          
+          @bundle_content = File.read(bundle_path)
           log_info("Loaded SSR bundle: #{bundle_path} (#{(File.size(bundle_path) / 1024.0).round(1)}KB)")
         end
         
         # console.log の出力を処理
         def process_console_output
-          logs_json = @vm.eval_code("globalThis.__salvia_flush_logs__()")
+          logs_json = vm.eval_code("globalThis.__salvia_flush_logs__()")
           
           return if logs_json.nil? || logs_json.empty?
           
