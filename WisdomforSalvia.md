@@ -48,7 +48,61 @@ sequenceDiagram
 
 ---
 
-## 2. Detailed Comparisons
+## 2. Directory Structure & Architecture
+
+Salvia は、Rails や Sinatra の既存の `app/` ディレクトリ構造に統合されるように設計されています。
+
+```
+my_rails_app/
+├── app/
+│   ├── controllers/      # Rails Controllers
+│   ├── models/           # Rails Models
+│   ├── views/            # Rails Views (ERB)
+│   │
+│   ├── islands/          # 🏝️ Interactive Components (Preact)
+│   │   └── Counter.jsx   # クライアントサイドで Hydrate される
+│   │
+│   ├── pages/            # 📄 Server Components (Preact)
+│   │   └── Home.jsx      # サーバーサイドでのみレンダリング (JSなし)
+│   │
+│   └── components/       # 🧩 Shared Components
+│       └── Button.jsx    # islands や pages から import して使う
+│
+├── public/
+│   └── assets/
+│       └── islands/      # ビルドされたクライアント用 JS がここに出力される
+│
+├── salvia/               # ⚙️ Salvia Configuration
+│   ├── build.ts          # ビルドスクリプト
+│   └── deno.json         # Deno 設定 (Import Map)
+│
+└── config/
+    └── initializers/
+        └── salvia.rb     # Salvia 設定
+```
+
+### ポイント
+*   **`app/islands`**: ここに置いたコンポーネントは、サーバーで HTML になり、ブラウザで JavaScript として Hydrate されます（`island` ヘルパーを使用）。
+*   **`app/pages`**: ここに置いたコンポーネントは、サーバーで HTML になるだけです。JavaScript はブラウザに送信されません（**Server Components**）。
+*   **`salvia/`**: ビルド設定や Deno の設定ファイルが置かれます。アプリケーションコードはここには置きません。
+
+### Import Map (`salvia/deno.json`)
+`salvia/deno.json` でライブラリのバージョン管理を行います。
+
+```json
+{
+  "imports": {
+    "preact": "https://esm.sh/preact@10.19.2",
+    "@/": "../app/"  // app/ ディレクトリへのエイリアス
+  }
+}
+```
+
+これにより、コンポーネント内で `import Button from "@/components/Button";` のように書くことができます。
+
+---
+
+## 3. Detailed Comparisons
 
 ### vs Next.js (Node.js Backend / BFF)
 
@@ -81,7 +135,7 @@ Rails を API モードにして、フロントエンドを React SPA で作る�
 
 ---
 
-## 3. Deep Dive: Key Technologies
+## 4. Deep Dive: Key Technologies
 
 ### A. JSX View & ERBless (ERB からの脱却)
 
@@ -397,7 +451,7 @@ salvia/                    # Frontend Root
 
 このアーキテクチャにより、**「バックエンドの堅牢さ」と「フロントエンドの表現力・開発体験」が完全に融合** します。
 
-## 4. Conclusion: The "Salvia" Experience
+## 5. Conclusion: The "Salvia" Experience
 
 Salvia は、**「Ruby で開発する楽しさ」** を損なうことなく、**「現代的なフロントエンドの UX」** を手に入れるための武器です。
 
@@ -408,7 +462,7 @@ Salvia は、**「Ruby で開発する楽しさ」** を損なうことなく、
 **"Write Ruby, Render JSX, Deliver HTML."**
 これが Salvia の真髄です。
 
-### 5. Rails API モード × Salvia: The Sweet Spot
+### 6. Rails API モード × Salvia: The Sweet Spot
 
 「Rails API モードでいいのでは？」という直感は、**完全に正しい**です。
 Salvia を「Full JSX/TSX」スタイル（ERBless）で採用する場合、Rails の役割は劇的に変化し、API モードとの相性が抜群になります。
