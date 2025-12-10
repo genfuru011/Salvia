@@ -303,3 +303,11 @@ The integration of `Salvia::DevServer` and the JIT architecture works correctly 
   - Verified SSR output for `/todos`.
   - Confirmed that `Salvia::Sidecar` works correctly with Sinatra.
   - Fixed TypeScript errors by adding proper interfaces to components.
+
+### 2025-12-11 Preact Bundling Issue Fix
+- **Issue**: `TypeError: Cannot read properties of undefined (reading '__H')` in browser.
+- **Cause**: `esbuild` was bundling Preact into JIT-compiled components (`TodoList.js`) despite `external` option, because `denoPlugins` (esbuild-deno-loader) was resolving imports to URLs before esbuild checked externals. This resulted in two Preact instances: one from import map (used by `islands.js`) and one bundled (used by components).
+- **Fix**:
+    1.  Added `preact/jsx-runtime` to externals in `Salvia::DevServer`.
+    2.  Modified `sidecar.ts` to inject a custom `externalizePlugin` *before* `denoPlugins`. This plugin forces paths matching the externals list to be treated as external, bypassing Deno resolution.
+- **Result**: Components now correctly import Preact from the import map, sharing the same instance as the hydration script.
