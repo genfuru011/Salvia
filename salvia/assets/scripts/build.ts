@@ -17,6 +17,7 @@ import { denoPlugins } from "jsr:@luca/esbuild-deno-loader@0.11";
 // We need to go up one level to access app/ and public/.
 const ROOT_DIR = "..";
 const ISLANDS_DIR = `${ROOT_DIR}/app/islands`;
+const PAGES_DIR = `${ROOT_DIR}/app/pages`;
 const SSR_OUTPUT_DIR = `${ROOT_DIR}/salvia/server`;
 const CLIENT_OUTPUT_DIR = `${ROOT_DIR}/public/assets/islands`;
 const WATCH_MODE = Deno.args.includes("--watch");
@@ -30,25 +31,37 @@ interface IslandFile {
   path: string;
   name: string;
   clientOnly: boolean;
+  isPage: boolean;
 }
 
 async function findIslandFiles(): Promise<IslandFile[]> {
   const files: IslandFile[] = [];
-  try {
-    for await (const entry of Deno.readDir(ISLANDS_DIR)) {
-      if (entry.isFile && (entry.name.endsWith(".tsx") || entry.name.endsWith(".jsx") || entry.name.endsWith(".js"))) {
-        if (entry.name.startsWith("_")) continue; // Skip internal files
-        const path = `${ISLANDS_DIR}/${entry.name}`;
-        const content = await Deno.readTextFile(path);
-        const clientOnly = content.trimStart().startsWith('"client only"') || 
-                          content.trimStart().startsWith("'client only'");
-        const name = entry.name.replace(/\.(tsx|jsx|js)$/, "");
-        files.push({ path, name, clientOnly });
+  
+  const scan = async (dir: string, isPage: boolean) => {
+    try {
+      for await (const entry of Deno.readDir(dir)) {
+        if (entry.isFile && (entry.name.endsWith(".tsx") || entry.name.endsWith(".jsx") || entry.name.endsWith(".js"))) {
+          if (entry.name.startsWith("_")) continue; // Skip internal files
+          const path = `${dir}/${entry.name}`;
+          const content = await Deno.readTextFile(path);
+          const clientOnly = content.trimStart().startsWith('"client only"') || 
+                            content.trimStart().startsWith("'client only'");
+          const name = entry.name.replace(/\.(tsx|jsx|js)$/, "");
+          files.push({ path, name, clientOnly, isPage });
+        }
       }
+    } catch {
+      // Directory might not exist
     }
-  } catch {
-    console.log("📁 app/islands directory not found. Skipping.");
+  };
+
+  await scan(ISLANDS_DIR, false);
+  await scan(PAGES_DIR, true);
+
+  if (files.length === 0) {
+    console.log("📁 No components found in app/islands or app/pages.");
   }
+  
   return files;
 }
 
@@ -61,7 +74,7 @@ async function buildSSR() {
   }
 
   const ssrFiles = islandFiles.filter(f => !f.clientOnly);
-  const clientFiles = islandFiles;  // All files go to client
+  const clientFiles = islandFiles.filter(f => !f.isPage);
 
   if (VERBOSE) {
     console.log("🔍 SSR targets:", ssrFiles.map(f => f.name));
@@ -78,8 +91,17 @@ async function buildSSR() {
       // Create a virtual entry point that exports all components
       // Get just the filename from the path
       const entryCode = ssrFiles.map(f => {
-        const filename = f.path.split("/").pop();
-        return `import ${f.name} from "./${filename}";`;
+        let importPath = f.path;
+        // f.path is like "../app/islands/Counter.tsx" or "../app/pages/Home.tsx"
+        // We are writing _ssr_entry.js to ISLANDS_DIR ("../app/islands")
+        
+        if (f.path.startsWith(ISLANDS_DIR)) {
+          importPath = `./${f.path.split("/").pop()}`;
+        } else if (f.path.startsWith(PAGES_DIR)) {
+          // From ../app/islands to ../app/pages is ../pages
+          importPath = `../pages/${f.path.split("/").pop()}`;
+        }
+        return `import ${f.name} from "${importPath}";`;
       }).join("\n") + `
 import { h } from "preact";
 import renderToString from "preact-render-to-string";
@@ -180,7 +202,7 @@ export function mount(element, props, options) {
 
     // Generate manifest (which Islands are client only)
     const manifest = Object.fromEntries(
-      islandFiles.map(f => [f.name, { clientOnly: f.clientOnly }])
+      islandFiles.map(f => [f.name, { clientOnly: f.clientOnly, serverOnly: f.isPage }])
     );
     await Deno.writeTextFile(
       `${SSR_OUTPUT_DIR}/manifest.json`,
@@ -208,7 +230,7 @@ async function watch() {
   console.log("👀 Watching for file changes...");
   
   // Watch Islands source
-  const watchDirs = [ISLANDS_DIR, "./app/views"];
+  const watchDirs = [ISLANDS_DIR, PAGES_DIR, "./app/views"];
   
   for (const dir of watchDirs) {
     (async () => {
