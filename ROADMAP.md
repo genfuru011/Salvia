@@ -31,11 +31,12 @@ Instead of competing with Rails/Hanami, Salvia will become the standard tool for
 
 ## Next Phase
 
-### Phase 1: Advanced SSR Features (v0.2.0)
+### Phase 1: Ecosystem Expansion (v0.2.0)
 
+- [ ] **Frontend Frameworks**: Support for React, Vue, Solid, Svelte (currently Preact only)
+- [ ] **Backend Integrations**: Official support for Roda and Hanami
 - [ ] **TypeScript Support**: Type-safe props passing
 - [ ] **Import Maps**: Better dependency management
-- [ ] **Multiple Frameworks**: Support for React, Vue, Svelte (currently Preact only)
 
 ---
 
