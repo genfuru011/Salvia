@@ -37,6 +37,10 @@ module Salvia
   class << self
     attr_accessor :root, :env, :logger
 
+    def logger
+      @logger ||= Logger.new(STDOUT)
+    end
+
     def config
       @config ||= Configuration.new
     end
