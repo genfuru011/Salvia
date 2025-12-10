@@ -1,7 +1,7 @@
 <p align="center">
   <img src="https://img.shields.io/badge/Ruby-3.1+-CC342D?style=flat-square&logo=ruby" alt="Ruby">
   <img src="https://img.shields.io/badge/License-MIT-blue?style=flat-square" alt="License">
-  <img src="https://img.shields.io/badge/Version-0.1.0-6A5ACD?style=flat-square" alt="Version">
+  <img src="https://img.shields.io/badge/Version-0.1.8-6A5ACD?style=flat-square" alt="Version">
   <img src="https://img.shields.io/gem/v/salvia_rb?style=flat-square&color=ff6347" alt="Gem">
 </p>
 
@@ -15,7 +15,7 @@
 
 ## Features
 
-- **🚀 Zero Configuration** - Works out of the box, customizable when needed
+- **🔒 Explicit Configuration** - Required `config/app.rb` & `config/database.yml`
 - **Server-Rendered (HTML) First** - Return HTML, not JSON APIs
 - **🏝️ SSR Islands Architecture** - Server-side render Preact components with QuickJS
 - **Rails-like DSL** - Familiar `resources`, `root to:` routing
@@ -47,23 +47,23 @@ salvia server      # Start server (Puma in dev, Falcon in prod)
 
 Open http://localhost:9292 in your browser.
 
-### Zero Configuration
+### Required configuration (strict)
 
-Salvia works with minimal setup:
+Salvia 0.1.8+ requires these files:
 
-```ruby
-# config.ru (3 lines!)
-require "salvia_rb"
-Salvia.configure { |c| c.root = __dir__ }
-run Salvia::Application.new
-```
+- `config/routes.rb` — define routes explicitly
+- `config/app.rb` — application settings (set `config.secret_key`)
+- `config/database.yml` — database settings
+- `db/` directory — database files/migrations
 
-### One-liner Mode
+Example `config/app.rb`:
 
 ```ruby
-# app.rb
-require "salvia_rb"
-Salvia.run!  # Auto-selects server: Puma (dev) or Falcon (prod)
+Salvia.configure do |config|
+  config.secret_key = ENV["SECRET_KEY"]
+  config.ssr_bundle_path = "vendor/server/ssr_bundle.js"
+  config.cache_templates = Salvia.production?
+end
 ```
 
 ## Directory Structure
@@ -82,12 +82,12 @@ myapp/
 │   │   └── home/
 │   │       └── index.html.erb
 │   └── islands/                # 🏝️ Island components
-│       └── Counter.js
+│       └── Counter.jsx
 ├── vendor/server/
 │   └── ssr_bundle.js           # SSR bundle (generated)
 ├── config/
 │   ├── database.yml
-│   ├── environment.rb
+│   ├── app.rb
 │   └── routes.rb
 ├── db/
 │   └── migrate/
