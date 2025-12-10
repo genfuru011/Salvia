@@ -211,3 +211,25 @@ Verified Salvia with a new Rails API application (`examples/rails_api_app`).
 -   ✅ Rails API app renders SSR HTML correctly.
 -   ✅ JIT compilation works via Deno Sidecar.
 -   ✅ Import Maps are injected correctly.
+
+## Verification Results (2025-12-10) - Part 2
+
+### Rails API Mode Integration
+- **Status**: Success ✅
+- **SSR**: Working correctly with `render html: ssr(...)`.
+- **Hydration**: Working correctly with `islands.js`.
+- **JIT Compilation**: Working correctly with `DenoSidecar`.
+- **Type Checking**: Working correctly (errors are logged).
+- **Import Maps**: Auto-injected by `ssr` helper.
+
+### Issues Resolved
+1. **QuickJS String Return Issue**: `QuickJS` gem returned `nil` or `Symbol` when `renderToString` returned a raw HTML string.
+   - **Fix**: Modified `render_jit` (and `render_production`) to return `JSON.stringify(html)` from JS and parse it in Ruby. This ensures reliable string transfer.
+2. **TypeScript Errors**: `deno check` reported errors for implicit `any`.
+   - **Fix**: Added proper TypeScript interfaces to `TodoList.tsx` and `Todos/Index.tsx`.
+3. **Regex Syntax Error**: `escape_js` had a regex syntax error.
+   - **Fix**: Corrected escaping in `gsub`.
+
+### Next Steps
+- Consider adding `Salvia::SSR.render_json` for API responses if needed (though `render html:` is fine for full pages).
+- Add more comprehensive tests for `QuickJS` adapter edge cases.
