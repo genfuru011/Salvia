@@ -31,16 +31,23 @@ $ bundle install
 
 ### 1. Install SSR files
 
-Run the install command to generate the necessary configuration and directories:
+Run the interactive installer to set up Salvia for your project:
 
 ```bash
 $ bundle exec salvia install
 ```
 
+The installer will ask you about:
+1.  **Frontend Framework**: (Currently Preact is supported)
+2.  **Backend Framework**: (Rails, Sinatra, etc.)
+3.  **Tailwind CSS**: (Installs `tailwindcss-ruby` if requested)
+
 This creates:
 *   `app/islands/` - Directory for your components
-*   `deno.json` - Deno configuration
-*   `bin/build_ssr.ts` - Build script
+*   `salvia/deno.json` - Deno configuration
+*   `salvia/build.ts` - Build script
+*   `public/assets/islands/` - Output directory for client bundles
+*   `public/assets/javascripts/islands.js` - Client-side hydration script
 
 ### 2. Create a Component
 
@@ -60,33 +67,98 @@ export default function Counter({ initialCount = 0 }) {
 }
 ```
 
-### 3. Build Components
+### 3. Integration Guide
+
+#### Rails
+
+1.  **Add Script Tag**: Add the hydration script to your layout (`app/views/layouts/application.html.erb`):
+
+    ```erb
+    <head>
+      <!-- ... -->
+      <script type="module" src="/assets/javascripts/islands.js"></script>
+    </head>
+    ```
+
+2.  **Render Component**: Use the `island` helper in your views:
+
+    ```erb
+    <%= island "Counter", initialCount: 10 %>
+    ```
+
+3.  **Development**: Create a `Procfile.dev` to run the build watcher alongside your server:
+
+    ```yaml
+    web: bin/rails server -p 3000
+    salvia: bundle exec salvia watch
+    # css: bundle exec tailwindcss -w ... (if using Tailwind)
+    ```
+
+    Run with: `bin/dev` or `foreman start -f Procfile.dev`
+
+#### Sinatra
+
+1.  **Setup Application**: Configure Salvia in your app (`app.rb`):
+
+    ```ruby
+    require 'sinatra'
+    require 'salvia'
+
+    class App < Sinatra::Base
+      # 1. Setup Salvia
+      Salvia.configure do |config|
+        config.islands_dir = "app/islands"
+        config.build_dir = "public/assets"
+      end
+
+      # 2. Include Helpers
+      helpers Salvia::Helpers
+
+      # 3. Serve Static Files (if not already configured)
+      use Rack::Static, urls: ["/assets"], root: "public"
+
+      get '/' do
+        erb :index
+      end
+    end
+    ```
+
+2.  **Add Script Tag**: Add the hydration script to your layout (`views/layout.erb`):
+
+    ```erb
+    <head>
+      <!-- ... -->
+      <script type="module" src="/assets/javascripts/islands.js"></script>
+    </head>
+    ```
+
+3.  **Render Component**: Use the `island` helper in your views (`views/index.erb`):
+
+    ```erb
+    <%= island "Counter", initialCount: 10 %>
+    ```
+
+### 4. Build & Watch
 
 Compile the components for SSR and the browser:
 
 ```bash
 $ bundle exec salvia build
-# or watch for changes
+```
+
+For development, use the watch command to automatically rebuild on changes:
+
+```bash
 $ bundle exec salvia watch
 ```
-
-### 4. Render in Ruby
-
-Use `Salvia::SSR` to render the component in your view (ERB, Slim, etc.):
-
-```ruby
-# In your controller or view helper
-html = Salvia::SSR.render("Counter", initialCount: 10)
-```
-
-To make it interactive on the client, you need to mount it. Salvia provides a helper for this (setup required).
 
 ## Configuration
 
 ```ruby
 Salvia.configure do |config|
-  config.islands_dir = "app/islands"
-  config.build_dir = "public/assets"
+  config.islands_dir = "app/islands"       # Directory for island components
+  config.build_dir = "public/assets"       # Output directory for client assets
+  config.ssr_bundle_path = "salvia/server/ssr_bundle.js" # Path to SSR bundle
 end
 ```
 

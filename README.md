@@ -106,7 +106,7 @@ export default function Counter({ initialCount = 0 }) {
 
     class App < Sinatra::Base
       # 1. Setup Salvia
-      Salvia.setup do |config|
+      Salvia.configure do |config|
         config.islands_dir = "app/islands"
         config.build_dir = "public/assets"
       end

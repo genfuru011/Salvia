@@ -22,7 +22,7 @@ module Salvia
     attr_accessor :ssr_bundle_path, :island_inspector, :islands_dir, :build_dir
 
     def initialize
-      @ssr_bundle_path = "vendor/server/ssr_bundle.js"
+      @ssr_bundle_path = "salvia/server/ssr_bundle.js"
       @islands_dir = "app/islands"
       @build_dir = "public/assets"
       @island_inspector = nil

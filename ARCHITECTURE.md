@@ -80,8 +80,9 @@ end
   - Native TypeScript/JSX support.
   - Fast startup.
 - **Outputs:**
-  - `vendor/server/ssr_bundle.js`: Contains components + `renderToString` function. Loaded by QuickJS.
-  - `public/assets/javascripts/islands.js`: Contains components + `hydrate` function. Loaded by Browser.
+  - `salvia/server/ssr_bundle.js`: Contains components + `renderToString` function. Loaded by QuickJS.
+  - `public/assets/islands/`: Contains client-side bundles for hydration.
+  - `public/assets/javascripts/islands.js`: The main hydration script.
 
 ### 3. View Helper (`island`)
 
@@ -94,7 +95,8 @@ def island(name, props = {}, options = {})
   html = Salvia::SSR.render(name, props)
 
   # 2. Wrap in a div with data attributes for hydration
-  tag(:div, data: { island: name, props: props.to_json }) { html }
+  # (Implementation varies by framework to ensure HTML safety)
+  build_tag(:div, data: { island: name, props: props.to_json }) { html }
 end
 ```
 
@@ -109,12 +111,13 @@ Salvia is designed to be framework-agnostic.
 3.  **Build**: `salvia build` compiles the JavaScript.
 4.  **Render**: Use the `island` helper in your framework's view layer.
 
-### Rails Integration (Planned)
+### Rails Integration
 
 ```ruby
 # config/initializers/salvia.rb
 Salvia.configure do |config|
-  config.islands_dir = Rails.root.join("app/javascript/islands")
+  config.islands_dir = Rails.root.join("app/islands")
+  config.ssr_bundle_path = Rails.root.join("salvia/server/ssr_bundle.js")
 end
 ```
 
@@ -123,6 +126,11 @@ end
 ```ruby
 require "sinatra"
 require "salvia"
+
+Salvia.configure do |config|
+  config.islands_dir = "app/islands"
+  config.ssr_bundle_path = "salvia/server/ssr_bundle.js"
+end
 
 helpers Salvia::Helpers
 
