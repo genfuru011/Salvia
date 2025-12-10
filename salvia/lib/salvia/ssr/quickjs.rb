@@ -82,6 +82,19 @@ module Salvia
           
           # Bundle component
           js_code = Salvia::Sidecar.instance.bundle(path, externals: ["preact", "preact/hooks", "preact-render-to-string"])
+          
+          # Async Type Check
+          Thread.new do
+            begin
+              result = Salvia::Sidecar.instance.check(path)
+              unless result["success"]
+                log_warn("Type Check Failed for #{component_name}:\n#{result["message"]}")
+              end
+            rescue => e
+              log_debug("Type Check Error: #{e.message}")
+            end
+          end
+
           @vm.eval_code(js_code)
           
           # Render

@@ -44,6 +44,24 @@ const handler = async (request: Request): Promise<Response> => {
         headers: { "Content-Type": "application/json" },
       });
     }
+
+    if (command === "check") {
+      const { entryPoint } = params;
+      const cmd = new Deno.Command("deno", {
+        args: ["check", "--config", "deno.json", entryPoint],
+        stdout: "piped",
+        stderr: "piped",
+        cwd: Deno.cwd(),
+      });
+      
+      const output = await cmd.output();
+      const success = output.code === 0;
+      const message = new TextDecoder().decode(output.stderr);
+      
+      return new Response(JSON.stringify({ success, message }), {
+        headers: { "Content-Type": "application/json" },
+      });
+    }
     
     if (command === "ping") {
         return new Response(JSON.stringify({ status: "pong" }));

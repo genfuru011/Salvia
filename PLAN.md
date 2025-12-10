@@ -43,9 +43,9 @@ This plan focuses on realizing the "Full JSX/TSX Architecture" where ERB is elim
 - [x] **Step 1: Managed Sidecar Optimization (The "Dream" Features)**
     - [x] Implement `Salvia::Sidecar` to manage persistent Deno process.
     - [x] Switch `Salvia::Compiler` to communicate via IPC/Socket (Implemented JIT bundling in `Salvia::SSR::QuickJS`).
-    - [ ] **Integrate Deno Ecosystem**:
-        - [ ] Implement `deno fmt` support for auto-formatting.
-        - [ ] Implement `deno check` for background type checking.
+    - [x] **Integrate Deno Ecosystem**:
+        - [x] Implement `deno fmt` support (in Sidecar).
+        - [x] Implement `deno check` for background type checking.
         - [ ] Implement advanced tree-shaking optimizations.
 - [ ] **Production Strategy**
     - [ ] Implement `salvia build` for pre-compilation.

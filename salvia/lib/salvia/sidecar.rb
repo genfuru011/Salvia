@@ -54,6 +54,11 @@ module Salvia
       response["code"]
     end
 
+    def check(entry_point)
+      start unless running?
+      request("check", { entryPoint: entry_point })
+    end
+
     private
 
     def wait_for_socket
