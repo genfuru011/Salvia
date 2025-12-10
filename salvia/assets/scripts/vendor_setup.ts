@@ -1,17 +1,18 @@
+import { h, Fragment } from "preact";
 import * as preact from "preact";
 import * as hooks from "preact/hooks";
 import * as jsxRuntime from "preact/jsx-runtime";
 import renderToString from "preact-render-to-string";
-import * as Turbo from "@hotwired/turbo";
+// import * as Turbo from "@hotwired/turbo";
 
 // Expose to global scope
 (globalThis as any).preact = preact;
 (globalThis as any).preactHooks = hooks;
 (globalThis as any).jsxRuntime = jsxRuntime;
 (globalThis as any).renderToString = renderToString;
-(globalThis as any).Turbo = Turbo;
-(globalThis as any).h = preact.h;
-(globalThis as any).Fragment = preact.Fragment;
+// (globalThis as any).Turbo = Turbo;
+(globalThis as any).h = h;
+(globalThis as any).Fragment = Fragment;
 
 // Simple require shim for JIT bundles
 (globalThis as any).require = function(moduleName: string) {

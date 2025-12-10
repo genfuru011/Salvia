@@ -165,8 +165,8 @@ module Salvia
       def load_vendor_bundle!
         vendor_path = File.join(Salvia.root, "salvia/vendor_setup.ts")
         if File.exist?(vendor_path)
-          code = Salvia::Compiler.bundle(vendor_path)
-          @vm.eval_code(code)
+          code = Salvia::Compiler.bundle(vendor_path, format: "iife")
+          eval_js(code)
           log_info("Loaded Vendor bundle (JIT)")
         else
           log_warn("vendor_setup.ts not found. JIT mode might fail.")

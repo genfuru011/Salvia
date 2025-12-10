@@ -268,3 +268,14 @@ Salvia is now fully compatible with Rails API mode, supporting the "Full JSX" ar
 - **Action**: Removed explicit `include Salvia::Helpers` from `ApplicationController` in `rails_api_app`.
 - **Result**: `/todos` endpoint still renders correctly.
 - **Conclusion**: The `Railtie` update correctly hooks into `ActionController::API`, making Salvia helpers available automatically in API-only Rails applications.
+
+## Sinatra App Verification (2025-12-11)
+
+- Created `examples/sinatra_app` from scratch using CLI.
+- Implemented Todo app with `TodoList.tsx` (Island) and `todos/Index.tsx` (Page).
+- Fixed `sidecar.ts` to handle `global-externals` correctly for IIFE format.
+  - `globalExternalsPlugin` was intercepting imports even when `externals` list was empty.
+  - Modified plugin to check `externals.includes(args.path)`.
+- Fixed `vendor_setup.ts` to use named imports for `h` and `Fragment` to ensure they are available globally.
+- Verified SSR rendering for `/todos`.
+- Verified JIT compilation of islands.

@@ -13,23 +13,6 @@ const globalExternals: Record<string, string> = {
   "react-dom": "globalThis.preact",
 };
 
-const globalExternalsPlugin = {
-  name: "global-externals",
-  setup(build: any) {
-    const filter = new RegExp(`^(${Object.keys(globalExternals).map(k => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join("|")})$`);
-    build.onResolve({ filter }, (args: any) => {
-      return { path: args.path, namespace: "global-externals" };
-    });
-    build.onLoad({ filter: /.*/, namespace: "global-externals" }, (args: any) => {
-      const globalVar = globalExternals[args.path];
-      return {
-        contents: `module.exports = ${globalVar};`,
-        loader: "js"
-      };
-    });
-  },
-};
-
 console.log(`🚀 Salvia Sidecar starting...`);
 
 Deno.serve({
@@ -70,6 +53,26 @@ async function bundle(entryPoint: string, externals: string[] = [], format: "esm
     let actualExternals = externals;
 
     if (format === "iife") {
+      const globalExternalsPlugin = {
+        name: "global-externals",
+        setup(build: any) {
+          const filter = new RegExp(`^(${Object.keys(globalExternals).map(k => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join("|")})$`);
+          build.onResolve({ filter }, (args: any) => {
+            if (externals.includes(args.path)) {
+              return { path: args.path, namespace: "global-externals" };
+            }
+            return null;
+          });
+          build.onLoad({ filter: /.*/, namespace: "global-externals" }, (args: any) => {
+            const globalVar = globalExternals[args.path];
+            return {
+              contents: `module.exports = ${globalVar};`,
+              loader: "js"
+            };
+          });
+        },
+      };
+      
       plugins.unshift(globalExternalsPlugin);
       // Remove handled externals from the list
       actualExternals = externals.filter(e => !globalExternals[e]);

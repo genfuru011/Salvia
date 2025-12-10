@@ -1,16 +1,10 @@
 import * as esbuild from "https://deno.land/x/esbuild@v0.24.2/mod.js";
 import { denoPlugins } from "jsr:@luca/esbuild-deno-loader@0.11";
 
-const SOCKET_PATH = Deno.args[0] || "/tmp/salvia.sock";
+// Use port 0 to let OS assign a free port
+const PORT = 0;
 
-// Ensure socket file is removed before starting
-try {
-  await Deno.remove(SOCKET_PATH);
-} catch {
-  // Ignore
-}
-
-console.log(`🚀 Salvia Sidecar starting on ${SOCKET_PATH}...`);
+console.log(`[Deno Init] 🚀 Salvia Sidecar starting...`);
 
 const handler = async (request: Request): Promise<Response> => {
   if (request.method !== "POST") {
@@ -22,21 +16,52 @@ const handler = async (request: Request): Promise<Response> => {
     const { command, params } = body;
 
     if (command === "bundle") {
-      const { entryPoint, externals } = params;
+      const { entryPoint, externals, format, globalName, configPath } = params;
       
+      // If format is IIFE, we need to handle externals by mapping them to globals
+      // But esbuild doesn't support this out of the box for IIFE with externals.
+      // We can use a plugin to rewrite imports to globals if they are in externals list.
+      
+      const globalExternalsPlugin = {
+        name: 'global-externals',
+        setup(build: any) {
+          build.onResolve({ filter: /.*/ }, (args: any) => {
+            if (externals && externals.includes(args.path)) {
+              return { path: args.path, namespace: 'global-externals' };
+            }
+          });
+          
+          build.onLoad({ filter: /.*/, namespace: 'global-externals' }, (args: any) => {
+            let globalVar = `globalThis['${args.path}']`;
+            if (args.path === "preact") globalVar = "globalThis.preact";
+            if (args.path === "preact/hooks") globalVar = "globalThis.preactHooks";
+            if (args.path === "preact/jsx-runtime") globalVar = "globalThis.jsxRuntime";
+            if (args.path === "preact-render-to-string") globalVar = "globalThis.renderToString";
+            
+            return {
+              contents: `module.exports = ${globalVar};`,
+              loader: 'js',
+            };
+          });
+        },
+      };
+
       // JIT Bundle for a specific entry point
       const result = await esbuild.build({
         entryPoints: [entryPoint],
         bundle: true,
-        format: "iife",
-        globalName: "SalviaComponent", // Exports will be in SalviaComponent.default
+        format: format || "esm",
+        globalName: globalName, // Exports will be in SalviaComponent.default
         platform: "neutral",
-        plugins: [...denoPlugins({ configPath: `${Deno.cwd()}/deno.json` })],
-        external: externals || [],
+        plugins: [
+          globalExternalsPlugin,
+          ...denoPlugins({ configPath: configPath || `${Deno.cwd()}/salvia/deno.json` })
+        ],
+        external: [], // We handle externals manually with the plugin
         write: false, // Return in memory
         jsx: "automatic",
         jsxImportSource: "preact",
-        minify: false, // Keep it readable for debugging, maybe add option later
+        minify: false, // Keep it readable for debugging
       });
 
       const code = result.outputFiles[0].text;
@@ -46,9 +71,27 @@ const handler = async (request: Request): Promise<Response> => {
     }
 
     if (command === "check") {
-      const { entryPoint } = params;
+      const { entryPoint, configPath } = params;
       const cmd = new Deno.Command("deno", {
-        args: ["check", "--config", "deno.json", entryPoint],
+        args: ["check", "--config", configPath || "deno.json", entryPoint],
+        stdout: "piped",
+        stderr: "piped",
+        cwd: Deno.cwd(),
+      });
+      
+      const output = await cmd.output();
+      const success = output.code === 0;
+      const message = new TextDecoder().decode(output.stderr);
+      
+      return new Response(JSON.stringify({ success, message }), {
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+    
+    if (command === "fmt") {
+      const { entryPoint, configPath } = params;
+      const cmd = new Deno.Command("deno", {
+        args: ["fmt", "--config", configPath || "deno.json", entryPoint],
         stdout: "piped",
         stderr: "piped",
         cwd: Deno.cwd(),
@@ -76,14 +119,13 @@ const handler = async (request: Request): Promise<Response> => {
   }
 };
 
-Deno.serve({ path: SOCKET_PATH }, handler);
+const server = Deno.serve({ port: PORT }, handler);
+// Output the assigned port so Ruby can read it
+console.log(`[Deno Init] Listening on http://localhost:${server.addr.port}/`);
 
 // Handle cleanup on exit
 const cleanup = () => {
   console.log("🛑 Stopping Sidecar...");
-  try {
-    Deno.removeSync(SOCKET_PATH);
-  } catch {}
   esbuild.stop();
   Deno.exit();
 };
