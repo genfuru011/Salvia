@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "json"
-require "salvia/sidecar"
+require "salvia/compiler"
 
 module Salvia
   module SSR
@@ -24,7 +24,7 @@ module Salvia
         
         if @development
           # JIT Mode
-          Salvia::Sidecar.instance.start
+          # Salvia::Compiler will auto-start the sidecar on first use
           load_vendor_bundle!
         else
           # Production Mode
@@ -64,7 +64,7 @@ module Salvia
         @vm = nil # ガベージコレクションに任せる
         @js_logs = []
         @initialized = false
-        Salvia::Sidecar.instance.stop if @development
+        Salvia::Compiler.shutdown if @development
       end
 
       private
@@ -81,12 +81,12 @@ module Salvia
           end
           
           # Bundle component
-          js_code = Salvia::Sidecar.instance.bundle(path, externals: ["preact", "preact/hooks", "preact-render-to-string"])
+          js_code = Salvia::Compiler.bundle(path, externals: ["preact", "preact/hooks", "preact-render-to-string"])
           
           # Async Type Check
           Thread.new do
             begin
-              result = Salvia::Sidecar.instance.check(path)
+              result = Salvia::Compiler.check(path)
               unless result["success"]
                 log_warn("Type Check Failed for #{component_name}:\n#{result["message"]}")
               end
@@ -164,7 +164,7 @@ module Salvia
       def load_vendor_bundle!
         vendor_path = File.join(Salvia.root, "salvia/vendor_setup.ts")
         if File.exist?(vendor_path)
-          code = Salvia::Sidecar.instance.bundle(vendor_path)
+          code = Salvia::Compiler.bundle(vendor_path)
           @vm.eval_code(code)
           log_info("Loaded Vendor bundle (JIT)")
         else

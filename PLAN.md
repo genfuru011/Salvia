@@ -41,12 +41,13 @@ This plan focuses on realizing the "Full JSX/TSX Architecture" where ERB is elim
 **Goal**: Eliminate the need for manual `deno task watch` and achieve JIT compilation.
 
 - [x] **Step 1: Managed Sidecar Optimization (The "Dream" Features)**
-    - [x] Implement `Salvia::Sidecar` to manage persistent Deno process.
-    - [x] Switch `Salvia::Compiler` to communicate via IPC/Socket (Implemented JIT bundling in `Salvia::SSR::QuickJS`).
+    - [x] Implement `Salvia::Sidecar` (Process Manager)
+    - [x] Implement `Salvia::Compiler` (Interface) & `DenoSidecar` (Adapter)
+    - [x] Create `salvia/sidecar.ts` (The Deno Script)
+    - [x] Integrate with Rails/Sinatra (Middleware/Controller)
     - [x] **Integrate Deno Ecosystem**:
         - [x] Implement `deno fmt` support (in Sidecar).
         - [x] Implement `deno check` for background type checking.
-        - [ ] Implement advanced tree-shaking optimizations.
 - [x] **Production Strategy**
     - [x] Implement `salvia build` for pre-compilation (Verified with new structure).
     - [x] Hybrid runtime (pre-built files in production).

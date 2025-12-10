@@ -612,20 +612,20 @@ Salvia のコアロジックは「HTML 文字列を受け取り、SSR して返�
 最終的な目標は、Salvia が **「Ruby のためのユニバーサルな View レイヤー」** になることです。
 バックエンドが何であれ、フロントエンドが何であれ、"Ruby でデータを渡し、JSX で描画する" という体験を統一します。
 
-### J. The Power of Deno Ecosystem (Future Roadmap)
+### J. The Power of Deno Ecosystem (Implemented)
 
-Salvia は将来的に、Deno を単なるビルドツールとしてだけでなく、**「Ruby のための高機能なフロントエンド・サイドカー」** として活用する計画です。
-Rails/Sinatra プロセスの裏で Deno Worker を常駐させることで、以下の機能が実現されます。
+Salvia は、Deno を単なるビルドツールとしてだけでなく、**「Ruby のための高機能なフロントエンド・サイドカー」** として活用しています。
+Rails/Sinatra プロセスの裏で Deno Worker を常駐させることで、以下の機能が実現されています。
 
 1.  **Zero-Config Type Checking**:
-    *   開発中にバックグラウンドで `deno check` が走り、Rails のログに型エラーを表示します。
+    *   開発中にバックグラウンドで `deno check` を走らせることが可能です。
     *   `tsconfig.json` の管理は不要です。
 
 2.  **Instant Formatting**:
-    *   `deno fmt` エンジンを利用し、保存時に TSX ファイルを自動整形します。
+    *   `deno fmt` エンジンを利用し、TSX ファイルを高速に整形できます。
 
 3.  **Advanced Optimizations**:
-    *   Fresh フレームワークの知見を活かした、高度な Tree Shaking や Island の自動検知が可能になります。
+    *   Fresh フレームワークの知見を活かした、高度な Tree Shaking や Island の自動検知の基盤が整っています。
 
 これにより、Rubyist は「Node.js のツールチェーン」を一切意識することなく、最高レベルのフロントエンド開発環境を手に入れることができます。
 
@@ -633,10 +633,10 @@ Rails/Sinatra プロセスの裏で Deno Worker を常駐させることで、�
 
 ## 10. Conclusion: The "Salvia" Experience
 
-Salvia は、最高の開発体験とパフォーマンスを実現するため、**Managed Sidecar** アプローチを採用します。
+Salvia は、最高の開発体験とパフォーマンスを実現するため、**Managed Sidecar** アプローチを採用しています。
 
 1.  **Managed Sidecar (Persistent Worker)**
-    *   Rails/Sinatra が裏で Deno プロセスを常駐させ、Unix Socket/IPC で通信します。
+    *   Rails/Sinatra が裏で Deno プロセスを常駐させ、HTTP (Port 0) で通信します。
     *   **メリット**: esbuild のコンテキストをメモリに保持できるため、圧倒的に高速（ミリ秒単位）。
     *   **エコシステム**: `deno fmt` や `deno check` をバックグラウンドで実行し、Ruby 開発者にモダンなフロントエンド体験を提供します。
     *   **ゴール**: Vite に匹敵する、あるいはそれを超える「Rubyネイティブな」開発体験を実現します。

@@ -1,10 +1,11 @@
-require 'socket'
+require 'net/http'
+require 'uri'
 require 'json'
+require 'timeout'
 
 module Salvia
   class Sidecar
-    SOCKET_PATH = "/tmp/salvia.sock"
-    SCRIPT_PATH = "salvia/sidecar.ts"
+    SCRIPT_PATH = File.join(__dir__, "sidecar.ts")
 
     def self.instance
       @instance ||= new
@@ -12,28 +13,45 @@ module Salvia
 
     def initialize
       @pid = nil
+      @port = nil
     end
 
     def start
       return if running?
 
-      # Remove socket if it exists (cleanup from crash)
-      File.unlink(SOCKET_PATH) if File.exist?(SOCKET_PATH)
-
-      cmd = ["deno", "run", "--allow-all", SCRIPT_PATH, SOCKET_PATH]
+      cmd = ["deno", "run", "--allow-all", SCRIPT_PATH]
       
       puts "🚀 Starting Salvia Sidecar..."
-      # Spawn process
-      @pid = spawn(*cmd, out: $stdout, err: $stderr)
-      Process.detach(@pid)
-
-      wait_for_socket
+      # Spawn process and capture stdout to find the port
+      # We use IO.popen to read the output stream
+      @io = IO.popen(cmd)
+      @pid = @io.pid
+      
+      # Wait for "Listening on http://localhost:PORT/"
+      wait_for_port
+      
+      # Detach so it runs in background, but we keep the IO open to read logs if needed
+      # Actually, for IO.popen, we shouldn't detach if we want to read from it.
+      # But we need to read in a non-blocking way or in a separate thread after finding the port.
+      
+      Thread.new do
+        begin
+          while line = @io.gets
+            # Forward Deno logs to stdout/logger
+            puts "[Deno] #{line}"
+          end
+        rescue IOError
+          # Stream closed
+        end
+      end
     end
 
     def stop
       return unless @pid
       Process.kill("TERM", @pid)
       @pid = nil
+      @port = nil
+      @io.close if @io && !@io.closed?
     end
 
     def running?
@@ -59,47 +77,43 @@ module Salvia
       request("check", { entryPoint: entry_point })
     end
 
+    def fmt(entry_point)
+      start unless running?
+      request("fmt", { entryPoint: entry_point })
+    end
+
     private
 
-    def wait_for_socket
-      20.times do
-        break if File.exist?(SOCKET_PATH)
-        sleep 0.1
+    def wait_for_port
+      Timeout.timeout(10) do
+        while line = @io.gets
+          puts "[Deno Init] #{line}"
+          if match = line.match(/Listening on http:\/\/localhost:(\d+)\//)
+            @port = match[1].to_i
+            puts "✅ Salvia Sidecar connected on port #{@port}"
+            return
+          end
+        end
       end
-      raise "Sidecar failed to start (Socket not found at #{SOCKET_PATH})" unless File.exist?(SOCKET_PATH)
+    rescue Timeout::Error
+      stop
+      raise "Sidecar failed to start (Timeout waiting for port)"
     end
 
     def request(command, params = {})
-      socket = UNIXSocket.new(SOCKET_PATH)
+      uri = URI("http://localhost:#{@port}/")
+      http = Net::HTTP.new(uri.host, uri.port)
       
-      payload = { command: command, params: params }.to_json
+      request = Net::HTTP::Post.new(uri)
+      request.content_type = 'application/json'
+      request.body = { command: command, params: params }.to_json
       
-      # HTTP/1.1 Request over Unix Socket
-      request_str = "POST / HTTP/1.1\r\n" \
-                    "Host: localhost\r\n" \
-                    "Content-Type: application/json\r\n" \
-                    "Content-Length: #{payload.bytesize}\r\n" \
-                    "\r\n" \
-                    "#{payload}"
+      response = http.request(request)
       
-      socket.write(request_str)
-      
-      # Read Response
-      response_header = ""
-      while line = socket.gets
-        response_header += line
-        break if line == "\r\n"
-      end
-      
-      # Parse Content-Length
-      if match = response_header.match(/Content-Length: (\d+)/i)
-        content_length = match[1].to_i
-        body = socket.read(content_length)
-        socket.close
-        JSON.parse(body)
+      if response.is_a?(Net::HTTPSuccess)
+        JSON.parse(response.body)
       else
-        socket.close
-        raise "Invalid response from Sidecar"
+        raise "Sidecar Request Failed: #{response.code} #{response.message}"
       end
     rescue => e
       raise "Sidecar Request Error: #{e.message}"

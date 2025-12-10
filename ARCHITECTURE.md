@@ -147,3 +147,35 @@ end
 2.  **Build-time vs Run-time**: Complex bundling happens at build time (Deno). Runtime is simple string generation.
 3.  **Progressive Enhancement**: Islands are fully functional HTML first, then hydrated for interactivity.
 
+---
+
+## JIT Compiler Architecture (The "Brain")
+
+Salvia's JIT compiler is designed with a **Pure Ruby Interface** and **Pluggable Adapters**.
+
+- **Core Logic (`Salvia::Compiler`)**:
+  - A pure Ruby class that acts as the single entry point for all compilation tasks.
+  - It is agnostic to the underlying build tool.
+
+- **Adapters (`Salvia::Compiler::Adapters::*`)**:
+  - **`DenoSidecar` (Default)**: Delegates tasks to the managed Deno process via Unix Socket. This provides access to the full Deno ecosystem (bundling, formatting, linting).
+  - **`Esbuild` (Future)**: A fallback adapter using the `esbuild` gem for environments where Deno cannot be installed.
+
+```ruby
+# Usage
+Salvia::Compiler.bundle("app/pages/Home.tsx")
+# -> Delegates to Salvia::Compiler::Adapters::DenoSidecar.new.bundle(...)
+```
+
+## Managed Sidecar (The "Engine")
+
+The **Managed Sidecar** is a long-running Deno process managed by the Ruby application.
+
+- **Lifecycle**: Started automatically by `Salvia::Compiler` when needed.
+- **Communication**: Uses Unix Domain Sockets for low-latency IPC.
+- **Capabilities**:
+  - **Bundling**: Transpiles TSX to JS on-the-fly.
+  - **Formatting**: Uses `deno fmt` to format code.
+  - **Linting**: Uses `deno lint` to check code.
+  - **Type Checking**: Uses `deno check` for type safety.
+
