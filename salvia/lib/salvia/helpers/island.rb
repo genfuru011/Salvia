@@ -110,11 +110,24 @@ module Salvia
           html_options[:class] = [html_options[:class], "salvia-island"].compact.join(" ")
         end
         
-        result = tag(tag_name, html_options) { inner_html }
+        result = build_tag(tag_name, html_options) { inner_html }
         result.respond_to?(:html_safe) ? result.html_safe : result
       end
       
       private
+      
+      def build_tag(name, options)
+        content = block_given? ? yield : ""
+        attrs = options.map do |key, value|
+          if key == :data && value.is_a?(Hash)
+            value.map { |k, v| " data-#{k.to_s.gsub('_', '-')}=\"#{escape_html(v)}\"" }.join
+          else
+            " #{key}=\"#{escape_html(value)}\""
+          end
+        end.join
+        
+        "<#{name}#{attrs}>#{content}</#{name}>"
+      end
       
       # インラインエラー表示 (開発モード用、軽量版)
       def ssr_error_inline(name, message)
