@@ -18,21 +18,21 @@ module Salvia
       # Create directories
       empty_directory "app/islands"
       empty_directory "public/assets/javascripts"
-      empty_directory "bin"
+      empty_directory "salvia"
 
       # Copy files
       # Note: source_root is 'salvia/', so paths are relative to that
-      copy_file "assets/scripts/deno.json", "deno.json"
-      copy_file "assets/scripts/build_ssr.ts", "bin/build_ssr.ts"
+      copy_file "assets/scripts/deno.json", "salvia/deno.json"
+      copy_file "assets/scripts/build.ts", "salvia/build.ts"
       copy_file "assets/javascripts/islands.js", "public/assets/javascripts/islands.js"
 
-      chmod "bin/build_ssr.ts", 0755
+      chmod "salvia/build.ts", 0755
 
       say ""
       say "✅ Salvia SSR installed!", :green
       say "   - app/islands/           : Put your .jsx components here"
-      say "   - bin/build_ssr.ts       : Build script"
-      say "   - deno.json              : Deno configuration"
+      say "   - salvia/build.ts        : Build script"
+      say "   - salvia/deno.json       : Deno configuration"
       say ""
       say "Next steps:", :yellow
       say "  1. Install Deno: https://deno.land"
@@ -46,8 +46,8 @@ module Salvia
       
       say "🏝️  Building Island components...", :green
       
-      # Use deno task defined in deno.json
-      cmd = "deno task build"
+      # Use deno task defined in salvia/deno.json
+      cmd = "deno task --config salvia/deno.json build"
       cmd += " --verbose" if options[:verbose]
       
       success = system(cmd)
@@ -56,7 +56,7 @@ module Salvia
         say "✅ SSR build completed!", :green
       else
         say "❌ SSR build failed", :red
-        say "Make sure you have run 'salvia install' and have a deno.json file.", :yellow
+        say "Make sure you have run 'salvia install' and have a salvia/deno.json file.", :yellow
         exit 1
       end
     end
@@ -68,7 +68,7 @@ module Salvia
       
       say "👀 Watching Island components...", :green
       
-      cmd = "deno task watch"
+      cmd = "deno task --config salvia/deno.json watch"
       cmd += " --verbose" if options[:verbose]
       
       exec cmd

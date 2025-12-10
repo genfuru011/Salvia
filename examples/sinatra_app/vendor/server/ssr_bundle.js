@@ -1,4 +1,4 @@
-// Salvia SSR Bundle - Generated at 2025-12-10T03:08:48.305Z
+// Salvia SSR Bundle - Generated at 2025-12-10T03:35:25.284Z
 (() => {
   // https://esm.sh/preact@10.19.3/denonext/preact.mjs
   var D;
@@ -362,7 +362,7 @@
     return a.vnode && a.vnode(u), u;
   }
 
-  // app/islands/Counter.jsx
+  // ../app/islands/Counter.jsx
   function Counter({ initialCount = 0 }) {
     const [count, setCount] = k(initialCount);
     return /* @__PURE__ */ g2("div", { className: "p-6 max-w-sm mx-auto bg-white rounded-xl shadow-md flex items-center space-x-4", children: [
@@ -569,7 +569,7 @@
   var N = /* @__PURE__ */ new Set(["area", "base", "br", "col", "command", "embed", "hr", "img", "input", "keygen", "link", "meta", "param", "source", "track", "wbr"]);
   var re2 = j2;
 
-  // app/islands/_ssr_entry.js
+  // ../app/islands/_ssr_entry.js
   var components = {
     "Counter": Counter
   };
@@ -583,4 +583,5 @@
       return re2(vnode);
     }
   };
+  var ssr_entry_default = {};
 })();

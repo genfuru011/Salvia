@@ -39,8 +39,8 @@ $ bundle exec salvia install
 
 This creates:
 *   `app/islands/` - Directory for your components
-*   `deno.json` - Deno configuration
-*   `bin/build_ssr.ts` - Build script
+*   `salvia/deno.json` - Deno configuration
+*   `salvia/build.ts` - Build script
 
 ### 2. Create a Component
 

@@ -8,7 +8,7 @@
     "preact/": "https://esm.sh/preact@10.19.3/"
   },
   "tasks": {
-    "build": "deno run --allow-all bin/build_ssr.ts",
-    "watch": "deno run --allow-all bin/build_ssr.ts --watch"
+    "build": "deno run --allow-all build.ts",
+    "watch": "deno run --allow-all build.ts --watch"
   }
 }

@@ -16,6 +16,17 @@ Salvia::SSR.configure(
 
 helpers Salvia::Helpers
 
+# Serve client-side island components
+get "/client/:name.js" do
+  content_type "application/javascript"
+  file_path = File.join(__dir__, "vendor/client/#{params[:name]}.js")
+  if File.exist?(file_path)
+    send_file file_path
+  else
+    halt 404
+  end
+end
+
 get "/" do
   erb :index
 end

@@ -18,11 +18,14 @@ import postcss from "npm:postcss@8";
 import tailwindcss from "npm:tailwindcss@3";
 import autoprefixer from "npm:autoprefixer@10";
 
-const ISLANDS_DIR = "./app/islands";
-const SSR_OUTPUT_DIR = "./vendor/server";
-const CLIENT_OUTPUT_DIR = "./vendor/client";
-const CSS_INPUT = "./app/assets/stylesheets/application.tailwind.css";
-const CSS_OUTPUT = "./public/assets/stylesheets/tailwind.css";
+// When running via `deno task --config salvia/deno.json`, CWD is `salvia/`.
+// We need to go up one level to access app/ and public/.
+const ROOT_DIR = "..";
+const ISLANDS_DIR = `${ROOT_DIR}/app/islands`;
+const SSR_OUTPUT_DIR = `${ROOT_DIR}/vendor/server`;
+const CLIENT_OUTPUT_DIR = `${ROOT_DIR}/vendor/client`;
+const CSS_INPUT = `${ROOT_DIR}/app/assets/stylesheets/application.tailwind.css`;
+const CSS_OUTPUT = `${ROOT_DIR}/public/assets/stylesheets/tailwind.css`;
 const WATCH_MODE = Deno.args.includes("--watch");
 const VERBOSE = Deno.args.includes("--verbose");
 
@@ -37,9 +40,9 @@ async function buildCSS() {
     // Load Tailwind config
     const config = {
       content: [
-        "./app/views/**/*.erb",
-        "./app/islands/**/*.{js,jsx,tsx}",
-        "./public/assets/javascripts/**/*.js"
+        `${ROOT_DIR}/app/views/**/*.erb`,
+        `${ROOT_DIR}/app/islands/**/*.{js,jsx,tsx}`,
+        `${ROOT_DIR}/public/assets/javascripts/**/*.js`
       ],
       theme: {
         extend: {
@@ -90,6 +93,7 @@ async function findIslandFiles(): Promise<IslandFile[]> {
   try {
     for await (const entry of Deno.readDir(ISLANDS_DIR)) {
       if (entry.isFile && (entry.name.endsWith(".tsx") || entry.name.endsWith(".jsx") || entry.name.endsWith(".js"))) {
+        if (entry.name.startsWith("_")) continue; // Skip internal files
         const path = `${ISLANDS_DIR}/${entry.name}`;
         const content = await Deno.readTextFile(path);
         const clientOnly = content.trimStart().startsWith('"client only"') || 
@@ -151,6 +155,7 @@ globalThis.SalviaSSR = {
     return renderToString(vnode);
   }
 };
+export default {}; // Ensure it's a module
 `;
       const entryPath = `${ISLANDS_DIR}/_ssr_entry.js`;
       await Deno.writeTextFile(entryPath, entryCode);
@@ -161,7 +166,7 @@ globalThis.SalviaSSR = {
         format: "iife",
         outfile: `${SSR_OUTPUT_DIR}/ssr_bundle.js`,
         platform: "neutral",
-        plugins: [...denoPlugins()],
+        plugins: [...denoPlugins({ configPath: `${Deno.cwd()}/deno.json` })],
         external: [],
         jsx: "automatic",
         jsxImportSource: "preact",
@@ -177,13 +182,36 @@ globalThis.SalviaSSR = {
     }
 
     // Client bundle (for hydration) - all files
+    // We need to wrap each component with a mount function
+    const clientEntryPoints = [];
+    
+    for (const file of clientFiles) {
+      const filename = file.path.split("/").pop();
+      const wrapperCode = `
+import Component from "./${filename}";
+import { h, hydrate, render } from "https://esm.sh/preact@10.19.3";
+
+export function mount(element, props, options) {
+  const vnode = h(Component, props);
+  if (options && options.hydrate) {
+    hydrate(vnode, element);
+  } else {
+    render(vnode, element);
+  }
+}
+`;
+      const wrapperPath = `${ISLANDS_DIR}/_client_${file.name}.js`;
+      await Deno.writeTextFile(wrapperPath, wrapperCode);
+      clientEntryPoints.push({ in: wrapperPath, out: file.name });
+    }
+
     await esbuild.build({
-      entryPoints: clientFiles.map(f => f.path),
+      entryPoints: clientEntryPoints,
       bundle: true,
       format: "esm",
       outdir: CLIENT_OUTPUT_DIR,
       platform: "browser",
-      plugins: [...denoPlugins()],
+      plugins: [...denoPlugins({ configPath: `${Deno.cwd()}/deno.json` })],
       external: [],
       jsx: "automatic",
       jsxImportSource: "preact",
@@ -192,6 +220,12 @@ globalThis.SalviaSSR = {
         js: `// Salvia Client Islands - Generated at ${new Date().toISOString()}`,
       },
     });
+    
+    // Clean up temp files
+    for (const entry of clientEntryPoints) {
+      await Deno.remove(entry.in);
+    }
+    
     console.log(`✅ Client Islands built: ${CLIENT_OUTPUT_DIR}/ (${clientFiles.map(f => f.name).join(", ")})`);
 
     // Generate manifest (which Islands are client only)
