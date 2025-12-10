@@ -47,12 +47,12 @@ Deno.serve({
       }
       
       if (command === "check") {
-         const result = await check(params.entryPoint);
+         const result = await check(params.entryPoint, params.configPath);
          return Response.json(result);
       }
 
       if (command === "fmt") {
-         const result = await fmt(params.entryPoint);
+         const result = await fmt(params.entryPoint, params.configPath);
          return Response.json(result);
       }
 
@@ -98,10 +98,16 @@ async function bundle(entryPoint: string, externals: string[] = [], format: "esm
   }
 }
 
-async function check(entryPoint: string) {
+async function check(entryPoint: string, configPath?: string) {
   try {
+    const args = ["check"];
+    if (configPath) {
+      args.push("--config", configPath);
+    }
+    args.push(entryPoint);
+
     const command = new Deno.Command("deno", {
-      args: ["check", entryPoint],
+      args: args,
       stdout: "piped",
       stderr: "piped",
     });
@@ -118,10 +124,16 @@ async function check(entryPoint: string) {
   }
 }
 
-async function fmt(entryPoint: string) {
+async function fmt(entryPoint: string, configPath?: string) {
   try {
+    const args = ["fmt"];
+    if (configPath) {
+      args.push("--config", configPath);
+    }
+    args.push(entryPoint);
+
     const command = new Deno.Command("deno", {
-      args: ["fmt", entryPoint],
+      args: args,
       stdout: "piped",
       stderr: "piped",
     });

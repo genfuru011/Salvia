@@ -14,6 +14,7 @@ module Salvia
     def initialize
       @pid = nil
       @port = nil
+      at_exit { stop }
     end
 
     def start
@@ -80,14 +81,16 @@ module Salvia
       response["code"]
     end
 
-    def check(entry_point)
+    def check(entry_point, config_path: nil)
       start unless running?
-      request("check", { entryPoint: entry_point })
+      resolved_config_path = File.expand_path(config_path || Salvia.config.deno_config_path, Salvia.root)
+      request("check", { entryPoint: entry_point, configPath: resolved_config_path })
     end
 
-    def fmt(entry_point)
+    def fmt(entry_point, config_path: nil)
       start unless running?
-      request("fmt", { entryPoint: entry_point })
+      resolved_config_path = File.expand_path(config_path || Salvia.config.deno_config_path, Salvia.root)
+      request("fmt", { entryPoint: entry_point, configPath: resolved_config_path })
     end
 
     private

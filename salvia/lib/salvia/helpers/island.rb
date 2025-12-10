@@ -55,7 +55,16 @@ module Salvia
           if File.exist?(deno_json_path)
             deno_config = JSON.parse(File.read(deno_json_path))
             if deno_config["imports"]
-              default_map["imports"].merge!(deno_config["imports"])
+              # npm: スキームを https://esm.sh/ に変換してブラウザで使えるようにする
+              imports = deno_config["imports"].transform_values do |v|
+                if v.is_a?(String) && v.start_with?("npm:")
+                  package = v.sub("npm:", "")
+                  "https://esm.sh/#{package}"
+                else
+                  v
+                end
+              end
+              default_map["imports"].merge!(imports)
             end
           end
         rescue => e

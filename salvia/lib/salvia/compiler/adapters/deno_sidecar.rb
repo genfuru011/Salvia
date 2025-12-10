@@ -6,12 +6,12 @@ module Salvia
           Salvia::Sidecar.instance.bundle(entry_point, **options)
         end
 
-        def check(entry_point)
-          Salvia::Sidecar.instance.check(entry_point)
+        def check(entry_point, **options)
+          Salvia::Sidecar.instance.check(entry_point, **options)
         end
 
-        def fmt(entry_point)
-          Salvia::Sidecar.instance.fmt(entry_point)
+        def fmt(entry_point, **options)
+          Salvia::Sidecar.instance.fmt(entry_point, **options)
         end
 
         def shutdown
