@@ -8,7 +8,6 @@
     "preact/": "https://esm.sh/preact@10.19.3/",
     "preact-render-to-string": "https://esm.sh/preact-render-to-string@6.3.1?deps=preact@10.19.3"
   },
-  "nodeModulesDir": "auto",
   "tasks": {
     "build": "deno run --allow-all build.ts",
     "watch": "deno run --allow-all build.ts --watch"
