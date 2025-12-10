@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const hasSSR = island.innerHTML.trim().length > 0;
     
     try {
-      const module = await import(`/client/${name}.js`);
+      const module = await import(`/assets/islands/${name}.js`);
       
       if (typeof module.mount === 'function') {
         module.mount(island, props, { hydrate: hasSSR });

@@ -22,8 +22,8 @@ import autoprefixer from "npm:autoprefixer@10";
 // We need to go up one level to access app/ and public/.
 const ROOT_DIR = "..";
 const ISLANDS_DIR = `${ROOT_DIR}/app/islands`;
-const SSR_OUTPUT_DIR = `${ROOT_DIR}/vendor/server`;
-const CLIENT_OUTPUT_DIR = `${ROOT_DIR}/vendor/client`;
+const SSR_OUTPUT_DIR = `${ROOT_DIR}/salvia/server`;
+const CLIENT_OUTPUT_DIR = `${ROOT_DIR}/public/assets/islands`;
 const CSS_INPUT = `${ROOT_DIR}/app/assets/stylesheets/application.tailwind.css`;
 const CSS_OUTPUT = `${ROOT_DIR}/public/assets/stylesheets/tailwind.css`;
 const WATCH_MODE = Deno.args.includes("--watch");

@@ -41,6 +41,7 @@ This creates:
 *   `app/islands/` - Directory for your components
 *   `salvia/deno.json` - Deno configuration
 *   `salvia/build.ts` - Build script
+*   `public/assets/islands/` - Output directory for client bundles
 
 ### 2. Create a Component
 

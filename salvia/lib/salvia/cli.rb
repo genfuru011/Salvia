@@ -18,6 +18,7 @@ module Salvia
       # Create directories
       empty_directory "app/islands"
       empty_directory "public/assets/javascripts"
+      empty_directory "public/assets/islands"
       empty_directory "salvia"
 
       # Copy files

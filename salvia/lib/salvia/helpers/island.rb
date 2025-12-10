@@ -12,7 +12,7 @@ module Salvia
       class << self
         # マニフェストを読み込む
         def load_manifest
-          manifest_path = File.join(Dir.pwd, "vendor/server/manifest.json")
+          manifest_path = File.join(Dir.pwd, "salvia/server/manifest.json")
           return {} unless File.exist?(manifest_path)
           
           mtime = File.mtime(manifest_path)
