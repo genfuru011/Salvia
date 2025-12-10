@@ -1,0 +1,6 @@
+source "https://rubygems.org"
+
+gem "sinatra"
+gem "salvia", path: "../../salvia"
+gem "puma"
+gem "rackup"
