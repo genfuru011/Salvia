@@ -181,7 +181,53 @@ Salvia が生成した HTML は、Turbo Drive によって SPA のように遷�
 
 ---
 
-### E. Why "use server" is Unnecessary
+### E. Import Map Strategy: deno.json vs Browser Import Map
+
+Salvia は、ビルド時と実行時のパフォーマンスを両立させるために、2つの異なるインポート戦略を組み合わせています。
+
+#### 1. Build Time (`deno.json`)
+**役割**: サーバーサイドレンダリング（SSR）のビルド時に Deno が使用します。
+- **設定**: `preact` などのライブラリを `npm:preact` や `esm.sh` にマッピングし、Deno が SSR 用のバンドルを作成できるようにします。
+- **動作**: ここで解決されたライブラリは、サーバー上で HTML を生成するために使われます。
+
+#### 2. Runtime (`<script type="importmap">`)
+**役割**: ブラウザ（クライアントサイド）が実行時に使用します。
+- **設定**: `preact` などを CDN URL（例: `https://esm.sh/preact`）にマッピングします。
+- **メリット**:
+    - **重複排除**: 各 Island ファイルに Preact のコードを含める必要がなくなります。すべての Island が共通の CDN からロードされた Preact を共有します。
+    - **キャッシュ**: ブラウザはライブラリをアプリケーションコードとは独立してキャッシュできるため、再訪問時のロードが高速化します。
+
+#### 関係性
+`salvia_import_map` ヘルパーがブラウザ用のインポートマップを出力します。
+一方、ビルドスクリプト（`build.ts`）では、クライアント用バンドルを作成する際に `external: ["preact", ...]` のように指定し、「このライブラリはバンドルに含めず、ブラウザ環境（インポートマップ）にあるものを使え」と指示します。これにより、**「サーバーではバンドル込み、クライアントでは CDN 参照」** という最適な構成が実現します。
+
+### F. The Road to ERBless (True HTML First)
+
+現在、Salvia は多くの場合 ERB/Slim テンプレートの中で `<%= island ... %>` のように使われています。しかし、Salvia の究極の目標は **"ERBless"** —— つまり、Ruby の View 層（ERB）を完全に排除することです。
+
+#### コンセプト
+Rails の View が Salvia コンポーネントを「部分的に」使うのではなく、Rails の Controller が直接 Salvia のページコンポーネントをレンダリングします。
+
+**現在のハイブリッド構成:**
+1. Controller -> `views/posts/index.html.erb`
+2. ERB -> `<%= island 'PostList', posts: @posts %>`
+3. Salvia -> PostList の HTML を生成して埋め込む
+
+**ERBless (完全版):**
+1. Controller -> `render_salvia 'pages/PostsIndex', props: { posts: @posts }`
+2. Salvia -> `<html>`, `<head>`, `<body>` を含むドキュメント全体を生成。
+
+#### メリット
+1. **構文の統一**: すべてを JSX/TSX で記述できます。Ruby (ERB) と JavaScript のコンテキストスイッチがなくなります。
+2. **コンポーネント指向**: レイアウトも単なる「親コンポーネント」になります（`<Layout><Page /></Layout>`）。
+3. **真の Server Components**: 最上位のページコンポーネントは「Server Component」として機能します。コントローラーから渡されたデータを使い、静的な HTML を生成します。インタラクティブな部分（Islands）だけがクライアントで JS としてロードされます。
+
+#### 実現方法
+`app/pages/` ディレクトリにページ全体のコンポーネントを配置し、コントローラーから直接それを呼び出すことで、今すぐこのアーキテクチャを実現可能です。`application.html.erb` すらも不要になり、すべてが JSX で完結する世界です。
+
+---
+
+### G. Why "use server" is Unnecessary
 
 Next.js などのフレームワークでは、クライアントコンポーネントからサーバー側の関数を直接呼び出すために **Server Actions (`"use server"`)** という機能があります。これは実質的に RPC (Remote Procedure Call) です。
 
