@@ -138,14 +138,14 @@ Salvia では、データを JSON にシリアライズして API エンドポ�
 
 Salvia はデフォルトで **Server Components** です。つまり、クライアントに JS を送りません。
 
-*   **Server Components (`app/components/`)**:
-    *   静的な表示（ヘッダー、フッター、記事本文、リスト表示）。
-    *   クライアントサイドの JS サイズは **0 bytes**。
+*   **Server Components (`app/pages/`)**:
+    *   ページ全体のレイアウトや静的なコンテンツ（ヘッダー、フッター、記事本文）。
+    *   クライアントバンドルには含まれません（JSサイズ **0 bytes**）。
     *   `useState` や `useEffect` は使えません（サーバーで1回実行されるだけ）。
 
 *   **Islands (`app/islands/`)**:
     *   動的な部分（いいねボタン、ドロップダウン、カルーセル）。
-    *   この部分だけがクライアントで Hydrate されます。
+    *   このディレクトリ内のファイルだけがクライアントで Hydrate されます。
     *   `useState` や `onClick` が使えます。
 
 **例: 記事ページ**
