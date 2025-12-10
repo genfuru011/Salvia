@@ -1,126 +1,75 @@
-# Salvia.rb Roadmap
+# Salvia Roadmap
 
-> "Wisdom for Rubyists." — A small, understandable Ruby MVC framework
+> **"Ruby Islands Architecture Engine"**
 
 ---
 
 ## Vision
 
-Salvia.rb fills the gap between "Rails is too heavy" and "Sinatra is too light."
+**Redefine "Salvia" from a "Zero-config MVC Framework" to a "Ruby Islands Architecture Engine".**
 
-- **Zero configuration** - Works out of the box, customizable when needed
-- **Server-rendered HTML first**
-- **SSR Islands** for rich UI when needed (No Node.js required)
-- **Tailwind CSS** for modern styling
-- **ActiveRecord** for database
+Instead of competing with Rails/Hanami, Salvia will become the standard tool for implementing Islands Architecture in the Ruby ecosystem. It will provide the rendering engine, build system, and hydration logic, which can be used within any Rack-based application (including Rails).
 
 ---
 
-## Current Version: v0.1.0 ✅
+## Current Version: v0.2.0 (SSR Engine) ✅
 
-> **"Initial Public Release"** - Published to RubyGems.org
+> **"The Great Unbundling"** - Pivot to standalone SSR engine
 
-### Core Framework
-- [x] `Salvia::Application` - Zero-config Rack application
-- [x] `Salvia::Router` - Rails-like DSL routing (Mustermann)
-- [x] `Salvia::Controller` - Request/response handling
-- [x] `render` method - ERB template rendering
-- [x] Layout + partial support
-- [x] `Salvia::Database` - ActiveRecord connection management
+### Core Features
+- [x] **SSR Engine**: QuickJS-based rendering (0.3ms/render)
+- [x] **Build System**: Deno + esbuild integration
+- [x] **Framework Agnostic**: Works with any Rack app
+- [x] **CLI**: `install`, `build`, `watch` commands
 
-### Zero Configuration
-- [x] Auto-setup with `Salvia::Application.new`
-- [x] 3-line `config.ru`
-- [x] `Salvia.run!` one-liner startup
-- [x] Environment-aware servers (Puma dev / Falcon prod)
-
-### SSR Islands Architecture
-- [x] QuickJS SSR Engine (0.3ms/render)
-- [x] `island` helper for Preact components
-- [x] Client hydration
-- [x] Counter component as example
-
-### Developer Experience
-- [x] Zeitwerk auto-loading
-- [x] Code reloading in development
-- [x] Custom error pages (404, 500)
-- [x] Interactive CLI with TTY::Prompt
-- [x] Code generators (controller, model, migration)
-
-### Security
-- [x] CSRF protection (Rack::Protection)
-- [x] Session management (flash messages)
-
-### Docker
-- [x] Auto-generated Dockerfile
-- [x] docker-compose.yml
-- [x] .dockerignore
+### Removed (Moved to Archive)
+- [x] MVC components (Router, Controller, Database)
+- [x] Monolithic application structure
 
 ---
 
 ## Next Phase
 
-### Phase 1: TypeScript Support (v0.2.0)
+### Phase 1: Framework Integration (v0.3.0)
 
-> **"Type-safe frontend development"**
+Make Salvia easy to install into existing frameworks.
 
-- [ ] `salvia types:generate` - Generate TypeScript types from ActiveRecord models
-- [ ] `salvia client:generate` - Generate API client from routes
-- [ ] TypeScript support in Islands
+- [ ] **Rails Integration**: `Salvia::Railtie` for auto-configuration
+- [ ] **Sinatra Integration**: Helper registration
+- [ ] **View Helpers**: `island` helper for ERB/Slim/Haml
 
----
+### Phase 2: Advanced SSR Features (v0.4.0)
 
-## Future Phases
-
-### Phase 2: Advanced Features (v0.3.0)
-
-- [ ] WebSocket support guide
-- [ ] Background job integration guide (Sidekiq / Solid Queue)
-- [ ] Multi-tenancy guide
+- [ ] **TypeScript Support**: Type-safe props passing
+- [ ] **Import Maps**: Better dependency management
+- [ ] **Multiple Frameworks**: Support for React, Vue, Svelte (currently Preact only)
 
 ---
 
-## v1.0.0: Stable Release
+## Future Vision: "Sage" Framework 🔮
 
-All features implemented and stable:
+> **"Wisdom for Rubyists"**
 
-- [ ] Complete Getting Started guide
-- [ ] API reference documentation
-- [ ] Deployment guides (Render, Fly.io, Heroku, Kamal)
-- [ ] Performance tuning guide
-- [ ] Bug fixes and stabilization
+Once Salvia (the SSR engine) is stable and popular, we will build a new MVC framework **on top of it**.
 
----
+**Project Name:** `Sage` (Salvia is a type of Sage plant)
 
-## Future (v1.1+)
+**Concept:**
+- A lightweight MVC framework
+- Uses `salvia` gem as the default view engine
+- Zero-config, HTML-first, Islands Architecture by default
 
-### salvia-core Gem Extraction
+```ruby
+# Sage Framework (Future)
+require "sage"
+require "salvia"
 
-Extract SSR Islands engine as independent gem for use with other frameworks:
-
+class PostsController < Sage::Controller
+  def index
+    render "posts/index" # Uses Salvia SSR
+  end
+end
 ```
-salvia-core (gem)
-├── QuickJS SSR engine
-├── Multi-library adapters (Preact/React/Vue/Solid/Svelte)
-├── island() helper
-├── Rails/Sinatra integration
-└── Deno build scripts
-```
-
-**Framework Compatibility:**
-
-| Framework | Usage |
-|-----------|-------|
-| Rails | `gem "salvia-core"` + Railtie |
-| Sinatra | `register SalviaCore::Sinatra` |
-| Hanami | View helper registration |
-| Roda | As plugin |
-| Rack | Direct usage |
-
-### Ecosystem
-
-- [ ] Official Island component library (`<salvia-chart>`, `<salvia-editor>`)
-- [ ] Admin panel generator (Salvia Admin)
 
 ---
 
@@ -128,12 +77,11 @@ salvia-core (gem)
 
 | Principle | Approach |
 |-----------|----------|
-| Language | English (CLI, logs, errors, docs) |
-| Rendering | ERB + SSR Islands only |
-| Build | Automatic (watch & rebuild) |
-| Packages | esm.sh for JS dependencies |
-| Architecture | Simple, explicit, understandable |
+| **Focus** | Do one thing well: SSR Islands |
+| **Simplicity** | No Node.js required, minimal dependencies |
+| **Speed** | QuickJS for fast rendering, Deno for fast builds |
+| **Flexibility** | Work with any Ruby framework |
 
 ---
 
-*Last updated: 2025-12-10 (v0.1.0)*
+*Last updated: 2025-12-10*
