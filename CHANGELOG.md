@@ -14,6 +14,75 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.1.8] - 2025-12-10
+
+> **"Strict Config"** - Enforce all configuration files
+
+### 🔒 Breaking
+- `config/app.rb` and `config/database.yml` are now mandatory (`db/` directory must also exist)
+- Boot error if `SECRET_KEY` is not set in production environment
+
+### ✅ Added
+- Added strict mode tests (app.rb/database.yml/db/ directory/SECRET_KEY)
+
+### ⚙️ Changed
+- Raise error immediately instead of suppressing exception when DB setup fails
+
+---
+
+## [0.1.7] - 2025-12-10
+
+### 🔒 Security & Strictness
+- **Strict DB Check**: `db/` directory must exist, or app will fail to boot.
+- **Error Handling**: Improved error messages for missing configurations.
+
+---
+
+## [0.1.6] - 2025-12-10
+
+### 🐛 Fixes
+- **Islands**: Fixed `Counter.js` generation to be `Counter.jsx` for correct syntax highlighting and Deno compatibility.
+- **CLI**: Updated templates to match new file extensions.
+
+---
+
+## [0.1.5] - 2025-12-10
+
+### 🐛 Fixes
+- **CLI**: Fixed `Salvia.root` undefined error during `salvia new`.
+- **Boot**: Fixed `require_app_environment` loading order.
+
+---
+
+## [0.1.4] - 2025-12-10
+
+> **"Explicit Config"** - Moving towards Rails/Hanami style configuration
+
+### 💥 Breaking Changes
+- **Config Structure**: Removed `config/environment.rb` in favor of `config/app.rb`.
+- **Boot Process**: `Salvia.boot` now requires explicit configuration files.
+
+### ✨ Features
+- **Dotenv**: Improved `.env` loading integration.
+- **Configuration**: Added `Salvia.configure` block support.
+
+---
+
+## [0.1.3] - 2025-12-10
+
+### 🔧 Internal
+- **Gem Packaging**: Fixed file inclusion in gemspec.
+- **Dependencies**: Adjusted dependency constraints.
+
+---
+
+## [0.1.2] - 2025-12-10
+
+### 🔧 Internal
+- **CLI**: Minor fixes to path resolution.
+
+---
+
 ## [0.1.1] - 2025-12-10
 
 > **"JSX & Deno Integration"** - Better DX for Islands development
@@ -94,18 +163,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-[Unreleased]: https://github.com/genfuru011/Salvia/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/genfuru011/Salvia/compare/v0.1.8...HEAD
+[0.1.8]: https://github.com/genfuru011/Salvia/releases/tag/v0.1.8
+[0.1.1]: https://github.com/genfuru011/Salvia/releases/tag/v0.1.1
 [0.1.0]: https://github.com/genfuru011/Salvia/releases/tag/v0.1.0
-
-### Removed
-- `docs/design/` directory (merged into ARCHITECTURE.md)
-- `docs/development/` directory (merged into GUIDE.md, ROADMAP.md)
-- `docs/security/` directory (merged into GUIDE.md)
-- `docs/meta/` directory (no longer needed)
 
 ---
 
-## [0.6.0] - 2025-12-09
+---
+
+## [0.6.0] - Unreleased draft (2025-12-09)
 
 > **"Architecture Simplification"** - Focused, streamlined framework
 
@@ -125,7 +192,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [0.5.0] - 2025-12-09
+## [0.5.0] - Unreleased draft (2025-12-09)
 
 > **"SSR Islands Architecture"** - Server-side rendering without Node.js
 
@@ -153,7 +220,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Nested `render` call duplicate output
 - Partial filename auto-prefix with `_`
 
-## [0.4.0] - 2025-12-08
+## [0.4.0] - Unreleased draft (2025-12-08)
 
 ### Added
 - **Environment Configuration**: Added support for `config/environments/*.rb` files.
@@ -163,7 +230,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Security Documentation**: Added comprehensive security assessment, guide, and checklist.
 - **CLI Update**: `salvia new` now generates `config/environments/development.rb` and `production.rb`.
 
-## [0.3.0] - 2025-12-08
+## [0.3.0] - Unreleased draft (2025-12-08)
 
 ### Added
 - **Flash Messages**: Added `flash` and `flash.now` support for temporary messages.
@@ -172,7 +239,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **HTMX Integration**: Automatic CSRF token injection for HTMX requests.
 - **Routing Enhancement**: Added support for nested resources and named routes (e.g., `posts_path`, `post_comments_path`).
 
-## [0.2.0] - 2025-12-08
+## [0.2.0] - Unreleased draft (2025-12-08)
 
 ### Added
 - **Zeitwerk Integration**: Auto-loading for framework components and application code.
@@ -184,97 +251,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Fixed `Mustermann` match method compatibility issue.
 - Fixed `salvia console` startup arguments for IRB compatibility.
-
-## [0.1.0] - 2025-12 (Development)
-
-### Added
-- **Core Framework**
-  - `Salvia::Application` as Rack application entry point
-  - `Salvia::Router` with Rails-like DSL (`root`, `resources`, `get`, `post`, etc.)
-  - `Salvia::Controller` base class with `render`, `params`, `redirect_to`
-  - ERB template rendering with layout support (Tilt + Erubi)
-  - Partial rendering with local variables
-  - **Smart Rendering**: Auto layout detection for HTMX requests
-
-- **Database Integration**
-  - `Salvia::Database` - ActiveRecord connection management
-  - `config/database.yml` support with ERB
-  - Database commands: `create!`, `drop!`, `migrate!`, `rollback!`
-  - SQLite3 as default development database
-
-- **CLI (`salvia` command)**
-  - `salvia new APP_NAME` - Generate new application scaffold
-  - `salvia server` / `salvia s` - Start development server (Puma)
-  - `salvia console` / `salvia c` - Start IRB console
-  - `salvia db:create` - Create the database
-  - `salvia db:drop` - Drop the database
-  - `salvia db:migrate` - Run database migrations
-  - `salvia db:rollback` - Rollback migrations
-  - `salvia db:setup` - Create and migrate
-  - `salvia css:build` - Build Tailwind CSS
-  - `salvia css:watch` - Watch and rebuild CSS
-  - `salvia routes` - List all routes
-  - `salvia version` - Show version
-
-- **Asset Management**
-  - HTMX placeholder in `public/assets/javascripts/`
-  - Tailwind CSS configuration with `tailwindcss-ruby`
-  - Static file serving via `Rack::Static`
-  - Custom Salvia color theme for Tailwind
-
-- **Project Generator**
-  - Standard MVC directory structure
-  - `config.ru` for Rack compatibility
-  - `Gemfile` with essential dependencies
-  - `Rakefile` with database tasks
-  - `tailwind.config.js` with Salvia theme
-  - Sample `HomeController` and welcome page
-  - `.gitignore` with common patterns
-
-- **Developer Experience**
-  - Development error page with stack trace
-  - 404 page with registered routes list
-  - HTMX request detection (`htmx_request?`)
-  - `htmx_trigger` helper for response headers
-
----
-
-<!-- Future version templates
-
-## [0.2.0] - Unreleased
-
-### Added
-- Zeitwerk auto-loading and code reloading
-- Enhanced development error page
-
-### Changed
-- (Breaking changes, if any)
-
-### Fixed
-- (Bug fixes)
-
-## [0.3.0] - Unreleased
-
-### Added
-- CSRF protection with Rack::Protection
-- Cookie-based session management
-- Flash messages (`flash[:notice]`, `flash[:alert]`)
-- Named routes (`*_path` helpers)
-- Nested resources in router
-
-## [1.0.0] - Unreleased
-
-### Added
-- Production deployment guide
-- Complete API documentation
-- Getting Started guide
-
-### Changed
-- Stable API (no more breaking changes in 1.x)
-
--->
-
----
-
-[Unreleased]: https://github.com/salvia-rb/salvia/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/salvia-rb/salvia/releases/tag/v0.1.0
