@@ -379,7 +379,57 @@ const globalExternals = { ...defaultExternals, ...userExternals };
 **4. `island.rb` (Gem Internal)**
 現状通り `deno.json` の `imports` を読み込み、`npm:` を `https://esm.sh/` に変換してブラウザ用 Import Map を生成する (実装済み)。
 
-### メリット
-- **一元管理**: バージョンも設定も `deno.json` を見るだけで完結する。
-- **拡張性**: ユーザーが自由にライブラリを追加し、SSR 対応できる。
-- **透明性**: Gem の内部ロジック (sidecar.ts) を隠蔽しつつ、必要な設定だけを公開できる。
+### 5. Multi-Framework Support Strategy (The "Adapter" Pattern)
+
+`deno.json` への集約により、フロントエンドフレームワークの切り替え（Preact -> React, Solid, Vue, Svelte）が現実的になります。
+
+構成は「2層構造」で管理します。
+
+#### Layer 1: Package Layer (`deno.json`)
+ライブラリの実体（URL）を定義します。フレームワークを切り替える際はここを変更します。
+
+```json
+// Preactの場合
+{
+  "imports": {
+    "framework": "npm:preact@10.19.3",
+    "framework/hooks": "npm:preact@10.19.3/hooks",
+    "framework/jsx-runtime": "npm:preact@10.19.3/jsx-runtime",
+    "framework/ssr": "npm:preact-render-to-string@6.3.1"
+  }
+}
+
+// Reactの場合 (将来的なイメージ)
+{
+  "imports": {
+    "framework": "npm:react@18.2.0",
+    "framework/client": "npm:react-dom@18.2.0/client",
+    "framework/jsx-runtime": "npm:react@18.2.0/jsx-runtime",
+    "framework/ssr": "npm:react-dom@18.2.0/server"
+  }
+}
+```
+
+#### Layer 2: Adapter Layer (`vendor_setup.ts`)
+フレームワークごとの「初期化ロジック」や「グローバル変数への露出」を吸収します。
+Salvia 本体は `globalThis.Salvia.render` や `globalThis.Salvia.hydrate` といった **統一されたインターフェース** だけを呼び出すようにします。
+
+```typescript
+// vendor_setup.ts (Preact Adapter)
+import { h, render } from "framework";
+import { renderToString } from "framework/ssr";
+
+// Salvia Standard Interface
+globalThis.Salvia = {
+  render: (Comp, props) => renderToString(h(Comp, props)),
+  hydrate: (Comp, props, el) => render(h(Comp, props), el)
+};
+```
+
+この設計により、Salvia 本体（Ruby側やビルドスクリプト）はフレームワークの詳細を知る必要がなくなり、`deno.json` と `vendor_setup.ts` を差し替えるだけであらゆるフレームワークに対応可能になります。
+
+### 6. Next Actions
+
+1.  **Refactor `sidecar.ts`**: `deno.json` を読み込んで `externals` を動的に生成するロジックを追加。
+2.  **Refactor `vendor_setup.ts`**: `deno.json` の import map を利用するように変更。
+3.  **Update CLI**: `salvia install` 時に生成する `deno.json` のテンプレートを更新。
