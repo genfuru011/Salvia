@@ -12,7 +12,7 @@ Instead of competing with Rails/Hanami, Salvia will become the standard tool for
 
 ---
 
-## Current Version: v0.2.0 (SSR Engine) ✅
+## Current Version: v0.1.0 (SSR Engine) ✅
 
 > **"The Great Unbundling"** - Pivot to standalone SSR engine
 
@@ -30,7 +30,7 @@ Instead of competing with Rails/Hanami, Salvia will become the standard tool for
 
 ## Next Phase
 
-### Phase 1: Framework Integration (v0.3.0)
+### Phase 1: Framework Integration (v0.2.0)
 
 Make Salvia easy to install into existing frameworks.
 
@@ -38,7 +38,7 @@ Make Salvia easy to install into existing frameworks.
 - [ ] **Sinatra Integration**: Helper registration
 - [ ] **View Helpers**: `island` helper for ERB/Slim/Haml
 
-### Phase 2: Advanced SSR Features (v0.4.0)
+### Phase 2: Advanced SSR Features (v0.3.0)
 
 - [ ] **TypeScript Support**: Type-safe props passing
 - [ ] **Import Maps**: Better dependency management

@@ -4,8 +4,8 @@
 
 | Version | Supported          | Status |
 | ------- | ------------------ | ------ |
-| 0.2.x   | :white_check_mark: | Current Stable (SSR Engine) |
-| 0.1.x   | :x: | End of Life (Legacy MVC) |
+| 0.1.x   | :white_check_mark: | Current Stable (SSR Engine) |
+| < 0.1.0 | :x: | End of Life (Legacy MVC) |
 
 ## Reporting a Vulnerability
 
