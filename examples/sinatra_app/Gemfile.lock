@@ -49,7 +49,7 @@ PLATFORMS
 
 DEPENDENCIES
   puma
-  rackup (~> 2.3)
+  rackup
   salvia!
   sinatra
 

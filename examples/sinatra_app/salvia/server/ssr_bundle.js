@@ -1,4 +1,4 @@
-// Salvia SSR Bundle - Generated at 2025-12-10T03:39:26.916Z
+// Salvia SSR Bundle - Generated at 2025-12-10T03:54:50.136Z
 (() => {
   // https://esm.sh/preact@10.19.3/denonext/preact.mjs
   var D;
@@ -362,23 +362,23 @@
     return a.vnode && a.vnode(u), u;
   }
 
-  // ../app/islands/Counter.jsx
-  function Counter({ initialCount = 0 }) {
-    const [count, setCount] = k(initialCount);
-    return /* @__PURE__ */ g2("div", { className: "p-6 max-w-sm mx-auto bg-white rounded-xl shadow-md flex items-center space-x-4", children: [
-      /* @__PURE__ */ g2("div", { className: "flex-1", children: [
-        /* @__PURE__ */ g2("p", { className: "text-xl font-medium text-black", children: [
-          "Count: ",
-          count
-        ] }),
-        /* @__PURE__ */ g2("p", { className: "text-slate-500", children: "Click to increment" })
+  // ../app/islands/Hello.jsx
+  function Hello({ name }) {
+    const [active, setActive] = k(false);
+    console.log("Rendering Hello component for:", name);
+    return /* @__PURE__ */ g2("div", { className: "max-w-md mx-auto bg-white rounded-xl shadow-md overflow-hidden md:max-w-2xl p-6", children: [
+      /* @__PURE__ */ g2("div", { className: "uppercase tracking-wide text-sm text-indigo-500 font-semibold", children: "Salvia Island" }),
+      /* @__PURE__ */ g2("p", { className: "mt-2 text-slate-500", children: [
+        "Hello, ",
+        name,
+        "!"
       ] }),
       /* @__PURE__ */ g2(
         "button",
         {
-          onClick: () => setCount(count + 1),
-          className: "px-4 py-1 text-sm text-purple-600 font-semibold rounded-full border border-purple-200 hover:text-white hover:bg-purple-600 hover:border-transparent focus:outline-none focus:ring-2 focus:ring-purple-600 focus:ring-offset-2",
-          children: "Increment"
+          onClick: () => setActive(!active),
+          className: `mt-4 px-4 py-2 rounded ${active ? "bg-indigo-600 text-white" : "bg-gray-200 text-gray-800"}`,
+          children: active ? "Active!" : "Click me"
         }
       )
     ] });
@@ -571,7 +571,7 @@
 
   // ../app/islands/_ssr_entry.js
   var components = {
-    "Counter": Counter
+    "Hello": Hello
   };
   globalThis.SalviaSSR = {
     render: function(name, props) {
