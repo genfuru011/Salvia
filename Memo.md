@@ -56,6 +56,10 @@
 *   **極端な構成**:
     *   Rails/SinatraのView (ERB) は `layout.erb` と、各アクションで `<%= island 'PageRoot', props %>` を呼び出すだけの薄いラッパーになる。
     *   UIロジック、条件分岐、ループなどは全て JSX (Preact) 側で完結する。
+*   **具体的な開発フロー**:
+    1.  RubyのControllerでデータを取得 (`@users = User.all`)。
+    2.  View (ERB) は `<%= salvia_island "UsersPage", users: @users %>` の1行のみ。
+    3.  `app/islands/UsersPage.jsx` (または `components/`) でリスト表示やレイアウトを全て記述。
 *   **メリット**:
     *   フロントエンド(JSX)とバックエンド(Ruby)の境界が明確になる。
     *   Reactエコシステムの恩恵（コンポーネントライブラリなど）をフルに受けられる。
@@ -63,7 +67,29 @@
     *   Salviaはあくまで「文字列としてのHTML」をRubyから返しているだけなので、クライアントサイドでのSPA遷移（ページ遷移なしでの書き換え）は自動では行われない（Turbo Driveなどを併用すれば可能）。
     *   データフェッチはRubyのControllerで行い、Propsとして渡す必要がある（RSCのようにコンポーネント内でDBアクセスはできない）。
 
-## 10. 結論 (2025-12-10)
+## 10. 🚀 真のHTML Firstへの道: Turbo Drive + Full SSR JSX
+ユーザーの指摘通り、これは「サーバーサイドが主導する真のHTML First」アーキテクチャに非常に近い。
+
+1.  **サーバーでJSXをレンダリング (SSR)**:
+    *   ERB/Slimの代わりに、表現力豊かなJSX (TSX) をテンプレートとして使用。
+    *   コンポーネント指向でUIを構築できる。
+    *   出力は純粋なHTML。
+
+2.  **Turbo DriveでSPA風の遷移**:
+    *   ページ遷移はTurbo Driveがインターセプトし、bodyを置換。
+    *   ブラウザはHTMLを受け取って表示するだけ。JSの初期化コストが極小。
+
+3.  **必要な部分だけIsland**:
+    *   インタラクティブな部分だけ `islands/` に配置してHydration。
+    *   それ以外の `components/` はただのHTML文字列になるため、クライアントサイドのJSバンドルサイズを圧迫しない。
+
+**結論**:
+Salviaは単なる「RailsでReactを使うツール」ではなく、**「JSXをサーバーサイドテンプレートエンジンとして使い、Turboで配信する」** という新しいRailsフロントエンドの標準形になり得るポテンシャルがある。
+
+- **検証事項**:
+  - Turbo Driveのキャッシュ復元時にIslands（Preact）のハイドレーションが正しく再実行されるか？（`turbo:load` イベントでの再マウント処理が必要かも）
+
+## 11. 結論 (2025-12-10)
 現状のアーキテクチャ（Islands Architecture）で進める方針で確定。
 - **Islands (`app/islands/`)**: クライアントサイドでのハイドレーションが必要なコンポーネント（インタラクティブなボタン、カウンターなど）。
 - **Components (`app/components/`)**: Islandsからインポートして使う、またはSSRのみで使う静的なUIパーツ。これらは単体ではハイドレーションされないが、Islandsの一部として組み込まれれば機能する。
