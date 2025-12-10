@@ -93,12 +93,24 @@ my_rails_app/
 {
   "imports": {
     "preact": "https://esm.sh/preact@10.19.2",
+    "uuid": "https://esm.sh/uuid@9.0.1",
     "@/": "../app/"  // app/ ディレクトリへのエイリアス
   }
 }
 ```
 
 これにより、コンポーネント内で `import Button from "@/components/Button";` のように書くことができます。
+
+### Advanced: `vendor_setup.ts` の役割
+
+`salvia/vendor_setup.ts` は、**SSR エンジン (QuickJS) の「初期環境」を作るための特殊なファイル** です。
+通常、ライブラリを追加するだけであれば、このファイルを編集する必要はありません（`deno.json` への追加だけで十分です）。
+
+**編集が必要なケース:**
+*   **フレームワーク自体を入れ替える場合**: 例として Preact から React に変更する場合、グローバル変数 `React` を露出させるために修正が必要です。
+*   **SSR のグローバルスコープに何かを注入したい場合**: QuickJS 環境下で `globalThis` に特定のオブジェクトを生やしたい場合など。
+
+このファイル内の `import` も `deno.json` の Import Map に従って解決されるため、ライブラリのバージョンアップは `deno.json` 側で行います。
 
 ---
 
@@ -232,6 +244,43 @@ Salvia が生成した HTML は、Turbo Drive によって SPA のように遷�
 4.  `<head>` 内のスクリプト（Islands のバンドルなど）をマージ。
 
 これにより、**「React Router などのクライアントサイドルーター」が不要** になります。ルーティングは全て Rails/Sinatra 側（`config/routes.rb`）で管理します。
+
+#### Recipe: Enabling Turbo Drive
+
+Turbo Drive を有効にするには、以下の手順を行います。
+
+1.  **`salvia/deno.json` に追加**:
+    ```json
+    {
+      "imports": {
+        "@hotwired/turbo": "https://esm.sh/@hotwired/turbo@8.0.0"
+      }
+    }
+    ```
+
+2.  **レイアウトまたは `<head>` で読み込み**:
+    Server Component (Layout) 内で script タグを出力するか、`salvia_import_map` の後に記述します。
+
+    ```tsx
+    // app/pages/layouts/Main.tsx
+    export default function MainLayout({ children }) {
+      return (
+        <html>
+          <head>
+            {/* ... */}
+            <script type="module">
+              import "@hotwired/turbo";
+            </script>
+          </head>
+          <body>
+            {children}
+          </body>
+        </html>
+      );
+    }
+    ```
+
+これだけで、アプリケーション全体が SPA のように高速に遷移するようになります。
 
 ---
 
