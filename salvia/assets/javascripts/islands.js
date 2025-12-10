@@ -3,6 +3,7 @@
 // Each island component must export a mount(element, props) function
 
 import "@hotwired/turbo";
+import { h, hydrate, render } from "preact";
 
 async function hydrateIsland(island) {
   if (island.dataset.hydrated) return;
@@ -13,13 +14,22 @@ async function hydrateIsland(island) {
   const hasSSR = island.innerHTML.trim().length > 0;
   
   try {
-    const module = await import(`/assets/islands/${name}.js`);
+    // Use the JIT path handled by Salvia::DevServer
+    const module = await import(`/salvia/assets/islands/${name}.js`);
     
     if (typeof module.mount === 'function') {
       module.mount(island, props, { hydrate: hasSSR });
       console.log(`🏝️ Island ${hasSSR ? 'hydrated' : 'mounted'}: ${name}`);
+    } else if (module.default) {
+      // Auto-hydration for Preact components
+      if (hasSSR) {
+        hydrate(h(module.default, props), island);
+      } else {
+        render(h(module.default, props), island);
+      }
+      console.log(`🏝️ Island ${hasSSR ? 'hydrated' : 'mounted'} (auto): ${name}`);
     } else {
-      console.error(`Island ${name} must export a mount() function`);
+      console.error(`Island ${name} must export a mount() function or be a Preact component.`);
     }
   } catch (error) {
     console.error(`Failed to load island: ${name}`, error);

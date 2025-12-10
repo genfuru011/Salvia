@@ -44,7 +44,8 @@ module Salvia
           "imports" => {
             "preact" => "https://esm.sh/preact@10.19.6",
             "preact/hooks" => "https://esm.sh/preact@10.19.6/hooks",
-            "preact/jsx-runtime" => "https://esm.sh/preact@10.19.6/jsx-runtime"
+            "preact/jsx-runtime" => "https://esm.sh/preact@10.19.6/jsx-runtime",
+            "@hotwired/turbo" => "https://esm.sh/@hotwired/turbo@8.0.0"
           }
         }
 
