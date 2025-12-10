@@ -18,6 +18,7 @@ import { denoPlugins } from "jsr:@luca/esbuild-deno-loader@0.11";
 const ROOT_DIR = "..";
 const ISLANDS_DIR = `${ROOT_DIR}/app/islands`;
 const PAGES_DIR = `${ROOT_DIR}/app/pages`;
+const COMPONENTS_DIR = `${ROOT_DIR}/app/components`;
 const SSR_OUTPUT_DIR = `${ROOT_DIR}/salvia/server`;
 const CLIENT_OUTPUT_DIR = `${ROOT_DIR}/public/assets/islands`;
 const WATCH_MODE = Deno.args.includes("--watch");
@@ -230,7 +231,7 @@ async function watch() {
   console.log("👀 Watching for file changes...");
   
   // Watch Islands source
-  const watchDirs = [ISLANDS_DIR, PAGES_DIR, "./app/views"];
+  const watchDirs = [ISLANDS_DIR, PAGES_DIR, COMPONENTS_DIR, "./app/views"];
   
   for (const dir of watchDirs) {
     (async () => {

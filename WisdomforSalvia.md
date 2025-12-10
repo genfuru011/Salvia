@@ -148,6 +148,11 @@ Salvia はデフォルトで **Server Components** です。つまり、クラ�
     *   このディレクトリ内のファイルだけがクライアントで Hydrate されます。
     *   `useState` や `onClick` が使えます。
 
+*   **Components (`app/components/`)**:
+    *   再利用可能な UI 部品（ボタン、カード、レイアウトなど）。
+    *   `pages` や `islands` から `import` して使用します。
+    *   これ自体はエントリーポイントになりません（どこから使われるかによって、サーバー側のみか、クライアント側にも含まれるかが決まります）。
+
 **例: 記事ページ**
 ```tsx
 export default function ArticlePage({ article }) {
