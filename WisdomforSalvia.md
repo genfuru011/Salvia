@@ -312,6 +312,91 @@ end
 - **単純なページ** は自動的に動作します（ファイルベース）。
 - **複雑なロジック** は標準の Controller を使用します（MVC）。
 
+### I. Full JSX/TSX Architecture (The Future)
+
+Salvia が目指す「View 層の完全な JSX 化」が実現された時のプロジェクト構成と動作イメージです。
+ERB ファイルは一つも存在せず、すべてが TypeScript と JSX で記述されます。
+
+#### 1. Directory Structure
+
+```
+app/
+├── controllers/           # Ruby: データ取得とビジネスロジック
+│   ├── posts_controller.rb
+│   └── application_controller.rb
+├── models/                # Ruby: データベースモデル
+│   └── post.rb
+└── views/                 # (Deleted) ERBディレクトリは消滅
+    └── (empty)
+
+salvia/                    # Frontend Root
+├── deno.json              # 依存関係定義 (Import Map)
+└── app/
+    ├── pages/             # Server Components (Entry Points)
+    │   ├── Home.tsx       # "/" 用のページ全体
+    │   ├── layouts/       # 共通レイアウト
+    │   │   └── Main.tsx
+    │   └── posts/
+    │       ├── Index.tsx  # "/posts"
+    │       └── Show.tsx   # "/posts/:id"
+    │
+    ├── components/        # Shared UI Components (Server/Client両用)
+    │   ├── Button.tsx
+    │   ├── Card.tsx
+    │   └── Navbar.tsx
+    │
+    └── islands/           # Client Components (Interactive)
+        ├── Counter.tsx    # Hydrateされる動的パーツ
+        └── LikeButton.tsx
+```
+
+#### 2. The Mechanism (How it works)
+
+このアーキテクチャでは、Ruby の Controller は「JSON を返す API」ではなく、「View コンポーネントを指定して Props を渡す指揮者」になります。
+
+**Flow:**
+
+1.  **Request**: ユーザーが `/posts/1` にアクセス。
+2.  **Controller (Ruby)**:
+    ```ruby
+    def show
+      @post = Post.find(params[:id])
+      # ERBの代わりに Salvia コンポーネントをレンダリング
+      render html: helpers.island("posts/Show", post: @post)
+    end
+    ```
+3.  **Salvia Engine**:
+    *   `app/pages/posts/Show.tsx` を読み込みます。
+    *   このコンポーネントは **Server Component** として扱われ、サーバー上でのみ実行されます。
+    *   `Layout` や `Navbar` などのコンポーネントを組み合わせて、`<html>` タグから始まる完全な HTML 文字列を生成します。
+4.  **Response**: 生成された HTML がブラウザに返されます。
+5.  **Hydration**:
+    *   ブラウザは HTML を即座に表示します（JS 不要）。
+    *   `app/islands/LikeButton.tsx` などのインタラクティブな部分だけが、個別に Hydrate（JS 実行）されます。
+
+#### 3. The Role of `deno.json` & `importmap`
+
+この構成では `package.json` や `node_modules` は登場しません。
+
+*   **`deno.json`**:
+    *   プロジェクトで使用するすべてのライブラリ（React, Tailwind, Lodash 等）をここで定義します。
+    *   URL インポート（`https://esm.sh/...`）を使用するため、巨大な `node_modules` をダウンロードする必要がありません。
+*   **`importmap`**:
+    *   `deno.json` の内容は、自動的にブラウザ用の `<script type="importmap">` に変換されて HTML に埋め込まれます。
+    *   これにより、サーバー（Deno）とクライアント（Browser）で全く同じモジュール解決ルールが適用されます。
+
+#### 4. Comparison with Standard Rails
+
+| | Standard Rails (ERB) | Salvia (Full JSX) |
+| :--- | :--- | :--- |
+| **View 言語** | Ruby (ERB/Slim) | TypeScript (JSX) |
+| **コンポーネント** | Partial / ViewComponent | React Component (Function) |
+| **アセット管理** | Propshaft / Importmap-rails | Deno / esbuild |
+| **JS 連携** | Stimulus (HTML に data 属性) | Islands (JSX をそのまま Hydrate) |
+| **型安全性** | なし (Runtime Error) | **あり** (Build Time Check) |
+
+このアーキテクチャにより、**「バックエンドの堅牢さ」と「フロントエンドの表現力・開発体験」が完全に融合** します。
+
 ## 4. Conclusion: The "Salvia" Experience
 
 Salvia は、**「Ruby で開発する楽しさ」** を損なうことなく、**「現代的なフロントエンドの UX」** を手に入れるための武器です。
