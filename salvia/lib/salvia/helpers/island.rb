@@ -39,18 +39,27 @@ module Salvia
       end
       
       # Import Map タグを生成する
-      def salvia_import_map
-        map = {
-          imports: {
+      def salvia_import_map(additional_map = {})
+        default_map = {
+          "imports" => {
             "preact" => "https://esm.sh/preact@10.19.6",
             "preact/hooks" => "https://esm.sh/preact@10.19.6/hooks",
             "preact/jsx-runtime" => "https://esm.sh/preact@10.19.6/jsx-runtime"
           }
         }
+
+        if additional_map.key?("imports")
+          default_map["imports"].merge!(additional_map["imports"])
+        end
+        
+        additional_map.each do |k, v|
+          next if k == "imports"
+          default_map[k] = v
+        end
         
         html = <<~HTML
           <script type="importmap">
-            #{map.to_json}
+            #{default_map.to_json}
           </script>
         HTML
         

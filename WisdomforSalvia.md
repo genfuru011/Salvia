@@ -201,6 +201,18 @@ Salvia は、ビルド時と実行時のパフォーマンスを両立させる�
 `salvia_import_map` ヘルパーがブラウザ用のインポートマップを出力します。
 一方、ビルドスクリプト（`build.ts`）では、クライアント用バンドルを作成する際に `external: ["preact", ...]` のように指定し、「このライブラリはバンドルに含めず、ブラウザ環境（インポートマップ）にあるものを使え」と指示します。これにより、**「サーバーではバンドル込み、クライアントでは CDN 参照」** という最適な構成が実現します。
 
+#### カスタマイズ（ライブラリの追加）
+使用するフレームワークやライブラリが増えた場合は、`salvia_import_map` ヘルパーに引数を渡すことで追加できます。
+
+```erb
+<%= salvia_import_map({
+  "imports" => {
+    "uuid" => "https://esm.sh/uuid@9.0.1",
+    "chart.js" => "https://esm.sh/chart.js@4.4.1"
+  }
+}) %>
+```
+
 ### F. The Road to ERBless (True HTML First)
 
 現在、Salvia は多くの場合 ERB/Slim テンプレートの中で `<%= island ... %>` のように使われています。しかし、Salvia の究極の目標は **"ERBless"** —— つまり、Ruby の View 層（ERB）を完全に排除することです。
