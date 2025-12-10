@@ -46,6 +46,29 @@ const handler = async (request: Request): Promise<Response> => {
         },
       };
 
+      const externalizePlugin = {
+        name: 'externalize-deps',
+        setup(build: any) {
+          build.onResolve({ filter: /.*/ }, (args: any) => {
+            if (externals && externals.includes(args.path)) {
+              return { path: args.path, external: true };
+            }
+          });
+        },
+      };
+
+      const isIIFE = format === "iife";
+      
+      const plugins = [
+        ...denoPlugins({ configPath: configPath || `${Deno.cwd()}/salvia/deno.json` })
+      ];
+      
+      if (isIIFE) {
+        plugins.unshift(globalExternalsPlugin);
+      } else {
+        plugins.unshift(externalizePlugin);
+      }
+
       // JIT Bundle for a specific entry point
       const result = await esbuild.build({
         entryPoints: [entryPoint],
@@ -53,11 +76,8 @@ const handler = async (request: Request): Promise<Response> => {
         format: format || "esm",
         globalName: globalName, // Exports will be in SalviaComponent.default
         platform: "neutral",
-        plugins: [
-          globalExternalsPlugin,
-          ...denoPlugins({ configPath: configPath || `${Deno.cwd()}/salvia/deno.json` })
-        ],
-        external: [], // We handle externals manually with the plugin
+        plugins: plugins,
+        external: [], // We handle externals manually with plugins
         write: false, // Return in memory
         jsx: "automatic",
         jsxImportSource: "preact",

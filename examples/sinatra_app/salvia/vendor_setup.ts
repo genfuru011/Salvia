@@ -22,13 +22,3 @@ import renderToString from "preact-render-to-string";
   if (moduleName === "preact-render-to-string") return { default: renderToString, renderToString };
   throw new Error("Module not found: " + moduleName);
 };
-(globalThis as any).Fragment = preact.Fragment;
-
-// Simple require shim for JIT bundles
-(globalThis as any).require = function(moduleName: string) {
-  if (moduleName === "preact") return preact;
-  if (moduleName === "preact/hooks") return hooks;
-  if (moduleName === "preact/jsx-runtime") return jsxRuntime;
-  if (moduleName === "preact-render-to-string") return { default: renderToString, renderToString };
-  throw new Error("Module not found: " + moduleName);
-};

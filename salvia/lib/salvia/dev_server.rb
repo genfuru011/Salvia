@@ -31,7 +31,7 @@ module Salvia
       source_path = resolve_source_path(base_name)
       
       unless source_path
-        return [404, { "Content-Type" => "text/plain" }, ["Not Found: #{path_info}"]]
+        return [404, { "content-type" => "text/plain" }, ["Not Found: #{path_info}"]]
       end
       
       begin
@@ -43,9 +43,9 @@ module Salvia
           format: "esm"
         )
         
-        [200, { "Content-Type" => "application/javascript" }, [js_code]]
+        [200, { "content-type" => "application/javascript" }, [js_code]]
       rescue => e
-        [500, { "Content-Type" => "text/plain" }, ["Build Error: #{e.message}"]]
+        [500, { "content-type" => "text/plain" }, ["Build Error: #{e.message}"]]
       end
     end
     
