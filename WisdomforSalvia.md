@@ -273,6 +273,43 @@ Next.js などのフレームワークでは、クライアントコンポーネ
 
 ---
 
+
+### H. Routing: The "Ruby Router" vs "File-based Routing"
+
+Salvia is designed to respect the **Ruby Way**. It does not force a file-based router on you (unlike Next.js). You use the powerful routers of Rails, Sinatra, or Roda.
+
+However, if you want **Next.js-style File-based Routing**, you can easily implement it with a single "Catch-all" route:
+
+#### Recipe: File-based Routing in Rails
+
+```ruby
+# config/routes.rb
+Rails.application.routes.draw do
+  # Map all requests to the PagesController
+  match "*path", to: "pages#show", via: :all
+  root "pages#show"
+end
+
+# app/controllers/pages_controller.rb
+class PagesController < ApplicationController
+  def show
+    # Map URL path to Component path
+    # e.g. /about -> app/pages/about.jsx
+    # e.g. /blog/post -> app/pages/blog/post.jsx
+    
+    path = params[:path] || "index"
+    component_name = path.split("/").map(&:camelize).join
+    
+    # Render the component (Salvia will look in app/pages/)
+    render html: helpers.island(component_name, params.permit!.to_h)
+  end
+end
+```
+
+This gives you the best of both worlds:
+- **Simple pages** work automatically (File-based).
+- **Complex logic** uses standard Controllers (MVC).
+
 ## 4. Conclusion: The "Salvia" Experience
 
 Salvia は、**「Ruby で開発する楽しさ」** を損なうことなく、**「現代的なフロントエンドの UX」** を手に入れるための武器です。
