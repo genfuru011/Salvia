@@ -330,3 +330,56 @@ Yes, for utility libraries and Deno-native modules.
 - **Utilities/Helpers**: Use **JSR** (`@std/*`, etc.).
 - **UI/Frameworks**: Use **npm** (`preact`, `framer-motion`).
 - **Salvia Internal**: Move internal helpers to JSR in the future.
+
+## 5. Unified Import Management (The "One Config" Strategy)
+
+現状の課題:
+- インポート定義が `deno.json`, `vendor_setup.ts`, `sidecar.ts`, `island.rb` に散らばっている。
+- 特に `sidecar.ts` (Gem内) に `globalExternals` がハードコードされており、ユーザーが任意のライブラリ (例: `uuid`) を SSR で使う際に Gem の修正が必要になる構造的欠陥がある。
+
+解決策: **`deno.json` を Single Source of Truth (SSOT) にする**
+
+### 新しい構成案
+
+**1. `deno.json` (User Project)**
+Deno の標準設定に加え、Salvia 独自の設定 (`salvia` キー) を持たせる。
+
+```json
+{
+  "imports": {
+    "preact": "npm:preact@10.19.2",
+    "uuid": "npm:uuid@9.0.1"
+  },
+  "salvia": {
+    "globalExternals": {
+      "uuid": "globalThis.uuid"
+    }
+  }
+}
+```
+
+**2. `vendor_setup.ts` (User Project)**
+SSR 環境 (QuickJS) にグローバル変数を注入する役割に徹する。
+
+```typescript
+import * as uuid from "uuid";
+(globalThis as any).uuid = uuid;
+```
+
+**3. `sidecar.ts` (Gem Internal)**
+`deno.json` を読み込み、`salvia.globalExternals` を動的に適用するよう修正する。
+
+```typescript
+// sidecar.ts (イメージ)
+const config = JSON.parse(Deno.readTextFileSync(configPath));
+const userExternals = config.salvia?.globalExternals || {};
+const globalExternals = { ...defaultExternals, ...userExternals };
+```
+
+**4. `island.rb` (Gem Internal)**
+現状通り `deno.json` の `imports` を読み込み、`npm:` を `https://esm.sh/` に変換してブラウザ用 Import Map を生成する (実装済み)。
+
+### メリット
+- **一元管理**: バージョンも設定も `deno.json` を見るだけで完結する。
+- **拡張性**: ユーザーが自由にライブラリを追加し、SSR 対応できる。
+- **透明性**: Gem の内部ロジック (sidecar.ts) を隠蔽しつつ、必要な設定だけを公開できる。
