@@ -13,73 +13,14 @@
 import * as esbuild from "https://deno.land/x/esbuild@v0.24.2/mod.js";
 import { denoPlugins } from "jsr:@luca/esbuild-deno-loader@0.11";
 
-// Tailwind CSS (Deno)
-import postcss from "npm:postcss@8";
-import tailwindcss from "npm:tailwindcss@3";
-import autoprefixer from "npm:autoprefixer@10";
-
 // When running via `deno task --config salvia/deno.json`, CWD is `salvia/`.
 // We need to go up one level to access app/ and public/.
 const ROOT_DIR = "..";
 const ISLANDS_DIR = `${ROOT_DIR}/app/islands`;
 const SSR_OUTPUT_DIR = `${ROOT_DIR}/salvia/server`;
 const CLIENT_OUTPUT_DIR = `${ROOT_DIR}/public/assets/islands`;
-const CSS_INPUT = `${ROOT_DIR}/app/assets/stylesheets/application.tailwind.css`;
-const CSS_OUTPUT = `${ROOT_DIR}/public/assets/stylesheets/tailwind.css`;
 const WATCH_MODE = Deno.args.includes("--watch");
 const VERBOSE = Deno.args.includes("--verbose");
-
-// ============================================
-// Tailwind CSS Build
-// ============================================
-
-async function buildCSS() {
-  try {
-    // Check if input file exists
-    try {
-      await Deno.stat(CSS_INPUT);
-    } catch {
-      if (VERBOSE) console.log("ℹ️  Tailwind CSS input not found. Skipping CSS build.");
-      return;
-    }
-
-    const css = await Deno.readTextFile(CSS_INPUT);
-    
-    // Load Tailwind config
-    let config;
-    try {
-      const configPath = `${ROOT_DIR}/tailwind.config.ts`;
-      // Dynamic import needs a file URL
-      const configFile = await import(`file://${await Deno.realPath(configPath)}`);
-      config = configFile.default;
-      if (VERBOSE) console.log("🎨 Loaded tailwind.config.ts");
-    } catch {
-      if (VERBOSE) console.log("ℹ️  tailwind.config.ts not found, using default config.");
-      config = {
-        content: [
-          `${ROOT_DIR}/app/views/**/*.erb`,
-          `${ROOT_DIR}/app/islands/**/*.{js,jsx,tsx}`,
-          `${ROOT_DIR}/public/assets/javascripts/**/*.js`
-        ],
-        theme: {
-          extend: {},
-        },
-        plugins: [],
-      };
-    }
-
-    const result = await postcss([
-      tailwindcss(config),
-      autoprefixer(),
-    ]).process(css, { from: CSS_INPUT, to: CSS_OUTPUT });
-
-    await Deno.writeTextFile(CSS_OUTPUT, result.css);
-    console.log(`✅ Tailwind CSS built: ${CSS_OUTPUT}`);
-  } catch (error) {
-    const e = error as Error;
-    console.error("❌ CSS build error:", e.message || error);
-  }
-}
 
 // ============================================
 // SSR Islands Build
@@ -259,7 +200,6 @@ export function mount(element, props, options) {
 
 async function build() {
   await Promise.all([
-    buildCSS(),
     buildSSR(),
   ]);
 }
@@ -267,8 +207,8 @@ async function build() {
 async function watch() {
   console.log("👀 Watching for file changes...");
   
-  // Watch Islands and CSS source
-  const watchDirs = [ISLANDS_DIR, "./app/views", "./app/assets/stylesheets"];
+  // Watch Islands source
+  const watchDirs = [ISLANDS_DIR, "./app/views"];
   
   for (const dir of watchDirs) {
     (async () => {

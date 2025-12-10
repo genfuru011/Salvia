@@ -2,5 +2,6 @@ source "https://rubygems.org"
 
 gem "sinatra"
 gem "salvia", path: "../../salvia"
+gem "tailwindcss-ruby"
 gem "puma"
 gem "rackup"

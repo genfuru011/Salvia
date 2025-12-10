@@ -37,46 +37,33 @@ module Salvia
       end
 
       if install_tailwind
+        # Add tailwindcss-ruby to Gemfile if present
+        if File.exist?("Gemfile")
+          append_to_file "Gemfile", "\ngem 'tailwindcss-ruby'\n"
+          say "   - Added 'tailwindcss-ruby' to Gemfile"
+        end
+
         empty_directory "app/assets/stylesheets"
         create_file "app/assets/stylesheets/application.tailwind.css" do
           <<~CSS
-            @tailwind base;
-            @tailwind components;
-            @tailwind utilities;
+            @import "tailwindcss";
+
+            @source "../../views/**/*.erb";
+            @source "../../islands/**/*.{js,jsx,tsx}";
+            @source "../../../public/assets/javascripts/**/*.js";
+
+            @theme {
+              --color-salvia-500: #6A5ACD;
+              --color-salvia-600: #5a4ab8;
+            }
           CSS
         end
         
-        # Create tailwind.config.ts
-        create_file "tailwind.config.ts" do
-          <<~TS
-            import { type Config } from "npm:tailwindcss@3";
-
-            export default {
-              content: [
-                "./app/views/**/*.erb",
-                "./app/islands/**/*.{js,jsx,tsx}",
-                "./public/assets/javascripts/**/*.js"
-              ],
-              theme: {
-                extend: {
-                  colors: {
-                    'salvia': {
-                      500: '#6A5ACD',
-                      600: '#5a4ab8',
-                    }
-                  }
-                },
-              },
-              plugins: [],
-            } satisfies Config;
-          TS
-        end
-        
-        say "   - app/assets/stylesheets/ : Tailwind CSS entry point created"
-        say "   - tailwind.config.ts      : Tailwind configuration created"
+        say "   - app/assets/stylesheets/ : Tailwind CSS entry point created (v4)"
         say ""
-        say "⚠️  Don't forget to link the generated CSS in your layout:", :yellow
-        say "   <link rel=\"stylesheet\" href=\"/assets/stylesheets/tailwind.css\">"
+        say "⚠️  Run 'bundle install' to install Tailwind CSS.", :yellow
+        say "⚠️  To build CSS, run:", :yellow
+        say "   bundle exec tailwindcss -i app/assets/stylesheets/application.tailwind.css -o public/assets/stylesheets/tailwind.css --watch"
       end
 
       chmod "salvia/build.ts", 0755

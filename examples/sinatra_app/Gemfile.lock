@@ -40,6 +40,7 @@ GEM
       rack-protection (= 4.2.1)
       rack-session (>= 2.0.0, < 3)
       tilt (~> 2.0)
+    tailwindcss-ruby (4.1.16-arm64-darwin)
     thor (1.4.0)
     tilt (2.6.1)
     zeitwerk (2.7.3)
@@ -52,6 +53,7 @@ DEPENDENCIES
   rackup
   salvia!
   sinatra
+  tailwindcss-ruby
 
 BUNDLED WITH
    2.4.19

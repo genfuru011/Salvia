@@ -77,6 +77,12 @@ $ bundle exec salvia build
 $ bundle exec salvia watch
 ```
 
+If you are using Tailwind CSS, run the Tailwind watcher in a separate terminal:
+
+```bash
+$ bundle exec tailwindcss -i app/assets/stylesheets/application.tailwind.css -o public/assets/stylesheets/tailwind.css --watch
+```
+
 ### 4. Render in Ruby
 
 Use `Salvia::SSR` to render the component in your view (ERB, Slim, etc.):
