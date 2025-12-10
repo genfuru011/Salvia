@@ -39,7 +39,7 @@ module Salvia
         # We externalize dependencies that should be handled by Import Map
         js_code = Salvia::Compiler.bundle(
           source_path, 
-          externals: ["preact", "preact/hooks", "react", "react-dom"],
+          externals: ["preact", "preact/hooks", "preact/jsx-runtime", "react", "react-dom"],
           format: "esm"
         )
         

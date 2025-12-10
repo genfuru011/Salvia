@@ -49,7 +49,18 @@ Deno.serve({
 
 async function bundle(entryPoint: string, externals: string[] = [], format: "esm" | "iife" | "cjs" = "esm", globalName?: string, configPath?: string) {
   try {
-    const plugins = [...denoPlugins({ configPath: configPath })];
+    const externalizePlugin = {
+      name: "force-external",
+      setup(build: any) {
+        if (externals.length === 0) return;
+        const filter = new RegExp(`^(${externals.map(k => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join("|")})$`);
+        build.onResolve({ filter }, (args: any) => {
+          return { path: args.path, external: true };
+        });
+      },
+    };
+
+    const plugins = [externalizePlugin, ...denoPlugins({ configPath: configPath })];
     let actualExternals = externals;
 
     if (format === "iife") {
