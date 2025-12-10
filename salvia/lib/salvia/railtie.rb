@@ -6,6 +6,10 @@ module Salvia
       ActiveSupport.on_load(:action_view) do
         include Salvia::Helpers
       end
+
+      ActiveSupport.on_load(:action_controller) do
+        include Salvia::Helpers
+      end
     end
 
     initializer "salvia.configure" do |app|
