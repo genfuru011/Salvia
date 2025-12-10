@@ -43,7 +43,14 @@
     *   `components/` 内のファイルを直接レンダリングしたい場合は、それを `islands/` に置くか、将来的に「Static Component（JSなしSSR）」としてのサポートを追加する必要があります。
     *   Fresh同様、"Island" として定義されたものだけが、独立したエントリーポイント（ハイドレーション対象）として機能します。
 
-## 8. 結論 (2025-12-10)
+## 8. Server Components vs RSC (React Server Components)
+*   **Salviaの `app/components/` (Server Components)**:
+    *   **純粋なサーバーサイドレンダリング**: サーバーでJSXをHTML文字列に変換して返すだけです。
+    *   **No Client JS**: クライアントにはHTMLとして届くため、JavaScriptは一切配信されず、ハイドレーションもされません（Islandsからインポートされない限り）。
+    *   **用途**: ボタン、レイアウト、静的なUIパーツ。従来のERB/Slimの代わりとしてJSXを使うイメージです。
+    *   **RSCとの違い**: React Server Components (RSC) は、サーバーで実行されつつ、クライアントコンポーネントと連携し、状態を保持したまま部分更新（ストリーミングやシリアライズ）を行う複雑な仕組みです。Salviaのこれは単なる「JSXテンプレートエンジン」としての利用に近いです。
+
+## 9. 結論 (2025-12-10)
 現状のアーキテクチャ（Islands Architecture）で進める方針で確定。
 - **Islands (`app/islands/`)**: クライアントサイドでのハイドレーションが必要なコンポーネント（インタラクティブなボタン、カウンターなど）。
 - **Components (`app/components/`)**: Islandsからインポートして使う、またはSSRのみで使う静的なUIパーツ。これらは単体ではハイドレーションされないが、Islandsの一部として組み込まれれば機能する。
