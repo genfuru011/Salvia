@@ -70,3 +70,5 @@ module Salvia
     end
   end
 end
+
+require "salvia/railtie" if defined?(Rails)

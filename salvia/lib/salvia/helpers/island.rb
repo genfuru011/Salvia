@@ -110,7 +110,8 @@ module Salvia
           html_options[:class] = [html_options[:class], "salvia-island"].compact.join(" ")
         end
         
-        tag(tag_name, html_options) { inner_html }
+        result = tag(tag_name, html_options) { inner_html }
+        result.respond_to?(:html_safe) ? result.html_safe : result
       end
       
       private

@@ -81,8 +81,8 @@ async function buildSSR() {
         const filename = f.path.split("/").pop();
         return `import ${f.name} from "./${filename}";`;
       }).join("\n") + `
-import { h } from "https://esm.sh/preact@10.19.3";
-import renderToString from "https://esm.sh/preact-render-to-string@6.3.1?deps=preact@10.19.3";
+import { h } from "preact";
+import renderToString from "preact-render-to-string";
 
 // Salvia SSR Runtime
 const components = {
@@ -217,7 +217,12 @@ async function watch() {
         let debounceTimer: number | undefined;
         
         for await (const event of watcher) {
-          if (event.kind === "modify" || event.kind === "create") {
+          // Ignore generated files
+          if (event.paths.some(p => p.includes("_ssr_entry.js") || p.includes("_client_"))) {
+            continue;
+          }
+
+          if (event.kind === "modify" || event.kind === "create" || event.kind === "remove") {
             clearTimeout(debounceTimer);
             debounceTimer = setTimeout(async () => {
               console.log(`🔄 Changes detected in ${dir}, rebuilding...`);

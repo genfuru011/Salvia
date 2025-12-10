@@ -1,3 +1,0 @@
-web: bin/rails server -p 3000
-js: bundle exec salvia watch
-css: bundle exec tailwindcss -i app/assets/stylesheets/application.tailwind.css -o public/assets/stylesheets/tailwind.css --watch
