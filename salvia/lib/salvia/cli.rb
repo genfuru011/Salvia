@@ -26,6 +26,8 @@ module Salvia
       copy_file "assets/scripts/deno.json", "salvia/deno.json"
       copy_file "assets/scripts/build.ts", "salvia/build.ts"
       copy_file "assets/javascripts/islands.js", "public/assets/javascripts/islands.js"
+      
+      create_file "salvia/.gitignore", "/server/\n"
 
       chmod "salvia/build.ts", 0755
 
