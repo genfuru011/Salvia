@@ -4,6 +4,32 @@ import { denoPlugins } from "jsr:@luca/esbuild-deno-loader@0.9.0";
 // port: 0 for dynamic port assignment
 const port = 0;
 
+const globalExternals: Record<string, string> = {
+  "preact": "globalThis.preact",
+  "preact/hooks": "globalThis.preactHooks",
+  "preact-render-to-string": "globalThis.renderToString",
+  "preact/jsx-runtime": "globalThis.jsxRuntime",
+  "react": "globalThis.preact",
+  "react-dom": "globalThis.preact",
+};
+
+const globalExternalsPlugin = {
+  name: "global-externals",
+  setup(build: any) {
+    const filter = new RegExp(`^(${Object.keys(globalExternals).map(k => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join("|")})$`);
+    build.onResolve({ filter }, (args: any) => {
+      return { path: args.path, namespace: "global-externals" };
+    });
+    build.onLoad({ filter: /.*/, namespace: "global-externals" }, (args: any) => {
+      const globalVar = globalExternals[args.path];
+      return {
+        contents: `module.exports = ${globalVar};`,
+        loader: "js"
+      };
+    });
+  },
+};
+
 console.log(`🚀 Salvia Sidecar starting...`);
 
 Deno.serve({
@@ -16,7 +42,7 @@ Deno.serve({
       const { command, params } = await req.json();
       
       if (command === "bundle") {
-        const result = await bundle(params.entryPoint, params.externals);
+        const result = await bundle(params.entryPoint, params.externals, params.format, params.globalName, params.configPath);
         return Response.json(result);
       }
       
@@ -38,16 +64,28 @@ Deno.serve({
   }
 });
 
-async function bundle(entryPoint: string, externals: string[] = []) {
+async function bundle(entryPoint: string, externals: string[] = [], format: "esm" | "iife" | "cjs" = "esm", globalName?: string, configPath?: string) {
   try {
+    const plugins = [...denoPlugins({ configPath: configPath })];
+    let actualExternals = externals;
+
+    if (format === "iife") {
+      plugins.unshift(globalExternalsPlugin);
+      // Remove handled externals from the list
+      actualExternals = externals.filter(e => !globalExternals[e]);
+    }
+
     const result = await esbuild.build({
-      plugins: [...denoPlugins()],
+      plugins: plugins,
       entryPoints: [entryPoint],
       bundle: true,
       write: false,
-      format: "esm",
+      format: format,
+      globalName: globalName || undefined,
       platform: "neutral",
-      external: externals,
+      external: actualExternals,
+      jsx: "automatic",
+      jsxImportSource: "preact",
     });
 
     if (result.errors.length > 0) {

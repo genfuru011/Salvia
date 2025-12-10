@@ -18,15 +18,15 @@ This plan focuses on realizing the "Full JSX/TSX Architecture" where ERB is elim
 - [x] **Verify `island` helper for Pages**
     - [x] Can we use `helpers.island("pages/Home")`? (Used `island("Home")` with build script adjustment).
     - [x] Does it correctly handle the full HTML structure (`<html>`, `<head>`, `<body>`)?
-- [ ] **Implement `render_salvia` (or similar) helper**
-    - [ ] A wrapper around `render html: ...` to make it cleaner in Controllers.
-    - [ ] Example: `render_salvia "pages/Home", props: { ... }`
+- [x] **Implement `render_salvia` (or similar) helper**
+    - [x] A wrapper around `render html: ...` to make it cleaner in Controllers. (Implemented as `ssr` helper)
+    - [x] Example: `render_salvia "pages/Home", props: { ... }`
 
 ## Phase 3: Full JSX Example Application
 **Goal**: Create a proof-of-concept application that uses NO ERB files.
 
 - [x] **Create `examples/full_jsx_app`**
-    - [x] Sinatra or Rails API mode.
+    - [x] Sinatra or Rails API mode. (Updated `examples/sinatra_app`)
     - [x] `app/pages/Home.tsx` (Server Component).
     - [x] `app/components/Layout.tsx` (Shared).
     - [x] `app/islands/Counter.tsx` (Client).
@@ -34,8 +34,8 @@ This plan focuses on realizing the "Full JSX/TSX Architecture" where ERB is elim
     - [x] Ensure `Home.tsx` code is NOT included in the client bundle.
 
 ## Phase 4: Documentation & Final Polish
-- [ ] **Update README.md** with the new "Full JSX" usage guide.
-- [ ] **Finalize WisdomforSalvia.md**.
+- [x] **Update README.md** with the new "Full JSX" usage guide.
+- [x] **Finalize WisdomforSalvia.md**.
 
 ## Phase 5: JIT Architecture (The "Vite-like" Experience)
 **Goal**: Eliminate the need for manual `deno task watch` and achieve JIT compilation.

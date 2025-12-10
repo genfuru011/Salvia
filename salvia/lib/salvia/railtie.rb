@@ -11,11 +11,14 @@ module Salvia
     initializer "salvia.configure" do |app|
       # Default configuration for Rails
       Salvia.configure do |config|
-        config.islands_dir = Rails.root.join("app/islands")
-        config.build_dir = Rails.root.join("public/assets")
-        
         # Use Rails logger
         Salvia.logger = Rails.logger
+      end
+    end
+
+    initializer "salvia.middleware" do |app|
+      if Rails.env.development?
+        app.middleware.use Salvia::DevServer
       end
     end
   end

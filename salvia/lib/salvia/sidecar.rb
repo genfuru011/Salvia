@@ -62,10 +62,16 @@ module Salvia
       false
     end
 
-    def bundle(entry_point, externals: [])
+    def bundle(entry_point, externals: [], format: "esm", global_name: nil)
       start unless running?
       
-      response = request("bundle", { entryPoint: entry_point, externals: externals })
+      response = request("bundle", { 
+        entryPoint: entry_point, 
+        externals: externals,
+        format: format,
+        globalName: global_name,
+        configPath: File.join(Dir.pwd, "deno.json")
+      })
       if response["error"]
         raise "Sidecar Bundle Error: #{response["error"]}"
       end

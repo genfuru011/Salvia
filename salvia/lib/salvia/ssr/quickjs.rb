@@ -81,7 +81,12 @@ module Salvia
           end
           
           # Bundle component
-          js_code = Salvia::Compiler.bundle(path, externals: ["preact", "preact/hooks", "preact-render-to-string"])
+          js_code = Salvia::Compiler.bundle(
+            path, 
+            externals: ["preact", "preact/hooks", "preact-render-to-string"],
+            format: "iife",
+            global_name: "SalviaComponent"
+          )
           
           # Async Type Check
           Thread.new do
@@ -204,6 +209,12 @@ module Salvia
         
         if name.include?("/")
            path = File.join(Salvia.root, "salvia/app", "#{name}.tsx")
+           return path if File.exist?(path)
+           
+           path = File.join(Salvia.root, "salvia/app", "#{name}.jsx")
+           return path if File.exist?(path)
+           
+           path = File.join(Salvia.root, "salvia/app", "#{name}.js")
            return path if File.exist?(path)
         end
         
