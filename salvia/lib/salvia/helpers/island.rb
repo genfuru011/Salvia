@@ -30,8 +30,33 @@ module Salvia
           manifest = load_manifest
           manifest.dig(name, "clientOnly") == true
         end
+
+        # Island が server only かどうか
+        def server_only?(name)
+          manifest = load_manifest
+          manifest.dig(name, "serverOnly") == true
+        end
       end
       
+      # Import Map タグを生成する
+      def salvia_import_map
+        map = {
+          imports: {
+            "preact" => "https://esm.sh/preact@10.19.6",
+            "preact/hooks" => "https://esm.sh/preact@10.19.6/hooks",
+            "preact/jsx-runtime" => "https://esm.sh/preact@10.19.6/jsx-runtime"
+          }
+        }
+        
+        html = <<~HTML
+          <script type="importmap">
+            #{map.to_json}
+          </script>
+        HTML
+        
+        html.respond_to?(:html_safe) ? html.html_safe : html
+      end
+
       # Island コンポーネントをレンダリングする
       #
       # SSR が有効な場合はサーバーサイドで HTML を生成し、
@@ -57,7 +82,11 @@ module Salvia
       #
       def island(name, props = {}, options = {})
         tag_name = options.delete(:tag) || :div
-        hydrate = options.fetch(:hydrate, true)
+        
+        # デフォルトの hydrate 値を決定
+        # serverOnly (app/pages) の場合はデフォルトで false
+        default_hydrate = !Island.server_only?(name)
+        hydrate = options.fetch(:hydrate, default_hydrate)
         
         # SSR 有効/無効の判定
         # 1. options[:ssr] が明示的に指定されていればそれを使う

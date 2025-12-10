@@ -155,7 +155,7 @@ export default {}; // Ensure it's a module
       const filename = file.path.split("/").pop();
       const wrapperCode = `
 import Component from "./${filename}";
-import { h, hydrate, render } from "https://esm.sh/preact@10.19.3";
+import { h, hydrate, render } from "preact";
 
 export function mount(element, props, options) {
   const vnode = h(Component, props);
@@ -179,7 +179,7 @@ export function mount(element, props, options) {
         outdir: CLIENT_OUTPUT_DIR,
         platform: "browser",
         plugins: [...denoPlugins({ configPath: `${Deno.cwd()}/deno.json` })],
-        external: [],
+        external: ["preact", "preact/hooks", "preact/jsx-runtime"],
         jsx: "automatic",
         jsxImportSource: "preact",
         minify: true,
