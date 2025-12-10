@@ -2,10 +2,11 @@
 <html>
 <head>
   <title>Salvia Sinatra Test</title>
+  <link rel="stylesheet" href="/assets/stylesheets/tailwind.css">
   <script type="module" src="/assets/javascripts/islands.js"></script>
 </head>
-<body>
-  <h1>Salvia on Sinatra</h1>
+<body class="bg-slate-100 p-10">
+  <h1 class="text-3xl font-bold text-center mb-8 text-slate-800">Salvia on Sinatra</h1>
   <%= island "Counter", initialCount: 5 %>
 </body>
 </html>

@@ -1,4 +1,4 @@
-// Salvia SSR Bundle - Generated at 2025-12-10T02:55:45.617Z
+// Salvia SSR Bundle - Generated at 2025-12-10T03:08:48.305Z
 (() => {
   // https://esm.sh/preact@10.19.3/denonext/preact.mjs
   var D;
@@ -365,12 +365,22 @@
   // app/islands/Counter.jsx
   function Counter({ initialCount = 0 }) {
     const [count, setCount] = k(initialCount);
-    return /* @__PURE__ */ g2("div", { style: { border: "1px solid #ccc", padding: "10px", borderRadius: "5px" }, children: [
-      /* @__PURE__ */ g2("p", { children: [
-        "Count: ",
-        count
+    return /* @__PURE__ */ g2("div", { className: "p-6 max-w-sm mx-auto bg-white rounded-xl shadow-md flex items-center space-x-4", children: [
+      /* @__PURE__ */ g2("div", { className: "flex-1", children: [
+        /* @__PURE__ */ g2("p", { className: "text-xl font-medium text-black", children: [
+          "Count: ",
+          count
+        ] }),
+        /* @__PURE__ */ g2("p", { className: "text-slate-500", children: "Click to increment" })
       ] }),
-      /* @__PURE__ */ g2("button", { onClick: () => setCount(count + 1), children: "Increment" })
+      /* @__PURE__ */ g2(
+        "button",
+        {
+          onClick: () => setCount(count + 1),
+          className: "px-4 py-1 text-sm text-purple-600 font-semibold rounded-full border border-purple-200 hover:text-white hover:bg-purple-600 hover:border-transparent focus:outline-none focus:ring-2 focus:ring-purple-600 focus:ring-offset-2",
+          children: "Increment"
+        }
+      )
     ] });
   }
 
