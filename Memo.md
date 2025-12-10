@@ -257,9 +257,14 @@ Completed 200 OK
 - **Response**: `Completed 200 OK` confirms the HTML was generated and sent to the client.
 
 ### 3. Fixes Implemented
-- **Railtie Update**: Updated `Salvia::Railtie` to automatically include `Salvia::Helpers` in `ActionController::API` (via `:action_controller` hook), eliminating the need for manual inclusion in `ApplicationController`.
+- **Railtie Update**: Updated `Salvia::Railtie` to automatically include `Salvia::Helpers` in `ActionController::API` (via `:action_controller_api` hook), eliminating the need for manual inclusion in `ApplicationController`.
 - **DOM Mocks**: Added mocks for `Event`, `CustomEvent`, `URL`, `document.documentElement`, etc., in the QuickJS adapter to support libraries like Turbo and Preact in the SSR environment.
 - **Type Checking**: Configured `deno.json` and `sidecar.ts` to correctly handle type checking and `npm:` specifiers, resolving TS errors during JIT compilation.
 
 ### 4. Conclusion
 Salvia is now fully compatible with Rails API mode, supporting the "Full JSX" architecture where Rails handles data/logic (Controllers) and Salvia handles the View layer (JSX/TSX) with SSR.
+
+## Final Verification (2025-12-10) - Railtie Fix
+- **Action**: Removed explicit `include Salvia::Helpers` from `ApplicationController` in `rails_api_app`.
+- **Result**: `/todos` endpoint still renders correctly.
+- **Conclusion**: The `Railtie` update correctly hooks into `ActionController::API`, making Salvia helpers available automatically in API-only Rails applications.
