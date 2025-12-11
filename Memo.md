@@ -454,3 +454,14 @@ globalThis.Salvia = {
 **Result**:
 The Sinatra example app (Todo list with Tailwind) works correctly with SSR and JIT compilation.
 
+
+### 18. Rails API App Verification (2025-12-11)
+
+**Verification of Unified Import Management:**
+1.  **Configuration**: Updated `examples/rails_api_app/salvia/deno.json` to use `framework` aliases and `vendor_setup.ts` to expose correct globals.
+2.  **Components**: Updated all components to import from `framework` instead of `preact`.
+3.  **SSR**: Confirmed correct HTML output for `/todos`.
+4.  **JIT**: Confirmed `TodoList.js` is compiled using `framework/hooks` and `framework/jsx-runtime`.
+5.  **Import Map**: Confirmed generated HTML contains correct import map with `framework` aliases.
+
+**Conclusion**: The Rails API example is fully functional and aligned with the new architecture.
