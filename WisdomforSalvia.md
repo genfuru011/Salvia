@@ -48,7 +48,7 @@ my_app/
 └── public/                # Static Assets
 ```
 
-## 3. Unified Import Management (The "One Config" Strategy)
+## 4. Unified Import Management (The "One Config" Strategy)
 
 Salvia v0.2.0 introduces a unified way to manage frontend dependencies using `deno.json`. This single file controls imports for:
 1.  **Browser (Client-side)**: Via Import Maps generated in HTML.
@@ -103,7 +103,7 @@ import { v4 as uuidv4 } from "uuid";
 **Why is this necessary?**
 QuickJS is a lightweight engine. By bundling `vendor_setup.ts` using Deno (which understands `npm:` and `deno.json`), we create a single self-contained JavaScript file (`vendor.js`) that contains all your dependencies. QuickJS simply loads this file, and *boom*, `h` and `renderToString` are available globally.
 
-## 4. Multi-Framework Support
+## 5. Multi-Framework Support
 
 Thanks to the `framework` alias strategy, switching frameworks is (theoretically) as simple as updating `deno.json`.
 
@@ -122,7 +122,7 @@ Thanks to the `framework` alias strategy, switching frameworks is (theoretically
 
 *Note: React support is currently experimental. Preact is the default and recommended framework for Salvia due to its lightweight nature and compatibility.*
 
-## 5. JIT Compilation & The Sidecar
+## 6. JIT Compilation & The Sidecar
 
 Salvia uses a "Managed Sidecar" architecture to provide instant feedback during development.
 
@@ -133,7 +133,7 @@ Salvia uses a "Managed Sidecar" architecture to provide instant feedback during 
 
 This eliminates the need for a separate `npm run build` or `deno task watch` command. You just run `rails s` or `ruby app.rb`, and Salvia handles the rest.
 
-## 6. The Ultimate Salvia Stack: Salvia + Turbo + Signals
+## 7. The Ultimate Salvia Stack: Salvia + Turbo + Signals
 
 Salvia、Turbo (Drive/Frames/Streams)、そして Preact Signals。これらを組み合わせることで、**「サーバーサイドの単純さ」と「クライアントサイドのリッチさ」を完全に両立**する、現代の Web 開発における「最強のスタック」が完成します。
 
@@ -276,7 +276,7 @@ export default function ProductList({ products }) {
 
 この構成により、**「在庫はサーバー主導でリアルタイム同期」「カートはクライアント主導でサクサク動作」** という、理想的な UX が実現できます。
 
-## 7. Props vs Signals: 状態管理のパラダイムシフト
+## 8. Props vs Signals: 状態管理のパラダイムシフト
 
 Salvia では、データの流れを理解し、適切なツールを選ぶことが重要です。
 
