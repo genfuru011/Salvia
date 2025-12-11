@@ -34,7 +34,7 @@ my_app/
 ├── app/                   # Ruby Backend (Controllers, Models)
 │   ├── controllers/
 │   └── models/
-├── config/                # Rails/Sinatra Config
+├── config/                # Rails Config
 ├── salvia/                # Frontend Root (Deno/TypeScript)
 │   └── app/
 │       ├── pages/         # Server Components (Entry Points)
@@ -51,7 +51,7 @@ my_app/
 Salvia v0.2.0 adopts a **Zero Config** philosophy, inspired by Next.js and Fresh.
 
 ### Internalized Configuration
-Previously exposed configuration files like `deno.json` and `vendor_setup.ts` are now internalized within the Salvia gem. This means:
+Previously exposed configuration files like `vendor_setup.ts` are now internalized within the Salvia gem. `deno.json` remains in your project root as the Single Source of Truth for dependencies. This means:
 
 1.  **No Boilerplate**: You don't need to manage complex build configurations or import maps.
 2.  **Preact Only**: Salvia is opinionated and strictly enforces a Preact + Signals architecture for maximum performance and compatibility.
@@ -59,7 +59,7 @@ Previously exposed configuration files like `deno.json` and `vendor_setup.ts` ar
 
 ### How it works under the hood
 
-Although hidden from the user, Salvia still uses `deno.json` internally to manage dependencies:
+While complex configuration files like `vendor_setup.ts` are hidden, `deno.json` remains exposed in your project root. This allows you to easily manage dependencies:
 
 1.  **Browser (Client-side)**: Via Import Maps generated in HTML.
 2.  **SSR (Server-side)**: Via Deno/QuickJS module resolution using the internal `deno.json`.
@@ -96,7 +96,7 @@ This ensures that `h` and `renderToString` are always available globally in your
 
 Salvia uses a "Managed Sidecar" architecture to provide instant feedback during development.
 
-1.  **Rails/Sinatra** starts a background Deno process (`sidecar.ts`).
+1.  **Rails** starts a background Deno process (`sidecar.ts`).
 2.  When you request a page, the **DevServer** middleware intercepts requests for `.js` files.
 3.  It asks the **Sidecar** to compile the corresponding `.tsx` file on-the-fly using `esbuild`.
 4.  The compiled JS is served to the browser (or used for SSR).
@@ -119,7 +119,7 @@ Salvia, Turbo (Drive/Frames/Streams), そして Preact Signals をすべて組�
 
 *   **役割:** **「HTML の生成」と「ロジックの実行」**
 *   **できること:**
-    *   Ruby (Rails/Sinatra) のコントローラーで DB からデータを取得する。
+    *   Ruby (Rails) のコントローラーで DB からデータを取得する。
     *   JSX/TSX (Server Components) を高速にレンダリングして HTML を作る。
     *   クライアントに送る JavaScript を最小限（Islands）にする。
 

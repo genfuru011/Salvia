@@ -34,7 +34,7 @@ my_app/
 ├── app/                   # Ruby Backend (Controllers, Models)
 │   ├── controllers/
 │   └── models/
-├── config/                # Rails/Sinatra Config
+├── config/                # Rails Config
 ├── salvia/                # Frontend Root (Deno/TypeScript)
 │   └── app/
 │       ├── pages/         # Server Components (Entry Points)
@@ -59,7 +59,7 @@ Salvia v0.2.0は、Next.jsやFreshに触発された **ゼロコンフィグ** �
 
 ### 内部での動作
 
-ユーザーからは隠されていますが、Salviaは依然として内部で `deno.json` を使用して依存関係を管理しています：
+`vendor_setup.ts` などの複雑な設定ファイルは隠蔽されていますが、`deno.json` はプロジェクトルートに公開されています。これにより、依存関係を簡単に管理できます：
 
 1.  **ブラウザ (クライアントサイド)**: HTML内に生成されたインポートマップ経由。
 2.  **SSR (サーバーサイド)**: 内部の `deno.json` を使用したDeno/QuickJSモジュール解決経由。
@@ -96,7 +96,7 @@ import { renderToString } from "preact-render-to-string";
 
 Salviaは、開発中に即時のフィードバックを提供するために "Managed Sidecar" アーキテクチャを使用します。
 
-1.  **Rails/Sinatra** がバックグラウンドのDenoプロセス (`sidecar.ts`) を開始します。
+1.  **Rails** がバックグラウンドのDenoプロセス (`sidecar.ts`) を開始します。
 2.  ページをリクエストすると、**DevServer** ミドルウェアが `.js` ファイルへのリクエストをインターセプトします。
 3.  それは **Sidecar** に、対応する `.tsx` ファイルを `esbuild` を使用してオンザフライでコンパイルするように依頼します。
 4.  コンパイルされたJSがブラウザに提供されます (またはSSRに使用されます)。
@@ -119,7 +119,7 @@ Salvia, Turbo (Drive/Frames/Streams), そして Preact Signals をすべて組�
 
 *   **役割:** **「HTML の生成」と「ロジックの実行」**
 *   **できること:**
-    *   Ruby (Rails/Sinatra) のコントローラーで DB からデータを取得する。
+    *   Ruby (Rails) のコントローラーで DB からデータを取得する。
     *   JSX/TSX (Server Components) を高速にレンダリングして HTML を作る。
     *   クライアントに送る JavaScript を最小限（Islands）にする。
 
