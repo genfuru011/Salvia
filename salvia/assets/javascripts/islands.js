@@ -2,7 +2,6 @@
 // Framework-agnostic island loader
 // Each island component must export a mount(element, props) function
 
-import "@hotwired/turbo";
 import { h, hydrate, render } from "preact";
 
 async function hydrateIsland(island) {
