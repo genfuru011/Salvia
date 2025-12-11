@@ -6,75 +6,66 @@
 
 ## Vision
 
-**Redefine "Salvia" from a "Zero-config MVC Framework" to a "Ruby Islands Architecture Engine".**
+**Salvia is the "React Server Components" for the Ruby ecosystem.**
 
-Instead of competing with Rails/Hanami, Salvia will become the standard tool for implementing Islands Architecture in the Ruby ecosystem. It will provide the rendering engine, build system, and hydration logic, which can be used within any Rack-based application (including Rails).
+Our primary focus is to provide a seamless **Rails + JSX** experience today, while laying the groundwork for **Sage**, a future HTML-first framework.
 
 ---
 
-## Current Version: v0.1.0 (SSR Engine) ✅
+## Current Version: v0.2.0 (Rails + JIT) ✅
 
-> **"The Great Unbundling"** - Pivot to standalone SSR engine
+> **"True HTML First"** - Full JSX support for Rails
 
 ### Core Features
 - [x] **SSR Engine**: QuickJS-based rendering (0.3ms/render)
-- [x] **Build System**: Deno + esbuild integration
-- [x] **Framework Agnostic**: Works with any Rack app
-- [x] **CLI**: `install`, `build`, `watch` commands
-- [x] **Integrations**: Rails (Railtie) and Sinatra helpers
-
-### Removed (Moved to Archive)
-- [x] MVC components (Router, Controller, Database)
-- [x] Monolithic application structure
+- [x] **JIT Compilation**: "Managed Sidecar" architecture using Deno (No build step)
+- [x] **Rails Integration**: Seamless `ssr` helper and Railtie
+- [x] **Unified Imports**: `deno.json` manages both Server and Client dependencies
+- [x] **Multi-Framework**: Support for Preact (Default) and React (Experimental)
 
 ---
 
 ## Next Phase
 
-### Phase 1: Ecosystem Expansion (v0.2.0)
+### Phase 1: Stability & Performance (v0.3.0)
 
-- [ ] **Frontend Frameworks**: Support for React, Vue, Solid, Svelte (currently Preact only)
-- [ ] **Backend Integrations**: Official support for Roda and Hanami
-- [ ] **TypeScript Support**: Type-safe props passing
-- [ ] **Import Maps**: Better dependency management
+- [ ] **Turbo Drive Integration**: First-class support for Turbo transitions with Islands
+- [ ] **Production Optimization**: Pre-bundling strategy for deployment
+- [ ] **View Component Compatibility**: Interop with GitHub's ViewComponent
+- [ ] **Advanced TypeScript**: Automatic type generation for Rails Models/Routes
 
----
-
-## Future Vision: "Sage" Framework 🔮
+### Phase 2: The "Sage" Framework (v1.0.0) 🔮
 
 > **"Wisdom for Rubyists"**
 
-Once Salvia (the SSR engine) is stable and popular, we will build a new MVC framework **on top of it**.
-
-**Project Name:** `Sage` (Salvia is a type of Sage plant)
+Once Salvia is battle-tested in Rails, we will release **Sage**, a standalone MVC framework built around it.
 
 **Concept:**
-- A lightweight MVC framework
-- Uses `salvia` gem as the default view engine
-- Zero-config, HTML-first, Islands Architecture by default
+- **HTML-First**: No JSON APIs by default.
+- **Zero-Config**: Deno + Ruby integrated from the start.
+- **Islands Architecture**: The default way to build UI.
 
 ```ruby
 # Sage Framework (Future)
 require "sage"
-require "salvia"
 
 class PostsController < Sage::Controller
   def index
-    render "posts/index" # Uses Salvia SSR
+    # Renders app/pages/posts/Index.tsx
+    render "posts/Index", posts: Post.all
   end
 end
 ```
 
 ---
 
-## Design Principles
+## Supported Platforms
 
-| Principle | Approach |
-|-----------|----------|
-| **Focus** | Do one thing well: SSR Islands |
-| **Simplicity** | No Node.js required, minimal dependencies |
-| **Speed** | QuickJS for fast rendering, Deno for fast builds |
-| **Flexibility** | Work with any Ruby framework |
+| Framework | Status | Note |
+| :--- | :--- | :--- |
+| **Ruby on Rails** | 🟢 **Primary** | First-class support. Recommended for production. |
+| **Sinatra** | 🟡 **Supported** | Works via adapter. Good for small apps. |
+| **Roda / Hanami** | ⚪ **Planned** | Community contributions welcome. |
 
 ---
 

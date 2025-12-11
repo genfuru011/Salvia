@@ -1,12 +1,18 @@
 # Wisdom for Salvia: The Architecture of True HTML First
 
-## 1. The Road to ERBless (True HTML First)
+## 1. The Road to Sage (Vision)
 
-Salvia aims to replace the traditional Rails/Sinatra View layer (ERB/Slim) entirely with JSX/TSX, while keeping the robust backend logic of Ruby.
+Salvia is not just a view engine; it is the foundational technology for **Sage**, a future Ruby MVC framework designed from the ground up for the "True HTML First" era.
+
+While Sage is in development, Salvia brings this futuristic architecture to **Ruby on Rails** today. It allows Rails developers to abandon ERB/Slim and adopt a modern, component-based frontend workflow without leaving the Ruby ecosystem.
+
+## 2. The Architecture: Rails + JSX
+
+Salvia replaces the traditional Rails View layer entirely with JSX/TSX, while keeping the robust backend logic of Ruby (Controllers & Models).
 
 **Architecture Comparison:**
 
-| Feature | Rails (Traditional) | Next.js (App Router) | Salvia (True HTML First) |
+| Feature | Rails (Traditional) | Next.js (App Router) | Salvia (Rails + JSX) |
 | :--- | :--- | :--- | :--- |
 | **Routing** | Ruby (routes.rb) | File-system (JS) | Ruby (routes.rb) |
 | **Data Fetching** | Ruby (Controller) | JS (Server Components) | Ruby (Controller) |
@@ -14,12 +20,12 @@ Salvia aims to replace the traditional Rails/Sinatra View layer (ERB/Slim) entir
 | **Interactivity** | Stimulus / Turbo | React (Hydration) | **Islands (Hydration)** |
 | **Build Step** | Asset Pipeline / Vite | Webpack / Turbopack | **No Build (JIT via Deno)** |
 
-In Salvia, your Ruby controller fetches data from the database (ActiveRecord) and passes it directly to a **Server Component (Page)**. This component is rendered to HTML on the server (SSR) and sent to the browser.
+In Salvia, your Rails controller fetches data from the database (ActiveRecord) and passes it directly to a **Server Component (Page)**. This component is rendered to HTML on the server (SSR) and sent to the browser.
 
 *   **Zero JS by default**: Static content is just HTML.
 *   **Islands Architecture**: Only interactive parts (Islands) are hydrated with JavaScript.
 
-## 2. Directory Structure (The "Salvia" Directory)
+## 3. Directory Structure (The "Salvia" Directory)
 
 To separate the frontend concerns from the Ruby backend, Salvia introduces a `salvia/` directory at the project root.
 
