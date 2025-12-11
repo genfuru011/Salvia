@@ -16,8 +16,9 @@ loader.inflector.inflect(
 loader.setup
 
 module Salvia
-  # Alias Core::Error to Salvia::Error for backward compatibility and convenience
+  # Alias Core classes for backward compatibility
   Error = Core::Error
+  Configuration = Core::Configuration
 
   class << self
     attr_accessor :root, :env, :logger
