@@ -18,10 +18,10 @@ module Salvia
       say ""
 
       # 1. Backend Framework
-      backend = ask("1. Which backend framework are you using?", :yellow, limited_to: ["sinatra", "rails", "hanami", "other"], default: "sinatra")
+      # backend = ask("1. Which backend framework are you using?", :yellow, limited_to: ["sinatra", "rails", "hanami", "other"], default: "sinatra")
 
       # 2. Tailwind CSS
-      install_tailwind = yes?("2. Do you want to install Tailwind CSS (via tailwindcss-ruby)? (y/N)", :yellow)
+      install_tailwind = yes?("1. Do you want to install Tailwind CSS (via tailwindcss-ruby)? (y/N)", :yellow)
 
       say ""
       say "🚀 Installing Salvia (Preact + Signals) for #{backend}...", :green

@@ -6,7 +6,7 @@
 
 ## Overview
 
-Salvia is a next-generation frontend engine for Ruby applications (Rails, Sinatra, Roda, etc.). It brings the **Islands Architecture** and **Server Components** concepts to the Ruby ecosystem, enabling a "True HTML First" approach where you can build modern, interactive UIs using JSX/TSX without abandoning your favorite Ruby framework.
+Salvia is a next-generation frontend engine for Ruby applications (Rails). It brings the **Islands Architecture** and **Server Components** concepts to the Ruby ecosystem, enabling a "True HTML First" approach where you can build modern, interactive UIs using JSX/TSX without abandoning your favorite Ruby framework.
 
 ### The "ERBless" Vision
 
@@ -67,7 +67,6 @@ my_app/
 ├── ...
 └── salvia/                # Frontend Root
     ├── deno.json          # Import Map & Dependencies (SSOT)
-    ├── vendor_setup.ts    # Vendor Library Configuration
     └── app/
         ├── pages/         # Server Components (Entry Points)
         │   ├── Home.tsx   # Replaces app/views/home/index.html.erb
@@ -118,7 +117,6 @@ my_app/
 **Role:** Single Source of Truth (SSOT) for dependencies.
 
 - **`deno.json`**: Defines imports used by both the server (SSR) and the client (Browser).
-- **`vendor_setup.ts`**: A special file to re-export npm packages so they can be bundled or served via ESM.
 - **Browser Compatibility**: Automatically converts `npm:` specifiers to `https://esm.sh/` URLs for browser usage.
 
 ---
@@ -145,23 +143,6 @@ class PostsController < ApplicationController
 end
 ```
 
-### Sinatra Integration
-
-```ruby
-require "sinatra"
-require "salvia"
-
-Salvia.configure do |config|
-  config.root_dir = Dir.pwd
-end
-
-helpers Salvia::Helpers
-
-get "/" do
-  # Renders salvia/app/pages/Home.tsx
-  ssr("Home", { title: "Hello Sinatra" })
-end
-```
 
 ## Internal Module Structure (Clean Architecture)
 
@@ -171,7 +152,7 @@ Salvia's codebase is organized to ensure maintainability and separation of conce
 - **`Salvia::Server`**: Server and process management (`dev_server.rb`, `sidecar.rb`).
 - **`Salvia::Compiler`**: JIT compilation logic and adapters (`compiler.rb`, `adapters/`).
 - **`Salvia::SSR`**: Server-Side Rendering engine (`ssr.rb`, `quickjs.rb`).
-- **`Salvia::Helpers`**: View helpers for Rails/Sinatra (`helpers.rb`, `island.rb`).
+- **`Salvia::Helpers`**: View helpers for Rails (`helpers.rb`, `island.rb`).
 
 ---
 

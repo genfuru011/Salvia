@@ -6,7 +6,7 @@
 
 ## 概要
 
-Salviaは、Rubyアプリケーション (Rails, Sinatra, Rodaなど) のための次世代フロントエンドエンジンです。**Islandsアーキテクチャ** と **Server Components** の概念をRubyエコシステムにもたらし、お気に入りのRubyフレームワークを捨てることなく、JSX/TSXを使用してモダンでインタラクティブなUIを構築できる「真のHTMLファースト」アプローチを可能にします。
+Salviaは、Rubyアプリケーション (Rails) のための次世代フロントエンドエンジンです。**Islandsアーキテクチャ** と **Server Components** の概念をRubyエコシステムにもたらし、お気に入りのRubyフレームワークを捨てることなく、JSX/TSXを使用してモダンでインタラクティブなUIを構築できる「真のHTMLファースト」アプローチを可能にします。
 
 ### "ERBless" ビジョン
 
@@ -67,7 +67,6 @@ my_app/
 ├── ...
 └── salvia/                # Frontend Root
     ├── deno.json          # Import Map & Dependencies (SSOT)
-    ├── vendor_setup.ts    # Vendor Library Configuration
     └── app/
         ├── pages/         # Server Components (Entry Points)
         │   ├── Home.tsx   # Replaces app/views/home/index.html.erb
@@ -118,7 +117,6 @@ my_app/
 **役割:** 依存関係の信頼できる唯一の情報源 (SSOT)。
 
 - **`deno.json`**: サーバー (SSR) とクライアント (ブラウザ) の両方で使用されるインポートを定義します。
-- **`vendor_setup.ts`**: npmパッケージを再エクスポートして、バンドルまたはESM経由で提供できるようにする特別なファイル。
 - **ブラウザ互換性:** ブラウザで使用するために、`npm:` 指定子を自動的に `https://esm.sh/` URLに変換します。
 
 ---
@@ -145,23 +143,6 @@ class PostsController < ApplicationController
 end
 ```
 
-### Sinatra統合
-
-```ruby
-require "sinatra"
-require "salvia"
-
-Salvia.configure do |config|
-  config.root_dir = Dir.pwd
-end
-
-helpers Salvia::Helpers
-
-get "/" do
-  # Renders salvia/app/pages/Home.tsx
-  ssr("Home", { title: "Hello Sinatra" })
-end
-```
 
 ## 内部モジュール構造 (クリーンアーキテクチャ)
 
@@ -171,7 +152,7 @@ Salviaのコードベースは、保守性と関心の分離を確保するた�
 - **`Salvia::Server`**: サーバーとプロセス管理 (`dev_server.rb`, `sidecar.rb`)。
 - **`Salvia::Compiler`**: JITコンパイルロジックとアダプター (`compiler.rb`, `adapters/`)。
 - **`Salvia::SSR`**: サーバーサイドレンダリングエンジン (`ssr.rb`, `quickjs.rb`)。
-- **`Salvia::Helpers`**: Rails/Sinatra用ビューヘルパー (`helpers.rb`, `island.rb`)。
+- **`Salvia::Helpers`**: Rails用ビューヘルパー (`helpers.rb`, `island.rb`)。
 
 ---
 
