@@ -45,6 +45,17 @@ $ bundle exec salvia install
 
 This creates the `salvia/` directory structure and configures your app with a **Zero Config** setup (Preact + Signals).
 
+#### Directory Structure
+
+```
+salvia/
+├── app/
+│   ├── components/  # Shared UI components (Buttons, Cards)
+│   ├── islands/     # Interactive components (Hydrated on client)
+│   └── pages/       # Server Components (SSR only, 0kb JS to client)
+└── deno.json        # Dependency management (Import Map)
+```
+
 ### 2. Create a Page (Server Component)
 
 Delete `app/views/home/index.html.erb` and create `salvia/app/pages/home/Index.tsx`:
