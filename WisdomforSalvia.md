@@ -132,3 +132,146 @@ Salvia uses a "Managed Sidecar" architecture to provide instant feedback during 
 4.  The compiled JS is served to the browser (or used for SSR).
 
 This eliminates the need for a separate `npm run build` or `deno task watch` command. You just run `rails s` or `ruby app.rb`, and Salvia handles the rest.
+
+## 6. The Ultimate Salvia Stack: Salvia + Turbo + Signals
+
+Salvia、Turbo (Drive/Frames/Streams)、そして Preact Signals。これらを組み合わせることで、**「サーバーサイドの単純さ」と「クライアントサイドのリッチさ」を完全に両立**する、現代の Web 開発における「最強のスタック」が完成します。
+
+### 1. 各技術の役割とシナジー
+
+| 技術 | 役割 (Role) | 利点 (Benefit) |
+| :--- | :--- | :--- |
+| **Salvia** | **Renderer** (HTML生成) | **初期表示が爆速**。サーバーで JSX を HTML に変換するため、クライアントの JS 負荷が最小限。SEO にも強い。 |
+| **Turbo Drive** | **Navigator** (画面遷移) | **SPA のような滑らかさ**。リンクとフォームをインターセプトし、ページ全体をリロードせずに `<body>` だけを差し替える。 |
+| **Turbo Frames** | **Decomposer** (部分置換) | **画面の分割統治**。ページ内の一部分（例: モーダル、サイドバー）だけを独立して更新・遅延読み込みできる。 |
+| **Turbo Streams** | **Broadcaster** (リアルタイム) | **Live 更新**。WebSocket (ActionCable) を通じて、サーバーからプッシュで HTML を追加・削除・更新する。 |
+| **Preact Signals** | **State Manager** (状態管理) | **超高速な局所更新**。Island 内の複雑な状態を管理。値が変わった時、コンポーネント全体を再レンダリングせず、DOM を直接ピンポイントで書き換える。 |
+
+### 2. 統合によるメリット (The "Why")
+
+このスタックを採用すると、**「JSON API を書く必要」がほぼなくなります**。
+
+1.  **ロジックはサーバー (Ruby) に集約**: 複雑なバリデーション、権限管理、DB 操作はすべて Rails/Sinatra が担当。
+2.  **UI は宣言的 (JSX)**: 現代的なコンポーネント指向で UI を構築。ERB のような「混ぜ書き」カオスから解放されます。
+3.  **通信は HTML (Turbo)**: クライアントは JSON をパースして DOM を組み立てる必要がありません。サーバーから送られてきた HTML をそのまま表示するだけです。
+4.  **対話性は局所化 (Islands + Signals)**: ドラッグ＆ドロップや複雑な計算など、どうしても JS が必要な場所だけ Island 化し、Signals で効率的に管理します。
+
+---
+
+### 3. 実例: リアルタイム・在庫管理ダッシュボード
+
+**シナリオ**:
+1.  商品一覧ページ。
+2.  **Turbo Streams**: 誰かが在庫を更新すると、閲覧している全員の画面で「在庫数」がリアルタイムに変わる。
+3.  **Preact Signals**: 「カートに入れる」ボタンを押すと、ヘッダーの「カート内の点数」が即座に増える（サーバー通信なしで UI 反映）。
+4.  **Turbo Drive**: ページ遷移してもカートの状態（Signals）は維持される。
+
+#### A. State Management (Signals)
+カートの状態を管理するグローバルな Signal を定義します。
+
+```typescript
+// salvia/app/islands/store.ts
+import { signal, computed } from "@preact/signals";
+
+export const cartItems = signal<number[]>([]);
+
+export const cartCount = computed(() => cartItems.value.length);
+
+export function addToCart(productId: number) {
+  cartItems.value = [...cartItems.value, productId];
+}
+```
+
+#### B. Client Components (Islands)
+Signals を使って、カートボタンとヘッダーを作ります。
+
+```tsx
+// salvia/app/islands/HeaderCart.tsx
+import { h } from "preact";
+import { cartCount } from "./store.ts";
+
+export default function HeaderCart() {
+  // cartCount.value が変わると、ここの数字だけが書き換わる
+  return (
+    <div class="cart-icon">
+      🛒 <span class="badge">{cartCount}</span>
+    </div>
+  );
+}
+```
+
+```tsx
+// salvia/app/islands/AddToCartButton.tsx
+import { h } from "preact";
+import { addToCart } from "./store.ts";
+
+export default function AddToCartButton({ productId }: { productId: number }) {
+  return (
+    <button 
+      onClick={() => addToCart(productId)}
+      class="bg-blue-500 text-white px-4 py-2 rounded"
+    >
+      Add to Cart
+    </button>
+  );
+}
+```
+
+#### C. Server Components (Pages) & Turbo Streams
+Rails 側で在庫更新時に Turbo Stream をブロードキャストします。
+
+```ruby
+# app/models/product.rb
+class Product < ApplicationRecord
+  # 在庫が変わったら、products/index ページの該当部分を更新する HTML を配信
+  after_update_commit do
+    broadcast_replace_to "products",
+      target: "product_#{id}_stock",
+      partial: "products/stock",
+      locals: { product: self }
+  end
+end
+```
+
+```tsx
+// salvia/app/pages/products/Index.tsx (Server Component)
+import { h } from "preact";
+import HeaderCart from "../../islands/HeaderCart.tsx";
+import AddToCartButton from "../../islands/AddToCartButton.tsx";
+
+export default function ProductList({ products }) {
+  return (
+    <div>
+      <header class="flex justify-between p-4 border-b">
+        <h1>My Shop</h1>
+        {/* ページ遷移しても状態が維持されるカート */}
+        <Island name="HeaderCart" component={HeaderCart} />
+      </header>
+
+      {/* Turbo Stream の購読を開始 */}
+      <turbo-cable-stream-source channel="Turbo::Streams::Channel" signed-stream-name="products" />
+
+      <div class="grid grid-cols-3 gap-4 p-4">
+        {products.map(product => (
+          <div class="border p-4 rounded" id={`product_${product.id}`}>
+            <h2>{product.name}</h2>
+            
+            {/* ここが Turbo Stream でリアルタイム更新されるターゲット */}
+            <div id={`product_${product.id}_stock`}>
+              Stock: {product.stock}
+            </div>
+
+            <Island 
+              name="AddToCartButton" 
+              component={AddToCartButton} 
+              props={{ productId: product.id }} 
+            />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+```
+
+この構成により、**「在庫はサーバー主導でリアルタイム同期」「カートはクライアント主導でサクサク動作」** という、理想的な UX が実現できます。
