@@ -68,6 +68,7 @@ module Salvia
       start unless running?
       
       resolved_config_path = File.expand_path(config_path || Salvia.config.deno_config_path, Salvia.root)
+      puts "[Salvia] Bundle config path: #{resolved_config_path}"
 
       response = request("bundle", { 
         entryPoint: entry_point, 
