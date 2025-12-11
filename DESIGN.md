@@ -57,16 +57,17 @@ Salvia v0.2.0 introduces a unified way to manage frontend dependencies using `de
 
 ### How it works
 
-You define your dependencies in `salvia/deno.json`:
+You define your dependencies in `salvia/deno.json`. Salvia is opinionated and comes pre-configured with **Preact** and **Signals**.
 
 ```json
 {
   "imports": {
-    // Framework Aliases (Required)
-    "framework": "npm:preact@10.19.3",
-    "framework/hooks": "npm:preact@10.19.3/hooks",
-    "framework/jsx-runtime": "npm:preact@10.19.3/jsx-runtime",
-    "framework/ssr": "npm:preact-render-to-string@6.3.1",
+    // Preact & Signals (Standard)
+    "preact": "npm:preact@10.19.3",
+    "preact/hooks": "npm:preact@10.19.3/hooks",
+    "preact/jsx-runtime": "npm:preact@10.19.3/jsx-runtime",
+    "preact-render-to-string": "npm:preact-render-to-string@6.3.1",
+    "@preact/signals": "npm:@preact/signals@1.2.2",
 
     // Other Libraries
     "uuid": "npm:uuid@9.0.1",
@@ -77,23 +78,29 @@ You define your dependencies in `salvia/deno.json`:
 
 **Key Concepts:**
 
-*   **`framework` alias**: Salvia uses this alias internally to support multiple frameworks (Preact, React, etc.) without changing the core logic. You simply point `framework` to your chosen library.
+*   **Preact First**: Salvia is built on Preact for its lightweight nature and powerful Signals architecture.
 *   **`npm:` specifiers**: Deno uses these to fetch packages from npm. Salvia automatically converts these to `https://esm.sh/...` URLs when generating the Import Map for the browser, ensuring browser compatibility without a build step.
 
 ### `vendor_setup.ts` (The Bridge)
 
 To make these ESM modules available to the QuickJS SSR engine (which doesn't natively support `npm:` imports or complex module resolution), we use a bridge file called `salvia/vendor_setup.ts`.
 
-This file imports the framework and libraries using the aliases defined in `deno.json` and exposes them to the global scope for QuickJS.
+This file imports Preact and Signals and exposes them to the global scope for QuickJS.
 
 ```typescript
 // salvia/vendor_setup.ts
-import { h, options } from "framework";
-import { renderToString } from "framework/ssr";
+import { h, Fragment } from "preact";
+import * as preact from "preact";
+import * as hooks from "preact/hooks";
+import * as signals from "@preact/signals";
+import { renderToString } from "preact-render-to-string";
 
 // Expose to QuickJS global scope
-(globalThis as any).h = h;
+(globalThis as any).Preact = preact;
+(globalThis as any).PreactHooks = hooks;
+(globalThis as any).PreactSignals = signals;
 (globalThis as any).renderToString = renderToString;
+(globalThis as any).h = h;
 
 // Setup other globals if needed
 import { v4 as uuidv4 } from "uuid";
@@ -103,26 +110,7 @@ import { v4 as uuidv4 } from "uuid";
 **Why is this necessary?**
 QuickJS is a lightweight engine. By bundling `vendor_setup.ts` using Deno (which understands `npm:` and `deno.json`), we create a single self-contained JavaScript file (`vendor.js`) that contains all your dependencies. QuickJS simply loads this file, and *boom*, `h` and `renderToString` are available globally.
 
-## 5. Multi-Framework Support
-
-Thanks to the `framework` alias strategy, switching frameworks is (theoretically) as simple as updating `deno.json`.
-
-**To use React (Future):**
-
-```json
-{
-  "imports": {
-    "framework": "npm:react@18.2.0",
-    "framework/client": "npm:react-dom@18.2.0/client",
-    "framework/jsx-runtime": "npm:react@18.2.0/jsx-runtime",
-    "framework/ssr": "npm:react-dom@18.2.0/server"
-  }
-}
-```
-
-*Note: React support is currently experimental. Preact is the default and recommended framework for Salvia due to its lightweight nature and compatibility.*
-
-## 6. JIT Compilation & The Sidecar
+## 5. JIT Compilation & The Sidecar
 
 Salvia uses a "Managed Sidecar" architecture to provide instant feedback during development.
 

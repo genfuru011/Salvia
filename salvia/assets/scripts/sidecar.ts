@@ -26,23 +26,28 @@ const handler = async (request: Request): Promise<Response> => {
         const globalExternalsPlugin = {
             name: "global-externals",
             setup(build: any) {
-              // フレームワーク本体 (preact/react)
-              build.onResolve({ filter: /^framework$/ }, (args: any) => {
+              // Preact
+              build.onResolve({ filter: /^preact$/ }, (args: any) => {
                 return { path: args.path, namespace: "global-external" };
               });
-              // Hooks (preact/hooks)
-              build.onResolve({ filter: /^framework\/hooks$/ }, (args: any) => {
+              // Hooks
+              build.onResolve({ filter: /^preact\/hooks$/ }, (args: any) => {
+                return { path: args.path, namespace: "global-external" };
+              });
+              // Signals
+              build.onResolve({ filter: /^@preact\/signals$/ }, (args: any) => {
                 return { path: args.path, namespace: "global-external" };
               });
               // JSX Runtime
-              build.onResolve({ filter: /^framework\/jsx-runtime$/ }, (args: any) => {
+              build.onResolve({ filter: /^preact\/jsx-runtime$/ }, (args: any) => {
                 return { path: args.path, namespace: "global-external" };
               });
 
               build.onLoad({ filter: /.*/, namespace: "global-external" }, (args: any) => {
-                if (args.path === "framework") return { contents: "module.exports = globalThis.Preact;", loader: "js" };
-                if (args.path === "framework/hooks") return { contents: "module.exports = globalThis.PreactHooks;", loader: "js" };
-                if (args.path === "framework/jsx-runtime") return { contents: "module.exports = globalThis.Preact;", loader: "js" };
+                if (args.path === "preact") return { contents: "module.exports = globalThis.Preact;", loader: "js" };
+                if (args.path === "preact/hooks") return { contents: "module.exports = globalThis.PreactHooks;", loader: "js" };
+                if (args.path === "@preact/signals") return { contents: "module.exports = globalThis.PreactSignals;", loader: "js" };
+                if (args.path === "preact/jsx-runtime") return { contents: "module.exports = globalThis.PreactJsxRuntime;", loader: "js" };
                 return null;
               });
             },
@@ -65,7 +70,7 @@ const handler = async (request: Request): Promise<Response> => {
         ...denoPlugins({ configPath: configPath || `${Deno.cwd()}/salvia/deno.json` })
       ];
       
-      if (isIIFE) {
+      if (isIIFE && !entryPoint.endsWith("vendor_setup.ts")) {
         // IIFEの場合は、globalExternalsPlugin を使う
         // ただし、denoPlugins よりも前に配置して、framework などの解決を横取りする
         plugins.unshift(globalExternalsPlugin);
@@ -78,19 +83,21 @@ const handler = async (request: Request): Promise<Response> => {
         entryPoints: [entryPoint],
         bundle: true,
         format: format || "esm",
-        globalName: globalName, // Exports will be in SalviaComponent.default
+        globalName: globalName || undefined, // Exports will be in SalviaComponent.default
         platform: "neutral",
         plugins: plugins,
         external: [], // We handle externals manually with plugins
         write: false, // Return in memory
     // 3. JSX Runtime (Automatic)
-    // deno.json の "framework/jsx-runtime" エイリアスを使用
-    jsx: "react-jsx",
-    jsxImportSource: "framework",
+    // deno.json の "preact/jsx-runtime" エイリアスを使用
+    jsx: "automatic",
+    jsxImportSource: "preact",
         minify: false, // Keep it readable for debugging
       });
 
       const code = result.outputFiles[0].text;
+      // Deno.writeTextFileSync("debug_bundle.js", code);
+
       return new Response(JSON.stringify({ code }), {
         headers: { "Content-Type": "application/json" },
       });
