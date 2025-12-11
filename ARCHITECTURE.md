@@ -163,6 +163,16 @@ get "/" do
 end
 ```
 
+## Internal Module Structure (Clean Architecture)
+
+Salvia's codebase is organized to ensure maintainability and separation of concerns:
+
+- **`Salvia::Core`**: Core logic and configuration (`configuration.rb`, `import_map.rb`, `path_resolver.rb`).
+- **`Salvia::Server`**: Server and process management (`dev_server.rb`, `sidecar.rb`).
+- **`Salvia::Compiler`**: JIT compilation logic and adapters (`compiler.rb`, `adapters/`).
+- **`Salvia::SSR`**: Server-Side Rendering engine (`ssr.rb`, `quickjs.rb`).
+- **`Salvia::Helpers`**: View helpers for Rails/Sinatra (`helpers.rb`, `island.rb`).
+
 ---
 
 ## Design Philosophy

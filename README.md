@@ -113,12 +113,12 @@ export default function Home() {
 *   [**Wisdom for Salvia**](WisdomforSalvia.md): Deep dive into the architecture, directory structure, and "True HTML First" philosophy.
 *   [**Architecture**](ARCHITECTURE.md): Internal design of the gem.
 
-## Other Frameworks
+## Framework Support
 
-While Salvia is optimized for Rails, it is built on Rack and supports other frameworks via adapters.
+Salvia is primarily designed for **Ruby on Rails** to pave the way for the **Sage** framework.
 
-*   **Sinatra**: Supported (See `examples/sinatra_app`)
-*   **Roda / Hanami**: Planned for future releases.
+*   **Ruby on Rails**: First-class support.
+*   **Sinatra**: Supported via adapter (See `examples/sinatra_app`).
 
 ## Requirements
 
