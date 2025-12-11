@@ -18,9 +18,10 @@ module Salvia
         @vm = ::Quickjs::VM.new
         
         load_console_shim!
-        load_vendor_bundle!
         
-        unless @development
+        if @development
+          load_vendor_bundle!
+        else
           load_ssr_bundle!
         end
         

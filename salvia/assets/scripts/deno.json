@@ -1,8 +1,4 @@
 {
-  "tasks": {
-    "build": "deno run --allow-all build.ts",
-    "watch": "deno run --allow-all --watch build.ts --watch"
-  },
   "imports": {
     "preact": "https://esm.sh/preact@10.19.3",
     "preact/hooks": "https://esm.sh/preact@10.19.3/hooks",

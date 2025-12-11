@@ -1,21 +1,27 @@
 # Salvia 🌿
 
-> **Ruby Islands Architecture Engine**
+> **The Future of Rails View Layer**
 
-Salvia is a standalone **Server-Side Rendering (SSR) engine** for Ruby. It brings the **Islands Architecture** to any Rack-based application (Rails, Sinatra, Roda, Hanami) without requiring a Node.js server.
+Salvia is a next-generation **Server-Side Rendering (SSR) engine** designed to replace ERB with **JSX/TSX** in Ruby on Rails. It brings the **Islands Architecture** and **True HTML First** philosophy to the Rails ecosystem.
 
 <img src="https://img.shields.io/gem/v/salvia?style=flat-square&color=ff6347" alt="Gem">
 
+## Vision: The Road to Sage
+
+Salvia is the core engine for a future MVC framework called **Sage**.
+While Sage will be a complete standalone framework, Salvia is available *today* as a drop-in replacement for the View layer in **Ruby on Rails**.
+
 ## Features
 
-*   🏝️ **Islands Architecture**: Render interactive components (Preact) only where needed.
-*   🚀 **No Node.js Server**: Uses **QuickJS** embedded in Ruby for fast SSR (0.3ms/render).
-*   🦕 **Deno Build System**: Uses Deno + esbuild for bundling (no Webpack/Vite complexity).
-*   🔌 **Framework Agnostic**: Works with Rails, Sinatra, or any Rack app.
+*   🏝️ **Islands Architecture**: Render interactive components (Preact/React) only where needed. Zero JS for static content.
+*   🚀 **True HTML First**: Replace `app/views/**/*.erb` with `app/pages/**/*.tsx`.
+*   ⚡ **JIT Compilation**: No build steps during development. Just run `rails s`.
+*   💎 **Rails Native**: Seamless integration with Controllers, Routes, and Models.
+*   🦕 **Deno Powered**: Uses Deno for lightning-fast TypeScript compilation and formatting.
 
 ## Installation
 
-Add this line to your application's Gemfile:
+Add this line to your Rails application's Gemfile:
 
 ```ruby
 gem 'salvia'
@@ -29,143 +35,117 @@ $ bundle install
 
 ## Getting Started
 
-### 1. Install SSR files
+### 1. Install Salvia
 
-Run the interactive installer to set up Salvia for your project:
+Run the interactive installer to set up Salvia for your Rails project:
 
 ```bash
 $ bundle exec salvia install
 ```
 
-The installer will ask you about:
-1.  **Frontend Framework**: (Currently Preact is supported)
-2.  **Backend Framework**: (Rails, Sinatra, etc.)
-3.  **Tailwind CSS**: (Installs `tailwindcss-ruby` if requested)
+This creates the `salvia/` directory structure and configures your app with a **Zero Config** setup (Preact + Signals).
 
-This creates:
-*   `app/islands/` - Directory for your components
-*   `salvia/deno.json` - Deno configuration
-*   `salvia/build.ts` - Build script
-*   `public/assets/islands/` - Output directory for client bundles
-*   `public/assets/javascripts/islands.js` - Client-side hydration script
+### 2. Create a Page (Server Component)
 
-### 2. Create a Component
+Delete `app/views/home/index.html.erb` and create `salvia/app/pages/home/Index.tsx`:
 
-Create a Preact component in `app/islands/Counter.jsx`:
+```tsx
+import { h } from 'preact';
 
-```jsx
+export default function Home({ title }) {
+  return (
+    <div class="p-10">
+      <h1 class="text-3xl font-bold">{title}</h1>
+      <p>This is rendered on the server with 0kb JavaScript sent to the client.</p>
+    </div>
+  );
+}
+```
+
+### 3. Render in Controller
+
+In your Rails controller:
+
+```ruby
+class HomeController < ApplicationController
+  def index
+    # Renders salvia/app/pages/home/Index.tsx
+    render html: ssr("home/Index", title: "Hello Salvia")
+  end
+end
+```
+
+### 4. Add Interactivity (Islands)
+
+Create an interactive component in `salvia/app/islands/Counter.tsx`:
+
+```tsx
 import { h } from 'preact';
 import { useState } from 'preact/hooks';
 
-export default function Counter({ initialCount = 0 }) {
-  const [count, setCount] = useState(initialCount);
+export default function Counter() {
+  const [count, setCount] = useState(0);
   return (
-    <button onClick={() => setCount(count + 1)}>
+    <button onClick={() => setCount(count + 1)} class="btn">
       Count: {count}
     </button>
   );
 }
 ```
 
-### 3. Integration Guide
+Use it in your Page:
 
-#### Rails
+```tsx
+import Counter from '../../islands/Counter.tsx';
 
-1.  **Add Script Tag**: Add the hydration script to your layout (`app/views/layouts/application.html.erb`):
-
-    ```erb
-    <head>
-      <!-- ... -->
-      <script type="module" src="/assets/javascripts/islands.js"></script>
-    </head>
-    ```
-
-2.  **Render Component**: Use the `island` helper in your views:
-
-    ```erb
-    <%= island "Counter", initialCount: 10 %>
-    ```
-
-3.  **Development**: Create a `Procfile.dev` to run the build watcher alongside your server:
-
-    ```yaml
-    web: bin/rails server -p 3000
-    salvia: bundle exec salvia watch
-    # css: bundle exec tailwindcss -w ... (if using Tailwind)
-    ```
-
-    Run with: `bin/dev` or `foreman start -f Procfile.dev`
-
-#### Sinatra
-
-1.  **Setup Application**: Configure Salvia in your app (`app.rb`):
-
-    ```ruby
-    require 'sinatra'
-    require 'salvia'
-
-    class App < Sinatra::Base
-      # 1. Setup Salvia
-      Salvia.configure do |config|
-        config.islands_dir = "app/islands"
-        config.build_dir = "public/assets"
-      end
-
-      # 2. Include Helpers
-      helpers Salvia::Helpers
-
-      # 3. Serve Static Files (if not already configured)
-      use Rack::Static, urls: ["/assets"], root: "public"
-
-      get '/' do
-        erb :index
-      end
-    end
-    ```
-
-2.  **Add Script Tag**: Add the hydration script to your layout (`views/layout.erb`):
-
-    ```erb
-    <head>
-      <!-- ... -->
-      <script type="module" src="/assets/javascripts/islands.js"></script>
-    </head>
-    ```
-
-3.  **Render Component**: Use the `island` helper in your views (`views/index.erb`):
-
-    ```erb
-    <%= island "Counter", initialCount: 10 %>
-    ```
-
-### 4. Build & Watch
-
-Compile the components for SSR and the browser:
-
-```bash
-$ bundle exec salvia build
+export default function Home() {
+  return (
+    <div>
+      <h1>Interactive Island</h1>
+      <Counter />
+    </div>
+  );
+}
 ```
 
-For development, use the watch command to automatically rebuild on changes:
+### 4. Turbo Drive (Optional)
 
-```bash
-$ bundle exec salvia watch
+Salvia works seamlessly with Turbo Drive for SPA-like navigation.
+
+Add Turbo to your layout file (e.g., `app/pages/layouts/Main.tsx`):
+
+```tsx
+<head>
+  {/* ... */}
+  <script type="module">
+    import * as Turbo from "https://esm.sh/@hotwired/turbo@8.0.0";
+    Turbo.start();
+  </script>
+</head>
 ```
 
-## Configuration
+This approach leverages Import Maps and browser-native modules, keeping your bundle size small and your architecture transparent.
 
-```ruby
-Salvia.configure do |config|
-  config.islands_dir = "app/islands"       # Directory for island components
-  config.build_dir = "public/assets"       # Output directory for client assets
-  config.ssr_bundle_path = "salvia/server/ssr_bundle.js" # Path to SSR bundle
-end
-```
+## Documentation
+
+*   **English**:
+    *   [**Wisdom for Salvia**](docs/en/DESIGN.md): Deep dive into the architecture, directory structure, and "True HTML First" philosophy.
+    *   [**Architecture**](docs/en/ARCHITECTURE.md): Internal design of the gem.
+*   **Japanese (日本語)**:
+    *   [**Salviaの知恵**](docs/ja/DESIGN.md): アーキテクチャ、ディレクトリ構造、「真のHTMLファースト」哲学についての詳細。
+    *   [**アーキテクチャ**](docs/ja/ARCHITECTURE.md): Gemの内部設計。
+
+## Framework Support
+
+Salvia is primarily designed for **Ruby on Rails** to pave the way for the **Sage** framework.
+
+*   **Ruby on Rails**: First-class support.
 
 ## Requirements
 
 *   Ruby 3.1+
-*   Deno (for building assets only)
+*   Rails 7.0+ (Recommended)
+*   Deno (for JIT compilation and tooling)
 
 ## License
 

@@ -128,15 +128,18 @@ This approach leverages Import Maps and browser-native modules, keeping your bun
 
 ## Documentation
 
-*   [**Wisdom for Salvia**](DESIGN.md): Deep dive into the architecture, directory structure, and "True HTML First" philosophy.
-*   [**Architecture**](ARCHITECTURE.md): Internal design of the gem.
+*   **English**:
+    *   [**Wisdom for Salvia**](docs/en/DESIGN.md): Deep dive into the architecture, directory structure, and "True HTML First" philosophy.
+    *   [**Architecture**](docs/en/ARCHITECTURE.md): Internal design of the gem.
+*   **Japanese (日本語)**:
+    *   [**Salviaの知恵**](docs/ja/DESIGN.md): アーキテクチャ、ディレクトリ構造、「真のHTMLファースト」哲学についての詳細。
+    *   [**アーキテクチャ**](docs/ja/ARCHITECTURE.md): Gemの内部設計。
 
 ## Framework Support
 
 Salvia is primarily designed for **Ruby on Rails** to pave the way for the **Sage** framework.
 
 *   **Ruby on Rails**: First-class support.
-*   **Sinatra**: Supported via adapter (See `examples/sinatra_app`).
 
 ## Requirements
 
