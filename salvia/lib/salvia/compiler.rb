@@ -1,6 +1,6 @@
 module Salvia
   class Compiler
-    class Error < StandardError; end
+    class Error < Salvia::Error; end
 
     class << self
       attr_writer :adapter

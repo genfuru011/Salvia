@@ -2,7 +2,7 @@
 
 module Salvia
   module SSR
-    class Error < StandardError; end
+    class Error < Salvia::Error; end
     class EngineNotFoundError < Error; end
     class RenderError < Error; end
 
