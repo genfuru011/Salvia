@@ -275,3 +275,49 @@ export default function ProductList({ products }) {
 ```
 
 この構成により、**「在庫はサーバー主導でリアルタイム同期」「カートはクライアント主導でサクサク動作」** という、理想的な UX が実現できます。
+
+## 7. Props vs Signals: 状態管理のパラダイムシフト
+
+Salvia では、データの流れを理解し、適切なツールを選ぶことが重要です。
+
+### 1. Props (The Waterfall)
+**用途**: サーバー (Rails) からクライアント (Island) への初期データの受け渡し。
+
+*   **方向**: 親 (Rails Controller/Page) -> 子 (Island Component)。
+*   **特徴**: 不変 (Immutable)。一度レンダリングされたら、親が再レンダリングしない限り変わらない。
+*   **Salviaでの役割**: データベースの値 (ActiveRecord) を UI に表示するために使う。
+
+```tsx
+// Rails (Controller) -> Page -> Island
+<Island name="UserProfile" props={{ name: @user.name, role: "admin" }} />
+```
+
+### 2. Signals (The Teleport)
+**用途**: クライアントサイドでの動的なインタラクション。
+
+*   **方向**: 状態 (Signal) <-> コンポーネント (Anywhere)。
+*   **特徴**: 反応的 (Reactive)。値が変わると、それを使っている場所だけが即座に更新される。
+*   **Salviaでの役割**: ユーザーの操作 (クリック、入力) による変化を管理する。
+
+```tsx
+// Client Side Only
+const count = signal(0);
+// ...
+<button onClick={() => count.value++}>{count}</button>
+```
+
+### 3. 使い分けの指針 (Best Practices)
+
+| シチュエーション | 推奨 (Recommended) | 理由 |
+| :--- | :--- | :--- |
+| **DBから取得したデータを表示する** | **Props** | サーバーで確定した値であり、クライアントで変更する必要がないため。 |
+| **フォームの入力値、トグルボタン** | **Signals** | ユーザー操作によって頻繁に変わり、即座に UI に反映する必要があるため。 |
+| **ショッピングカート、通知バッジ** | **Signals (Global)** | 複数のコンポーネント (ヘッダーと商品一覧など) で状態を共有するため。 |
+| **ページ遷移 (リンク)** | **Turbo Drive** | JS で状態管理するよりも、URL を変えて新しい HTML を取得する方がシンプルで堅牢。 |
+
+**結論**:
+*   **Props** で初期状態を作り、
+*   **Signals** で動きをつけ、
+*   **Turbo** でページを繋ぐ。
+
+これが Salvia の "Golden Triangle" です。
