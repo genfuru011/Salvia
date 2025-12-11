@@ -135,146 +135,128 @@ This eliminates the need for a separate `npm run build` or `deno task watch` com
 
 ## 7. The Ultimate Salvia Stack: Salvia + Turbo + Signals
 
-Salvia、Turbo (Drive/Frames/Streams)、そして Preact Signals。これらを組み合わせることで、**「サーバーサイドの単純さ」と「クライアントサイドのリッチさ」を完全に両立**する、現代の Web 開発における「最強のスタック」が完成します。
+Salvia, Turbo (Drive/Frames/Streams), そして Preact Signals をすべて組み合わせる構成は、**「Ruby の生産性」と「SPA のユーザー体験」を極限まで効率よく両立させる、Salvia アーキテクチャの完成形** と言えます。
 
-### 1. 各技術の役割とシナジー
+これらを組み合わせることで、**「重厚な JavaScript フレームワーク（Next.js等）」を使わずに、それと同等以上のリッチなアプリケーション** を作ることができます。
 
-| 技術 | 役割 (Role) | 利点 (Benefit) |
-| :--- | :--- | :--- |
-| **Salvia** | **Renderer** (HTML生成) | **初期表示が爆速**。サーバーで JSX を HTML に変換するため、クライアントの JS 負荷が最小限。SEO にも強い。 |
-| **Turbo Drive** | **Navigator** (画面遷移) | **SPA のような滑らかさ**。リンクとフォームをインターセプトし、ページ全体をリロードせずに `<body>` だけを差し替える。 |
-| **Turbo Frames** | **Decomposer** (部分置換) | **画面の分割統治**。ページ内の一部分（例: モーダル、サイドバー）だけを独立して更新・遅延読み込みできる。 |
-| **Turbo Streams** | **Broadcaster** (リアルタイム) | **Live 更新**。WebSocket (ActionCable) を通じて、サーバーからプッシュで HTML を追加・削除・更新する。 |
-| **Preact Signals** | **State Manager** (状態管理) | **超高速な局所更新**。Island 内の複雑な状態を管理。値が変わった時、コンポーネント全体を再レンダリングせず、DOM を直接ピンポイントで書き換える。 |
+それぞれの役割と、組み合わせた時の化学反応（メリット）、そして具体的な実例を解説します。
 
-### 2. 統合によるメリット (The "Why")
+### 1. 各プレイヤーの役割（何ができるか？）
 
-このスタックを採用すると、**「JSON API を書く必要」がほぼなくなります**。
+このアーキテクチャでは、**「誰がどこを担当するか」** が明確に分かれています。
 
-1.  **ロジックはサーバー (Ruby) に集約**: 複雑なバリデーション、権限管理、DB 操作はすべて Rails/Sinatra が担当。
-2.  **UI は宣言的 (JSX)**: 現代的なコンポーネント指向で UI を構築。ERB のような「混ぜ書き」カオスから解放されます。
-3.  **通信は HTML (Turbo)**: クライアントは JSON をパースして DOM を組み立てる必要がありません。サーバーから送られてきた HTML をそのまま表示するだけです。
-4.  **対話性は局所化 (Islands + Signals)**: ドラッグ＆ドロップや複雑な計算など、どうしても JS が必要な場所だけ Island 化し、Signals で効率的に管理します。
+#### 🌿 Salvia (The Brain / 脳)
 
----
+*   **役割:** **「HTML の生成」と「ロジックの実行」**
+*   **できること:**
+    *   Ruby (Rails/Sinatra) のコントローラーで DB からデータを取得する。
+    *   JSX/TSX (Server Components) を高速にレンダリングして HTML を作る。
+    *   クライアントに送る JavaScript を最小限（Islands）にする。
 
-### 3. 実例: リアルタイム・在庫管理ダッシュボード
+#### 🏎️ Turbo (The Transport / 足)
 
-**シナリオ**:
-1.  商品一覧ページ。
-2.  **Turbo Streams**: 誰かが在庫を更新すると、閲覧している全員の画面で「在庫数」がリアルタイムに変わる。
-3.  **Preact Signals**: 「カートに入れる」ボタンを押すと、ヘッダーの「カート内の点数」が即座に増える（サーバー通信なしで UI 反映）。
-4.  **Turbo Drive**: ページ遷移してもカートの状態（Signals）は維持される。
+*   **役割:** **「HTML の運搬」と「画面の書き換え」**
+*   **Drive (全体遷移):** リンククリックやフォーム送信を横取りし、ページ全体をリロードせずに `<body>` だけを差し替える（SPA 化）。
+*   **Frames (部分置換):** 画面の一部（例: モーダルやサイドバー）だけを独立してナビゲーションさせる。
+*   **Streams (差分更新):** サーバーからの指示で、特定の要素だけを「追加」「削除」「更新」する（WebSocket やフォームレスポンスで使用）。
 
-#### A. State Management (Signals)
-カートの状態を管理するグローバルな Signal を定義します。
+#### ⚡️ Preact Signals (The Nerves / 神経)
 
-```typescript
-// salvia/app/islands/store.ts
-import { signal, computed } from "@preact/signals";
+*   **役割:** **「瞬時の反応」と「状態の共有」**
+*   **できること:**
+    *   **Micro-Interactivity:** ボタンを押した瞬間の数値更新や、ドラッグ操作など、0.1秒の遅延も許されない UI を動かす。
+    *   **Shared State:** Turbo でページが切り替わっても、メモリ上の状態（カートの中身など）を維持し、複数の Island 間で共有する。
 
-export const cartItems = signal<number[]>([]);
+### 2. 全部使うとどうなる？（メリット）
 
-export const cartCount = computed(() => cartItems.value.length);
+これらをフル活用すると、従来の開発における「トレードオフ（あちらを立てればこちらが立たず）」を解消できます。
 
-export function addToCart(productId: number) {
-  cartItems.value = [...cartItems.value, productId];
-}
-```
+1.  **「JS を書かない」のに「ヌルヌル動く」**
+    *   基本は Ruby で HTML を返すだけ（Salvia）。
+    *   でも画面遷移は爆速（Turbo Drive）。
+    *   ここぞという場所だけリッチに動く（Signals）。
+    *   結果、**開発コストは低いのに、品質は高い** アプリになります。
 
-#### B. Client Components (Islands)
-Signals を使って、カートボタンとヘッダーを作ります。
+2.  **「状態管理」の地獄からの解放**
+    *   複雑な「サーバーデータとクライアントデータの同期」が不要になります。データは常にサーバー（HTML）が正です。
+    *   クライアントで持つべきは「UIの一時的な状態（Signals）」だけになり、バグが激減します。
 
-```tsx
-// salvia/app/islands/HeaderCart.tsx
-import { h } from "preact";
-import { cartCount } from "./store.ts";
+3.  **「バンドルサイズ」の劇的な削減**
+    *   React Router も Redux も Axios も不要です。
+    *   必要なのは Preact と Turbo だけ。初期表示速度（LCP）が圧倒的に速くなります。
 
-export default function HeaderCart() {
-  // cartCount.value が変わると、ここの数字だけが書き換わる
-  return (
-    <div class="cart-icon">
-      🛒 <span class="badge">{cartCount}</span>
-    </div>
-  );
-}
-```
+### 3. 実例: 「リアルタイム・タスク管理ボード」（Trello風）
 
-```tsx
-// salvia/app/islands/AddToCartButton.tsx
-import { h } from "preact";
-import { addToCart } from "./store.ts";
+この構成で作るとどうなるか、具体的なユーザー操作の流れで見てみましょう。
 
-export default function AddToCartButton({ productId }: { productId: number }) {
-  return (
-    <button 
-      onClick={() => addToCart(productId)}
-      class="bg-blue-500 text-white px-4 py-2 rounded"
-    >
-      Add to Cart
-    </button>
-  );
-}
-```
+#### 画面構成
 
-#### C. Server Components (Pages) & Turbo Streams
-Rails 側で在庫更新時に Turbo Stream をブロードキャストします。
+*   **ボード画面:** タスクのリスト（To Do, Doing, Done）が並んでいる。
+*   **ヘッダー:** 「未完了タスク数」が表示されている。
+
+#### シナリオと技術の連動
+
+| ユーザーの操作 | 裏側の動き | 担当技術 | 解説 |
+| :--- | :--- | :--- | :--- |
+| **1. ページを開く** | サーバーでタスク一覧の HTML を生成し、表示する。JS はまだ動いていない。 | **Salvia** | 爆速で画面が表示される（SSR）。 |
+| **2. タスクを追加する** | フォームから「会議」と入力して Enter。 | **Turbo Drive** | ページリロードせず、裏で POST リクエストを送信。 |
+| **(サーバー処理)** | DB にタスクを保存し、**「新しいタスクの HTML だけ」** をレスポンスする。 | **Salvia** | ページ全体を返さないので軽い。 |
+| **3. 画面に反映** | レスポンスを受け取り、リストの一番下にタスクを `append` (追記) する。 | **Turbo Streams** | 一瞬でリストが更新される。 |
+| **4. 数値が増える** | タスク追加を検知し、ヘッダーの「未完了数」を `+1` する。 | **Signals** | 画面再描画なしで、数字のテキストノードだけ書き換わる。 |
+| **5. 詳細を開く** | タスクをクリックすると、画面遷移せずにモーダルで詳細が出る。 | **Turbo Frames** | `src="/tasks/1"` の HTML を部分的に取得して表示。 |
+| **6. ドラッグ移動** | タスクを「Doing」から「Done」へドラッグ＆ドロップする。 | **Preact (Islands)** | **ここだけは JS (Signals) が主役。** サーバーを待たずに即座に UI を動かす。 |
+
+#### コードイメージ
+
+**Controller (Ruby):**
 
 ```ruby
-# app/models/product.rb
-class Product < ApplicationRecord
-  # 在庫が変わったら、products/index ページの該当部分を更新する HTML を配信
-  after_update_commit do
-    broadcast_replace_to "products",
-      target: "product_#{id}_stock",
-      partial: "products/stock",
-      locals: { product: self }
-  end
+def create
+  task = Task.create(params[:task])
+  
+  # Turbo Stream で「追加」命令と「HTML」を返す
+  render turbo_stream: turbo_stream.append("todo_list", html: ssr("islands/TaskCard", task: task))
 end
 ```
 
+**TaskCard Island (TypeScript + Signals):**
+
 ```tsx
-// salvia/app/pages/products/Index.tsx (Server Component)
-import { h } from "preact";
-import HeaderCart from "../../islands/HeaderCart.tsx";
-import AddToCartButton from "../../islands/AddToCartButton.tsx";
+// store.ts (状態共有)
+export const totalCount = signal(0);
 
-export default function ProductList({ products }) {
+// TaskCard.tsx
+export default function TaskCard({ task }) {
+  // マウント時にカウントアップ（Signals）
+  useEffect(() => { totalCount.value++ }, []);
+
   return (
-    <div>
-      <header class="flex justify-between p-4 border-b">
-        <h1>My Shop</h1>
-        {/* ページ遷移しても状態が維持されるカート */}
-        <Island name="HeaderCart" component={HeaderCart} />
-      </header>
-
-      {/* Turbo Stream の購読を開始 */}
-      <turbo-cable-stream-source channel="Turbo::Streams::Channel" signed-stream-name="products" />
-
-      <div class="grid grid-cols-3 gap-4 p-4">
-        {products.map(product => (
-          <div class="border p-4 rounded" id={`product_${product.id}`}>
-            <h2>{product.name}</h2>
-            
-            {/* ここが Turbo Stream でリアルタイム更新されるターゲット */}
-            <div id={`product_${product.id}_stock`}>
-              Stock: {product.stock}
-            </div>
-
-            <Island 
-              name="AddToCartButton" 
-              component={AddToCartButton} 
-              props={{ productId: product.id }} 
-            />
-          </div>
-        ))}
-      </div>
+    <div class="card" draggable="true">
+      {task.title}
     </div>
   );
 }
 ```
 
-この構成により、**「在庫はサーバー主導でリアルタイム同期」「カートはクライアント主導でサクサク動作」** という、理想的な UX が実現できます。
+**Header Island (TypeScript + Signals):**
+
+```tsx
+// Header.tsx
+export default function Header() {
+  // TaskCard が増減すると、ここも勝手に変わる
+  return <div>Remaining: {totalCount}</div>;
+}
+```
+
+### 結論
+
+この「全部入り」構成は、**Web アプリケーション開発の "Sweet Spot"（最適解）** です。
+
+*   **Salvia** が土台を作り、
+*   **Turbo** がそれを運び、
+*   **Signals** が彩りを添える。
+
+それぞれが得意なことだけに集中しているため、無駄がなく、非常に強力です。もしこれからアプリを作るなら、迷わずこの「フルセット」で始めることをお勧めします。
 
 ## 8. Props vs Signals: 状態管理のパラダイムシフト
 
