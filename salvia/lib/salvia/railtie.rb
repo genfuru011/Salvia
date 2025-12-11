@@ -26,7 +26,7 @@ module Salvia
 
     initializer "salvia.middleware" do |app|
       if Rails.env.development?
-        app.middleware.use Salvia::DevServer
+        app.middleware.use Salvia::Server::DevServer
       end
     end
   end

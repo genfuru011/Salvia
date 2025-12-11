@@ -4,7 +4,8 @@ require 'json'
 require 'timeout'
 
 module Salvia
-  class Sidecar
+  module Server
+    class Sidecar
     SCRIPT_PATH = File.join(__dir__, "sidecar.ts")
 
     def self.instance
@@ -128,6 +129,7 @@ module Salvia
       end
     rescue => e
       raise "Sidecar Request Error: #{e.message}"
+    end
     end
   end
 end

@@ -193,7 +193,7 @@ module Salvia
       end
       
       def resolve_path(name)
-        Salvia::PathResolver.resolve(name)
+        Salvia::Core::PathResolver.resolve(name)
       end
       
       def process_console_output

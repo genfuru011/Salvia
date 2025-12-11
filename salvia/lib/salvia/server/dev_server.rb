@@ -1,5 +1,6 @@
 module Salvia
-  class DevServer
+  module Server
+    class DevServer
     def initialize(app)
       @app = app
     end
@@ -37,7 +38,7 @@ module Salvia
       begin
         # Bundle for browser (ESM)
         # We externalize dependencies that should be handled by Import Map
-        externals = Salvia::ImportMap.new.keys
+        externals = Salvia::Core::ImportMap.new.keys
         # Always externalize framework aliases just in case
         externals += ["framework", "framework/hooks", "framework/jsx-runtime"]
         
@@ -54,7 +55,8 @@ module Salvia
     end
     
     def resolve_source_path(name)
-      Salvia::PathResolver.resolve(name)
+      Salvia::Core::PathResolver.resolve(name)
+    end
     end
   end
 end

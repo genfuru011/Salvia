@@ -3,7 +3,8 @@
 require "json"
 
 module Salvia
-  class ImportMap
+  module Core
+    class ImportMap
     def self.load
       new.load
     end
@@ -37,6 +38,7 @@ module Salvia
       return path if File.exist?(path)
 
       nil
+    end
     end
   end
 end

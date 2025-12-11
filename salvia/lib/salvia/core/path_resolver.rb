@@ -1,7 +1,8 @@
 # frozen_string_literal: true
 
 module Salvia
-  class PathResolver
+  module Core
+    class PathResolver
     def self.resolve(name)
       # Check flat structure
       path = File.join(Salvia.root, "#{name}.tsx")
@@ -36,6 +37,7 @@ module Salvia
       end
       
       nil
+    end
     end
   end
 end
