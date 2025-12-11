@@ -128,7 +128,7 @@ This approach leverages Import Maps and browser-native modules, keeping your bun
 
 ## Documentation
 
-*   [**Wisdom for Salvia**](WisdomforSalvia.md): Deep dive into the architecture, directory structure, and "True HTML First" philosophy.
+*   [**Wisdom for Salvia**](DESIGN.md): Deep dive into the architecture, directory structure, and "True HTML First" philosophy.
 *   [**Architecture**](ARCHITECTURE.md): Internal design of the gem.
 
 ## Framework Support
