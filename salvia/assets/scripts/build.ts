@@ -13,6 +13,9 @@
 import * as esbuild from "https://deno.land/x/esbuild@v0.24.2/mod.js";
 import { denoPlugins } from "jsr:@luca/esbuild-deno-loader@0.11";
 
+const WATCH_MODE = Deno.args.includes("--watch");
+const VERBOSE = Deno.args.includes("--verbose");
+
 // Resolve deno.json relative to this script
 let CONFIG_PATH = new URL("./deno.json", import.meta.url).pathname;
 
@@ -25,6 +28,22 @@ try {
   // User config not found, use internal one
 }
 
+// Load externals from deno.json
+let externals = ["preact", "preact/hooks", "preact/jsx-runtime"];
+try {
+  const configContent = await Deno.readTextFile(CONFIG_PATH);
+  const config = JSON.parse(configContent);
+  if (config.imports) {
+    const importKeys = Object.keys(config.imports);
+    externals = [...new Set([...externals, ...importKeys])];
+  }
+  if (VERBOSE) {
+    console.log("📦 Externals loaded from deno.json:", externals);
+  }
+} catch (e) {
+  console.warn("⚠️ Failed to load externals from deno.json:", e);
+}
+
 // When running via `deno task --config salvia/deno.json`, CWD is usually the project root.
 // But if running from inside salvia/, it's different.
 const ROOT_DIR = Deno.cwd().endsWith("/salvia") ? "." : "salvia";
@@ -33,8 +52,6 @@ const PAGES_DIR = `${ROOT_DIR}/app/pages`;
 const COMPONENTS_DIR = `${ROOT_DIR}/app/components`;
 const SSR_OUTPUT_DIR = `${ROOT_DIR}/server`;
 const CLIENT_OUTPUT_DIR = `${ROOT_DIR}/../public/assets/islands`;
-const WATCH_MODE = Deno.args.includes("--watch");
-const VERBOSE = Deno.args.includes("--verbose");
 
 // ============================================
 // SSR Islands Build
@@ -192,7 +209,7 @@ export function mount(element, props, options) {
         outdir: CLIENT_OUTPUT_DIR,
         platform: "browser",
         plugins: [...denoPlugins({ configPath: CONFIG_PATH })],
-        external: ["preact", "preact/hooks", "preact/jsx-runtime"],
+        external: externals,
         jsx: "automatic",
         jsxImportSource: "preact",
         minify: true,

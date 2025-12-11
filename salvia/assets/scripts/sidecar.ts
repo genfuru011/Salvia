@@ -18,6 +18,28 @@ const handler = async (request: Request): Promise<Response> => {
     if (command === "bundle") {
       const { entryPoint, externals, format, globalName, configPath } = params;
       
+      // Load globals from deno.json
+      const defaultGlobals: Record<string, string> = {
+        "preact": "globalThis.Preact",
+        "preact/hooks": "globalThis.PreactHooks",
+        "@preact/signals": "globalThis.PreactSignals",
+        "preact/jsx-runtime": "globalThis.PreactJsxRuntime",
+      };
+
+      let userGlobals: Record<string, string> = {};
+      try {
+        const cfgPath = configPath || `${Deno.cwd()}/salvia/deno.json`;
+        const configText = await Deno.readTextFile(cfgPath);
+        const config = JSON.parse(configText);
+        if (config.salvia && config.salvia.globals) {
+          userGlobals = config.salvia.globals;
+        }
+      } catch {
+        // Ignore if config not found or invalid
+      }
+
+      const allGlobals = { ...defaultGlobals, ...userGlobals };
+      
       // If format is IIFE, we need to handle externals by mapping them to globals
       // But esbuild doesn't support this out of the box for IIFE with externals.
       // We can use a plugin to rewrite imports to globals if they are in externals list.
@@ -26,28 +48,22 @@ const handler = async (request: Request): Promise<Response> => {
         const globalExternalsPlugin = {
             name: "global-externals",
             setup(build: any) {
-              // Preact
-              build.onResolve({ filter: /^preact$/ }, (args: any) => {
-                return { path: args.path, namespace: "global-external" };
-              });
-              // Hooks
-              build.onResolve({ filter: /^preact\/hooks$/ }, (args: any) => {
-                return { path: args.path, namespace: "global-external" };
-              });
-              // Signals
-              build.onResolve({ filter: /^@preact\/signals$/ }, (args: any) => {
-                return { path: args.path, namespace: "global-external" };
-              });
-              // JSX Runtime
-              build.onResolve({ filter: /^preact\/jsx-runtime$/ }, (args: any) => {
-                return { path: args.path, namespace: "global-external" };
-              });
+              // Register resolvers for all globals
+              for (const pkg of Object.keys(allGlobals)) {
+                // Escape regex special characters
+                const escapedPkg = pkg.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                const filter = new RegExp(`^${escapedPkg}$`);
+                
+                build.onResolve({ filter }, (args: any) => {
+                  return { path: args.path, namespace: "global-external" };
+                });
+              }
 
               build.onLoad({ filter: /.*/, namespace: "global-external" }, (args: any) => {
-                if (args.path === "preact") return { contents: "module.exports = globalThis.Preact;", loader: "js" };
-                if (args.path === "preact/hooks") return { contents: "module.exports = globalThis.PreactHooks;", loader: "js" };
-                if (args.path === "@preact/signals") return { contents: "module.exports = globalThis.PreactSignals;", loader: "js" };
-                if (args.path === "preact/jsx-runtime") return { contents: "module.exports = globalThis.PreactJsxRuntime;", loader: "js" };
+                const globalVar = allGlobals[args.path];
+                if (globalVar) {
+                  return { contents: `module.exports = ${globalVar};`, loader: "js" };
+                }
                 return null;
               });
             },
