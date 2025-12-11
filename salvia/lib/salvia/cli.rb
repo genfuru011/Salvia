@@ -18,7 +18,11 @@ module Salvia
       say ""
 
       # 1. Backend Framework
-      # backend = ask("1. Which backend framework are you using?", :yellow, limited_to: ["sinatra", "rails", "hanami", "other"], default: "sinatra")
+      backend = if File.exist?("bin/rails") || File.exist?("config/application.rb")
+                  "rails"
+                else
+                  "other"
+                end
 
       # 2. Tailwind CSS
       install_tailwind = yes?("1. Do you want to install Tailwind CSS (via tailwindcss-ruby)? (y/N)", :yellow)
@@ -120,7 +124,14 @@ module Salvia
       
       # Use internal build script
       build_script = File.expand_path("../../../assets/scripts/build.ts", __FILE__)
-      config_path = File.expand_path("../../../assets/scripts/deno.json", __FILE__)
+      
+      # Use user's deno.json if available, otherwise fallback to internal
+      user_config = File.expand_path("salvia/deno.json")
+      config_path = if File.exist?(user_config)
+                      user_config
+                    else
+                      File.expand_path("../../../assets/scripts/deno.json", __FILE__)
+                    end
       
       cmd = "deno run --allow-all --config #{config_path} #{build_script}"
       cmd += " --verbose" if options[:verbose]
@@ -144,7 +155,14 @@ module Salvia
       
       # Use internal build script
       build_script = File.expand_path("../../../assets/scripts/build.ts", __FILE__)
-      config_path = File.expand_path("../../../assets/scripts/deno.json", __FILE__)
+      
+      # Use user's deno.json if available, otherwise fallback to internal
+      user_config = File.expand_path("salvia/deno.json")
+      config_path = if File.exist?(user_config)
+                      user_config
+                    else
+                      File.expand_path("../../../assets/scripts/deno.json", __FILE__)
+                    end
       
       cmd = "deno run --allow-all --config #{config_path} #{build_script} --watch"
       cmd += " --verbose" if options[:verbose]

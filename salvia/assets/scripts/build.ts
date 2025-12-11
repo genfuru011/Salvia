@@ -223,6 +223,17 @@ export function mount(element, props, options) {
     );
     console.log(`✅ Manifest generated: ${SSR_OUTPUT_DIR}/manifest.json`);
 
+    // Copy islands.js loader
+    try {
+      const islandsJsPath = new URL("../javascripts/islands.js", import.meta.url).pathname;
+      const islandsJsOutput = `${ROOT_DIR}/../public/assets/javascripts/islands.js`;
+      await Deno.mkdir(`${ROOT_DIR}/../public/assets/javascripts`, { recursive: true });
+      await Deno.copyFile(islandsJsPath, islandsJsOutput);
+      console.log(`✅ Loader copied: ${islandsJsOutput}`);
+    } catch (e) {
+      console.warn("⚠️  Failed to copy islands.js loader:", e);
+    }
+
   } catch (error) {
     const e = error as Error;
     console.error("❌ SSR build error:", e.message || error);
