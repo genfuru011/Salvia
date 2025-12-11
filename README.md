@@ -141,10 +141,12 @@ This approach leverages Import Maps and browser-native modules, keeping your bun
 
 *   **English**:
     *   [**Wisdom for Salvia**](docs/en/DESIGN.md): Deep dive into the architecture, directory structure, and "True HTML First" philosophy.
+    *   [**Reference Guide**](docs/en/REFERENCE.md): Comprehensive guide on usage, API, and configuration.
     *   [**Architecture**](docs/en/ARCHITECTURE.md): Internal design of the gem.
 *   **Japanese (日本語)**:
     *   [**README**](docs/ja/README.ja.md): 日本語版README。
     *   [**Salviaの知恵**](docs/ja/DESIGN.md): アーキテクチャ、ディレクトリ構造、「真のHTMLファースト」哲学についての詳細。
+    *   [**リファレンスガイド**](docs/ja/REFERENCE.md): 使用方法、API、設定に関する包括的なガイド。
     *   [**アーキテクチャ**](docs/ja/ARCHITECTURE.md): Gemの内部設計。
 
 ## Framework Support

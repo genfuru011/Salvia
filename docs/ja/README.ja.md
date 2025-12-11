@@ -141,9 +141,11 @@ SalviaはTurbo Driveとシームレスに連携し、SPAのようなナビゲー
 
 *   **English**:
     *   [**Wisdom for Salvia**](../en/DESIGN.md): Deep dive into the architecture, directory structure, and "True HTML First" philosophy.
+    *   [**Reference Guide**](../en/REFERENCE.md): Comprehensive guide on usage, API, and configuration.
     *   [**Architecture**](../en/ARCHITECTURE.md): Internal design of the gem.
 *   **Japanese (日本語)**:
     *   [**Salviaの知恵**](DESIGN.md): アーキテクチャ、ディレクトリ構造、「真のHTMLファースト」哲学についての詳細。
+    *   [**リファレンスガイド**](REFERENCE.md): 使用方法、API、設定に関する包括的なガイド。
     *   [**アーキテクチャ**](ARCHITECTURE.md): Gemの内部設計。
 
 ## フレームワークサポート
