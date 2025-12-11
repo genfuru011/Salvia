@@ -16,7 +16,6 @@ Gem::Specification.new do |spec|
 
   spec.metadata["homepage_uri"] = spec.homepage
   spec.metadata["source_code_uri"] = "https://github.com/genfuru011/Salvia/tree/main/salvia"
-  spec.metadata["changelog_uri"] = "https://github.com/genfuru011/Salvia/blob/main/CHANGELOG.md"
   spec.metadata["documentation_uri"] = "https://github.com/genfuru011/Salvia/tree/main/docs"
   spec.metadata["bug_tracker_uri"] = "https://github.com/genfuru011/Salvia/issues"
   spec.metadata["rubygems_mfa_required"] = "true"
