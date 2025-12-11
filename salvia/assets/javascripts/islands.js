@@ -14,8 +14,8 @@ async function hydrateIsland(island) {
   const hasSSR = island.innerHTML.trim().length > 0;
   
   try {
-    // Use the JIT path handled by Salvia::DevServer
-    const module = await import(`/salvia/assets/islands/${name}.js`);
+    // Use the import map alias which handles dev/prod paths
+    const module = await import(`@/islands/${name}.js`);
     
     if (typeof module.mount === 'function') {
       module.mount(island, props, { hydrate: hasSSR });

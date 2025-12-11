@@ -508,3 +508,12 @@ To improve maintainability and follow standard Ruby gem structure, the `lib/salv
   - Verified that the refactored library works correctly with the Sinatra example app.
   - SSR rendering works as expected.
   - `Salvia.config` correctly delegates to `Salvia::Core::Configuration`.
+
+### 5. Production Path Issue (Resolved)
+- **Issue**: `islands.js` used a hardcoded JIT path (`/salvia/assets/islands/...`), which would fail in production.
+- **Resolution**:
+    - Updated `Salvia::Helpers::Island#salvia_import_map` to inject an alias `@/islands/`.
+        - Development: Maps to `/salvia/assets/islands/` (JIT).
+        - Production: Maps to `/assets/islands/` (Pre-built).
+    - Updated `islands.js` to use this alias: `import("@/islands/${name}.js")`.
+    - Verified in Rails API example app.

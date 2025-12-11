@@ -48,7 +48,7 @@ module Salvia
     end
 
     def env
-      @env ||= ENV.fetch("RACK_ENV", "development")
+      @env ||= ENV["RACK_ENV"] || ENV["RAILS_ENV"] || "development"
     end
 
     def development?

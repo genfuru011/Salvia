@@ -49,6 +49,14 @@ module Salvia
           }
         }
 
+        # Islands path mapping
+        islands_path = if defined?(Salvia.env) && Salvia.env == "development"
+                         "/salvia/assets/islands/"
+                       else
+                         "/assets/islands/"
+                       end
+        default_map["imports"]["@/islands/"] = islands_path
+
         # deno.json から imports を読み込む
         begin
           deno_json_path = File.join(Salvia.root, "salvia/deno.json")
