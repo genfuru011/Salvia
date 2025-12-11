@@ -441,3 +441,16 @@ globalThis.Salvia = {
 - `sidecar.ts` uses `framework` aliases mapped to global variables (`globalThis.Preact`) for IIFE builds.
 - `vendor_setup.ts` imports from `framework` aliases.
 - Switching frameworks (e.g., Preact to React) only requires updating `deno.json`.
+
+### 17. Sinatra App & Flat Structure Fixes (2025-12-11)
+
+**Issues & Fixes:**
+1.  **Flat Directory Structure**: `Salvia::SSR::QuickJS` and `Salvia::DevServer` were updated to support flat directory structures (e.g., `app.rb` and `TodoList.tsx` in the same root directory).
+2.  **Vendor Setup Path**: `QuickJS` adapter now checks for `vendor_setup.ts` in the project root if not found in `salvia/`.
+3.  **JSX Runtime**: `sidecar.ts` was updated to use `jsx: "automatic"` and correctly map `framework/jsx-runtime` to `globalThis.PreactJsxRuntime` for IIFE builds.
+4.  **Vendor Setup Bundling**: `sidecar.ts` was modified to **disable** `globalExternalsPlugin` when bundling `vendor_setup.ts`. This ensures `preact` is bundled *into* `vendor_setup.js` (defining the globals) rather than trying to import from non-existent globals.
+5.  **Global Exports**: `vendor_setup.ts` was updated to explicitly expose `h` and `renderToString` to `globalThis`, as `quickjs.rb`'s render script relies on them.
+
+**Result**:
+The Sinatra example app (Todo list with Tailwind) works correctly with SSR and JIT compilation.
+
