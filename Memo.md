@@ -465,3 +465,17 @@ The Sinatra example app (Todo list with Tailwind) works correctly with SSR and J
 5.  **Import Map**: Confirmed generated HTML contains correct import map with `framework` aliases.
 
 **Conclusion**: The Rails API example is fully functional and aligned with the new architecture.
+
+## 2025-12-11 Refactoring for Clean Architecture
+
+### Changes
+1.  **Extracted `Salvia::PathResolver`**: Centralized file path resolution logic (used by both SSR and DevServer).
+2.  **Extracted `Salvia::SSR::DomMock`**: Moved DOM mocking logic out of `QuickJS` adapter.
+3.  **Extracted `Salvia::ImportMap`**: Created a class to parse `deno.json` and retrieve import keys.
+4.  **Updated `Salvia::DevServer`**: Now uses `Salvia::ImportMap` to dynamically determine external dependencies, adhering to the "Unified Import Management" principle.
+5.  **Updated `Salvia::SSR::QuickJS`**: Refactored to use the new helper classes, reducing its complexity.
+
+### Verification
+- Verified Sinatra example app (`examples/sinatra_app`) works correctly with the refactored code.
+- SSR output is correct.
+- Server starts without errors.

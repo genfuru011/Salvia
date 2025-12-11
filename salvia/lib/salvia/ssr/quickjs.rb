@@ -158,6 +158,7 @@ module Salvia
       def load_console_shim!
         shim = generate_console_shim
         @vm.eval_code(shim)
+        @vm.eval_code(Salvia::SSR::DomMock.generate_shim)
       rescue => e
         log_error("Failed to load console shim: #{e.message}")
       end
@@ -192,39 +193,7 @@ module Salvia
       end
       
       def resolve_path(name)
-        # Check flat structure
-        path = File.join(Salvia.root, "#{name}.tsx")
-        return path if File.exist?(path)
-
-        roots = [
-          "salvia/app/pages",
-          "salvia/app/islands",
-          "salvia/app/components"
-        ]
-        
-        roots.each do |root|
-          path = File.join(Salvia.root, root, "#{name}.tsx")
-          return path if File.exist?(path)
-          
-          path = File.join(Salvia.root, root, "#{name}.jsx")
-          return path if File.exist?(path)
-          
-          path = File.join(Salvia.root, root, "#{name}.js")
-          return path if File.exist?(path)
-        end
-        
-        if name.include?("/")
-           path = File.join(Salvia.root, "salvia/app", "#{name}.tsx")
-           return path if File.exist?(path)
-           
-           path = File.join(Salvia.root, "salvia/app", "#{name}.jsx")
-           return path if File.exist?(path)
-           
-           path = File.join(Salvia.root, "salvia/app", "#{name}.js")
-           return path if File.exist?(path)
-        end
-        
-        nil
+        Salvia::PathResolver.resolve(name)
       end
       
       def process_console_output
@@ -264,39 +233,6 @@ module Salvia
               __salvia_logs__ = [];
               return JSON.stringify(logs);
             };
-
-            // Mock DOM globals for SSR
-            globalThis.window = globalThis;
-            globalThis.self = globalThis;
-            globalThis.addEventListener = function() {};
-            globalThis.removeEventListener = function() {};
-            globalThis.document = {
-              createElement: function() { return {}; },
-              createTextNode: function() { return {}; },
-              addEventListener: function() { },
-              removeEventListener: function() { },
-              head: {},
-              body: {},
-              documentElement: {
-                addEventListener: function() { },
-                removeEventListener: function() { }
-              }
-            };
-            globalThis.HTMLFormElement = class {};
-            globalThis.HTMLElement = class {};
-            globalThis.Element = class {};
-            globalThis.Node = class {};
-            globalThis.Event = class {};
-            globalThis.CustomEvent = class {};
-            globalThis.URL = class { 
-              constructor(url) { this.href = url; } 
-              static createObjectURL() { return ""; }
-              static revokeObjectURL() { }
-            };
-            globalThis.requestAnimationFrame = function(cb) { return setTimeout(cb, 0); };
-            globalThis.cancelAnimationFrame = function(id) { clearTimeout(id); };
-            globalThis.navigator = { userAgent: 'SalviaSSR' };
-            globalThis.location = { href: 'http://localhost' };
           })();
         JS
       end
