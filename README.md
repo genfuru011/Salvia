@@ -108,6 +108,24 @@ export default function Home() {
 }
 ```
 
+### 4. Turbo Drive (Optional)
+
+Salvia works seamlessly with Turbo Drive for SPA-like navigation.
+
+Add Turbo to your layout file (e.g., `app/pages/layouts/Main.tsx`):
+
+```tsx
+<head>
+  {/* ... */}
+  <script type="module">
+    import * as Turbo from "https://esm.sh/@hotwired/turbo@8.0.0";
+    Turbo.start();
+  </script>
+</head>
+```
+
+This approach leverages Import Maps and browser-native modules, keeping your bundle size small and your architecture transparent.
+
 ## Documentation
 
 *   [**Wisdom for Salvia**](WisdomforSalvia.md): Deep dive into the architecture, directory structure, and "True HTML First" philosophy.
