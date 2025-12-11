@@ -23,11 +23,7 @@ const handler = async (request: Request): Promise<Response> => {
       // We can use a plugin to rewrite imports to globals if they are in externals list.
       
         // 4. Global Externals (for IIFE format)
-        // ブラウザで実行される際、これらのモジュールはバンドルせず、
-        // グローバル変数 (window.Preact など) から取得するようにする。
-        // これにより、クライアントサイドでの重複ロードを防ぎ、キャッシュを効かせる。
-        plugins: [
-          {
+        const globalExternalsPlugin = {
             name: "global-externals",
             setup(build: any) {
               // フレームワーク本体 (preact/react)
@@ -44,21 +40,13 @@ const handler = async (request: Request): Promise<Response> => {
               });
 
               build.onLoad({ filter: /.*/, namespace: "global-external" }, (args: any) => {
-                // ここでグローバル変数へのマッピングを行う
-                // TODO: React対応時に分岐が必要になる可能性があるが、
-                // 現状は Preact 前提で window.Preact にマッピングする。
-                // 将来的には deno.json の設定を見て動的に変えることも検討。
                 if (args.path === "framework") return { contents: "module.exports = globalThis.Preact;", loader: "js" };
                 if (args.path === "framework/hooks") return { contents: "module.exports = globalThis.PreactHooks;", loader: "js" };
-                // jsx-runtime は通常グローバルには露出しないが、Preactの場合は本体に含まれることが多い
-                // ここでは簡易的に Preact 本体に逃がすか、個別に定義するか。
-                // 一旦 Preact 本体と同じ扱いにする。
                 if (args.path === "framework/jsx-runtime") return { contents: "module.exports = globalThis.Preact;", loader: "js" };
                 return null;
               });
             },
-          },
-        ],
+        };
 
       const externalizePlugin = {
         name: 'externalize-deps',

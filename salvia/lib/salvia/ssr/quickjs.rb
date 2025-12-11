@@ -164,6 +164,10 @@ module Salvia
       
       def load_vendor_bundle!
         vendor_path = File.join(Salvia.root, "salvia/vendor_setup.ts")
+        unless File.exist?(vendor_path)
+          vendor_path = File.join(Salvia.root, "vendor_setup.ts")
+        end
+
         if File.exist?(vendor_path)
           code = Salvia::Compiler.bundle(vendor_path, format: "iife")
           eval_js(code)
@@ -188,6 +192,10 @@ module Salvia
       end
       
       def resolve_path(name)
+        # Check flat structure
+        path = File.join(Salvia.root, "#{name}.tsx")
+        return path if File.exist?(path)
+
         roots = [
           "salvia/app/pages",
           "salvia/app/islands",

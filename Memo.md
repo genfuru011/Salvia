@@ -433,3 +433,11 @@ globalThis.Salvia = {
 1.  **Refactor `sidecar.ts`**: `deno.json` を読み込んで `externals` を動的に生成するロジックを追加。
 2.  **Refactor `vendor_setup.ts`**: `deno.json` の import map を利用するように変更。
 3.  **Update CLI**: `salvia install` 時に生成する `deno.json` のテンプレートを更新。
+
+## 16. Unified Import Management Status (2025-12-11)
+
+**Implemented**:
+- `deno.json` is now the Single Source of Truth.
+- `sidecar.ts` uses `framework` aliases mapped to global variables (`globalThis.Preact`) for IIFE builds.
+- `vendor_setup.ts` imports from `framework` aliases.
+- Switching frameworks (e.g., Preact to React) only requires updating `deno.json`.

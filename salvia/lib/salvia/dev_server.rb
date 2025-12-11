@@ -39,7 +39,7 @@ module Salvia
         # We externalize dependencies that should be handled by Import Map
         js_code = Salvia::Compiler.bundle(
           source_path, 
-          externals: ["preact", "preact/hooks", "preact/jsx-runtime", "react", "react-dom"],
+          externals: ["framework", "framework/hooks", "framework/jsx-runtime", "preact", "preact/hooks", "preact/jsx-runtime", "react", "react-dom"],
           format: "esm"
         )
         
@@ -50,12 +50,16 @@ module Salvia
     end
     
     def resolve_source_path(name)
-      # name is like "islands/Counter"
+      # name is like "islands/Counter" or "TodoList" (if flat)
       
       # Check directly in salvia/app
       path = File.join(Salvia.root, "salvia/app", "#{name}.tsx")
       return path if File.exist?(path)
       
+      # Check in root (flat structure support)
+      path = File.join(Salvia.root, "#{name}.tsx")
+      return path if File.exist?(path)
+
       path = File.join(Salvia.root, "salvia/app", "#{name}.jsx")
       return path if File.exist?(path)
       

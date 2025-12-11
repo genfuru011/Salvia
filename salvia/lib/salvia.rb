@@ -19,9 +19,10 @@ module Salvia
   class Error < StandardError; end
 
   class Configuration
-    attr_accessor :ssr_bundle_path, :island_inspector, :islands_dir, :build_dir, :deno_config_path
+    attr_accessor :ssr_bundle_path, :island_inspector, :islands_dir, :build_dir, :deno_config_path, :root
 
     def initialize
+      @root = Dir.pwd
       @ssr_bundle_path = "salvia/server/ssr_bundle.js"
       @islands_dir = "salvia/app/islands"
       @build_dir = "public/assets"
@@ -59,7 +60,7 @@ module Salvia
     end
 
     def root
-      @root ||= Dir.pwd
+      config.root
     end
 
     def env

@@ -63,7 +63,7 @@ async function bundle(entryPoint: string, externals: string[] = [], format: "esm
     const plugins = [externalizePlugin, ...denoPlugins({ configPath: configPath })];
     let actualExternals = externals;
 
-    if (format === "iife") {
+    if (format === "iife" && !entryPoint.endsWith("vendor_setup.ts")) {
       const globalExternalsPlugin = {
         name: "global-externals",
         setup(build: any) {
@@ -90,7 +90,7 @@ async function bundle(entryPoint: string, externals: string[] = [], format: "esm
             // jsx-runtime は通常グローバルには露出しないが、Preactの場合は本体に含まれることが多い
             // ここでは簡易的に Preact 本体に逃がすか、個別に定義するか。
             // 一旦 Preact 本体と同じ扱いにする。
-            if (args.path === "framework/jsx-runtime") return { contents: "module.exports = globalThis.Preact;", loader: "js" };
+            if (args.path === "framework/jsx-runtime") return { contents: "module.exports = globalThis.PreactJsxRuntime;", loader: "js" };
             return null;
           });
         },
@@ -112,7 +112,7 @@ async function bundle(entryPoint: string, externals: string[] = [], format: "esm
       external: actualExternals,
     // 3. JSX Runtime (Automatic)
     // deno.json の "framework/jsx-runtime" エイリアスを使用
-    jsx: "react-jsx",
+    jsx: "automatic",
     jsxImportSource: "framework",
     });
 
