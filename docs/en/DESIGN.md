@@ -105,78 +105,78 @@ This eliminates the need for a separate `npm run build` or `deno task watch` com
 
 ## 7. The Ultimate Salvia Stack: Salvia + Turbo + Signals
 
-Salvia, Turbo (Drive/Frames/Streams), そして Preact Signals をすべて組み合わせる構成は、**「Ruby の生産性」と「SPA のユーザー体験」を極限まで効率よく両立させる、Salvia アーキテクチャの完成形** と言えます。
+The combination of Salvia, Turbo (Drive/Frames/Streams), and Preact Signals is the **definitive Salvia architecture**, balancing **"Ruby's productivity" and "SPA user experience"** with extreme efficiency.
 
-これらを組み合わせることで、**「重厚な JavaScript フレームワーク（Next.js等）」を使わずに、それと同等以上のリッチなアプリケーション** を作ることができます。
+By combining these, you can create **rich applications equivalent to or better than heavy JavaScript frameworks (like Next.js)** without using them.
 
-それぞれの役割と、組み合わせた時の化学反応（メリット）、そして具体的な実例を解説します。
+Here, we explain the role of each, the chemical reaction (benefits) when combined, and concrete examples.
 
-### 1. 各プレイヤーの役割（何ができるか？）
+### 1. Roles of Each Player (What can they do?)
 
-このアーキテクチャでは、**「誰がどこを担当するか」** が明確に分かれています。
+In this architecture, **"who is responsible for what"** is clearly divided.
 
-#### 🌿 Salvia (The Brain / 脳)
+#### 🌿 Salvia (The Brain)
 
-*   **役割:** **「HTML の生成」と「ロジックの実行」**
-*   **できること:**
-    *   Ruby (Rails) のコントローラーで DB からデータを取得する。
-    *   JSX/TSX (Server Components) を高速にレンダリングして HTML を作る。
-    *   クライアントに送る JavaScript を最小限（Islands）にする。
+*   **Role:** **"HTML Generation" and "Logic Execution"**
+*   **Capabilities:**
+    *   Fetching data from the DB using Ruby (Rails) controllers.
+    *   Rendering JSX/TSX (Server Components) at high speed to create HTML.
+    *   Minimizing JavaScript sent to the client (Islands only).
 
-#### 🏎️ Turbo (The Transport / 足)
+#### 🏎️ Turbo (The Transport)
 
-*   **役割:** **「HTML の運搬」と「画面の書き換え」**
-*   **Drive (全体遷移):** リンククリックやフォーム送信を横取りし、ページ全体をリロードせずに `<body>` だけを差し替える（SPA 化）。
-*   **Frames (部分置換):** 画面の一部（例: モーダルやサイドバー）だけを独立してナビゲーションさせる。
-*   **Streams (差分更新):** サーバーからの指示で、特定の要素だけを「追加」「削除」「更新」する（WebSocket やフォームレスポンスで使用）。
+*   **Role:** **"HTML Transport" and "Screen Updates"**
+*   **Drive (Global Navigation):** Intercepts link clicks and form submissions, replacing only the `<body>` without reloading the entire page (SPA-like behavior).
+*   **Frames (Partial Replacement):** Navigates only a part of the screen (e.g., modals or sidebars) independently.
+*   **Streams (Differential Updates):** Adds, removes, or updates specific elements based on instructions from the server (used in WebSockets or form responses).
 
-#### ⚡️ Preact Signals (The Nerves / 神経)
+#### ⚡️ Preact Signals (The Nerves)
 
-*   **役割:** **「瞬時の反応」と「状態の共有」**
-*   **できること:**
-    *   **Micro-Interactivity:** ボタンを押した瞬間の数値更新や、ドラッグ操作など、0.1秒の遅延も許されない UI を動かす。
-    *   **Shared State:** Turbo でページが切り替わっても、メモリ上の状態（カートの中身など）を維持し、複数の Island 間で共有する。
+*   **Role:** **"Instant Reaction" and "State Sharing"**
+*   **Capabilities:**
+    *   **Micro-Interactivity:** Handles UI updates that cannot tolerate even 0.1s delay, such as updating numbers instantly upon button press or drag operations.
+    *   **Shared State:** Maintains state in memory (like cart contents) even when pages switch via Turbo, sharing it across multiple Islands.
 
-### 2. 全部使うとどうなる？（メリット）
+### 2. What happens when you use them all? (Benefits)
 
-これらをフル活用すると、従来の開発における「トレードオフ（あちらを立てればこちらが立たず）」を解消できます。
+Fully utilizing these resolves the "trade-offs" in traditional development.
 
-1.  **「JS を書かない」のに「ヌルヌル動く」**
-    *   基本は Ruby で HTML を返すだけ（Salvia）。
-    *   でも画面遷移は爆速（Turbo Drive）。
-    *   ここぞという場所だけリッチに動く（Signals）。
-    *   結果、**開発コストは低いのに、品質は高い** アプリになります。
+1.  **"No JS written" but "Moves Smoothly"**
+    *   Basically, Ruby just returns HTML (Salvia).
+    *   But screen transitions are blazing fast (Turbo Drive).
+    *   Rich interactions happen only where needed (Signals).
+    *   Result: **Low development cost, high quality** application.
 
-2.  **「状態管理」の地獄からの解放**
-    *   複雑な「サーバーデータとクライアントデータの同期」が不要になります。データは常にサーバー（HTML）が正です。
-    *   クライアントで持つべきは「UIの一時的な状態（Signals）」だけになり、バグが激減します。
+2.  **Liberation from "State Management" Hell**
+    *   Complex "synchronization between server data and client data" becomes unnecessary. Data is always correct on the server (HTML).
+    *   The client only needs to hold "temporary UI state (Signals)", drastically reducing bugs.
 
-3.  **「バンドルサイズ」の劇的な削減**
-    *   React Router も Redux も Axios も不要です。
-    *   必要なのは Preact と Turbo だけ。初期表示速度（LCP）が圧倒的に速くなります。
+3.  **Drastic Reduction in Bundle Size**
+    *   No React Router, Redux, or Axios needed.
+    *   Only Preact and Turbo are required. Initial display speed (LCP) becomes overwhelmingly fast.
 
-### 3. 実例: 「リアルタイム・タスク管理ボード」（Trello風）
+### 3. Example: "Real-time Task Management Board" (Trello-like)
 
-この構成で作るとどうなるか、具体的なユーザー操作の流れで見てみましょう。
+Let's see how this works with specific user operations.
 
-#### 画面構成
+#### Screen Structure
 
-*   **ボード画面:** タスクのリスト（To Do, Doing, Done）が並んでいる。
-*   **ヘッダー:** 「未完了タスク数」が表示されている。
+*   **Board Screen:** Lists of tasks (To Do, Doing, Done).
+*   **Header:** Displays "Number of incomplete tasks".
 
-#### シナリオと技術の連動
+#### Scenario and Technology Interaction
 
-| ユーザーの操作 | 裏側の動き | 担当技術 | 解説 |
+| User Operation | Backend Action | Technology | Explanation |
 | :--- | :--- | :--- | :--- |
-| **1. ページを開く** | サーバーでタスク一覧の HTML を生成し、表示する。JS はまだ動いていない。 | **Salvia** | 爆速で画面が表示される（SSR）。 |
-| **2. タスクを追加する** | フォームから「会議」と入力して Enter。 | **Turbo Drive** | ページリロードせず、裏で POST リクエストを送信。 |
-| **(サーバー処理)** | DB にタスクを保存し、**「新しいタスクの HTML だけ」** をレスポンスする。 | **Salvia** | ページ全体を返さないので軽い。 |
-| **3. 画面に反映** | レスポンスを受け取り、リストの一番下にタスクを `append` (追記) する。 | **Turbo Streams** | 一瞬でリストが更新される。 |
-| **4. 数値が増える** | タスク追加を検知し、ヘッダーの「未完了数」を `+1` する。 | **Signals** | 画面再描画なしで、数字のテキストノードだけ書き換わる。 |
-| **5. 詳細を開く** | タスクをクリックすると、画面遷移せずにモーダルで詳細が出る。 | **Turbo Frames** | `src="/tasks/1"` の HTML を部分的に取得して表示。 |
-| **6. ドラッグ移動** | タスクを「Doing」から「Done」へドラッグ＆ドロップする。 | **Preact (Islands)** | **ここだけは JS (Signals) が主役。** サーバーを待たずに即座に UI を動かす。 |
+| **1. Open Page** | Server generates and displays HTML for the task list. JS is not running yet. | **Salvia** | Screen displays instantly (SSR). |
+| **2. Add Task** | Type "Meeting" in the form and press Enter. | **Turbo Drive** | Sends POST request in the background without page reload. |
+| **(Server Process)** | Saves task to DB and responds with **"Only the HTML for the new task"**. | **Salvia** | Lightweight response, not the whole page. |
+| **3. Reflect on Screen** | Receives response and `appends` the task to the bottom of the list. | **Turbo Streams** | List updates instantly. |
+| **4. Number Increases** | Detects task addition and increments "Incomplete Count" in the header by `+1`. | **Signals** | Only the number text node updates without screen redraw. |
+| **5. Open Details** | Click a task to show details in a modal without screen transition. | **Turbo Frames** | Partially fetches and displays HTML from `src="/tasks/1"`. |
+| **6. Drag & Drop** | Drag a task from "Doing" to "Done". | **Preact (Islands)** | **Here, JS (Signals) is the star.** Moves UI instantly without waiting for the server. |
 
-#### コードイメージ
+#### Code Image
 
 **Controller (Ruby):**
 
@@ -184,7 +184,7 @@ Salvia, Turbo (Drive/Frames/Streams), そして Preact Signals をすべて組�
 def create
   task = Task.create(params[:task])
   
-  # Turbo Stream で「追加」命令と「HTML」を返す
+  # Return "Append" instruction and "HTML" via Turbo Stream
   render turbo_stream: turbo_stream.append("todo_list", html: ssr("islands/TaskCard", task: task))
 end
 ```
@@ -192,12 +192,12 @@ end
 **TaskCard Island (TypeScript + Signals):**
 
 ```tsx
-// store.ts (状態共有)
+// store.ts (Shared State)
 export const totalCount = signal(0);
 
 // TaskCard.tsx
 export default function TaskCard({ task }) {
-  // マウント時にカウントアップ（Signals）
+  // Count up on mount (Signals)
   useEffect(() => { totalCount.value++ }, []);
 
   return (
@@ -213,31 +213,31 @@ export default function TaskCard({ task }) {
 ```tsx
 // Header.tsx
 export default function Header() {
-  // TaskCard が増減すると、ここも勝手に変わる
+  // Automatically updates when TaskCard increases/decreases
   return <div>Remaining: {totalCount}</div>;
 }
 ```
 
-### 結論
+### Conclusion
 
-この「全部入り」構成は、**Web アプリケーション開発の "Sweet Spot"（最適解）** です。
+This "All-in-One" configuration is the **"Sweet Spot" (Optimal Solution) for Web Application Development**.
 
-*   **Salvia** が土台を作り、
-*   **Turbo** がそれを運び、
-*   **Signals** が彩りを添える。
+*   **Salvia** builds the foundation,
+*   **Turbo** transports it,
+*   **Signals** adds the color.
 
-それぞれが得意なことだけに集中しているため、無駄がなく、非常に強力です。もしこれからアプリを作るなら、迷わずこの「フルセット」で始めることをお勧めします。
+Since each focuses only on what it does best, there is no waste, and it is extremely powerful. If you are building an app from scratch, we strongly recommend starting with this "Full Set".
 
-## 8. Props vs Signals: 状態管理のパラダイムシフト
+## 8. Props vs Signals: A Paradigm Shift in State Management
 
-Salvia では、データの流れを理解し、適切なツールを選ぶことが重要です。
+In Salvia, understanding data flow and choosing the right tool is crucial.
 
 ### 1. Props (The Waterfall)
-**用途**: サーバー (Rails) からクライアント (Island) への初期データの受け渡し。
+**Usage**: Passing initial data from Server (Rails) to Client (Island).
 
-*   **方向**: 親 (Rails Controller/Page) -> 子 (Island Component)。
-*   **特徴**: 不変 (Immutable)。一度レンダリングされたら、親が再レンダリングしない限り変わらない。
-*   **Salviaでの役割**: データベースの値 (ActiveRecord) を UI に表示するために使う。
+*   **Direction**: Parent (Rails Controller/Page) -> Child (Island Component).
+*   **Characteristic**: Immutable. Once rendered, it does not change unless the parent re-renders.
+*   **Role in Salvia**: Used to display database values (ActiveRecord) in the UI.
 
 ```tsx
 // Rails (Controller) -> Page -> Island
@@ -245,11 +245,11 @@ Salvia では、データの流れを理解し、適切なツールを選ぶこ�
 ```
 
 ### 2. Signals (The Teleport)
-**用途**: クライアントサイドでの動的なインタラクション。
+**Usage**: Dynamic interaction on the client side.
 
-*   **方向**: 状態 (Signal) <-> コンポーネント (Anywhere)。
-*   **特徴**: 反応的 (Reactive)。値が変わると、それを使っている場所だけが即座に更新される。
-*   **Salviaでの役割**: ユーザーの操作 (クリック、入力) による変化を管理する。
+*   **Direction**: State (Signal) <-> Component (Anywhere).
+*   **Characteristic**: Reactive. When the value changes, only the places using it update instantly.
+*   **Role in Salvia**: Manages changes caused by user operations (clicks, input).
 
 ```tsx
 // Client Side Only
@@ -258,18 +258,18 @@ const count = signal(0);
 <button onClick={() => count.value++}>{count}</button>
 ```
 
-### 3. 使い分けの指針 (Best Practices)
+### 3. Guidelines for Use (Best Practices)
 
-| シチュエーション | 推奨 (Recommended) | 理由 |
+| Situation | Recommended | Reason |
 | :--- | :--- | :--- |
-| **DBから取得したデータを表示する** | **Props** | サーバーで確定した値であり、クライアントで変更する必要がないため。 |
-| **フォームの入力値、トグルボタン** | **Signals** | ユーザー操作によって頻繁に変わり、即座に UI に反映する必要があるため。 |
-| **ショッピングカート、通知バッジ** | **Signals (Global)** | 複数のコンポーネント (ヘッダーと商品一覧など) で状態を共有するため。 |
-| **ページ遷移 (リンク)** | **Turbo Drive** | JS で状態管理するよりも、URL を変えて新しい HTML を取得する方がシンプルで堅牢。 |
+| **Displaying data fetched from DB** | **Props** | It is a value determined by the server and does not need to change on the client. |
+| **Form input values, toggle buttons** | **Signals** | Changes frequently by user operation and needs to be reflected in UI instantly. |
+| **Shopping cart, notification badge** | **Signals (Global)** | To share state across multiple components (e.g., header and product list). |
+| **Page transition (Link)** | **Turbo Drive** | Changing URL and fetching new HTML is simpler and more robust than managing state with JS. |
 
-**結論**:
-*   **Props** で初期状態を作り、
-*   **Signals** で動きをつけ、
-*   **Turbo** でページを繋ぐ。
+**Conclusion**:
+*   **Props** for initial state,
+*   **Signals** for interactivity,
+*   **Turbo** for navigation.
 
-これが Salvia の "Golden Triangle" です。
+This is Salvia's "Golden Triangle".
