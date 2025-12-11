@@ -479,3 +479,32 @@ The Sinatra example app (Todo list with Tailwind) works correctly with SSR and J
 - Verified Sinatra example app (`examples/sinatra_app`) works correctly with the refactored code.
 - SSR output is correct.
 - Server starts without errors.
+
+## Refactoring and Organization (2025-12-11 Part 2)
+
+### 1. Library Structure Organization
+To improve maintainability and follow standard Ruby gem structure, the `lib/salvia` directory has been further organized:
+
+- **Core Components (`lib/salvia/core/`)**:
+  - `configuration.rb`: Extracted `Salvia::Configuration` to `Salvia::Core::Configuration`.
+  - `error.rb`: Extracted `Salvia::Error` to `Salvia::Core::Error`.
+  - `import_map.rb`: Handles `deno.json` parsing and import map generation.
+  - `path_resolver.rb`: Handles path resolution logic.
+
+- **Server Components (`lib/salvia/server/`)**:
+  - `dev_server.rb`: Rack middleware for JIT compilation.
+  - `sidecar.rb`: Manages the Deno sidecar process.
+  - `sidecar.ts`: The Deno script running in the sidecar.
+
+- **Compiler Adapters (`lib/salvia/compiler/`)**:
+  - `adapters/deno_sidecar.rb`: Adapter for the Deno sidecar.
+
+- **Main Entry Point (`lib/salvia.rb`)**:
+  - Updated to use `Salvia::Core::Configuration` and alias `Salvia::Error` to `Salvia::Core::Error` for backward compatibility.
+  - Uses `Zeitwerk` for autoloading.
+
+### 2. Verification
+- **Sinatra Example App**:
+  - Verified that the refactored library works correctly with the Sinatra example app.
+  - SSR rendering works as expected.
+  - `Salvia.config` correctly delegates to `Salvia::Core::Configuration`.
