@@ -13,6 +13,18 @@
 import * as esbuild from "https://deno.land/x/esbuild@v0.24.2/mod.js";
 import { denoPlugins } from "jsr:@luca/esbuild-deno-loader@0.11";
 
+// Resolve deno.json relative to this script
+let CONFIG_PATH = new URL("./deno.json", import.meta.url).pathname;
+
+// Check for user config in project root
+const USER_CONFIG_PATH = `${Deno.cwd()}/salvia/deno.json`;
+try {
+  await Deno.stat(USER_CONFIG_PATH);
+  CONFIG_PATH = USER_CONFIG_PATH;
+} catch {
+  // User config not found, use internal one
+}
+
 // When running via `deno task --config salvia/deno.json`, CWD is usually the project root.
 // But if running from inside salvia/, it's different.
 const ROOT_DIR = Deno.cwd().endsWith("/salvia") ? "." : "salvia";
@@ -133,7 +145,7 @@ export default {}; // Ensure it's a module
         format: "iife",
         outfile: `${SSR_OUTPUT_DIR}/ssr_bundle.js`,
         platform: "neutral",
-        plugins: [...denoPlugins({ configPath: `${Deno.cwd()}/deno.json` })],
+        plugins: [...denoPlugins({ configPath: CONFIG_PATH })],
         external: [],
         jsx: "automatic",
         jsxImportSource: "preact",
@@ -179,7 +191,7 @@ export function mount(element, props, options) {
         format: "esm",
         outdir: CLIENT_OUTPUT_DIR,
         platform: "browser",
-        plugins: [...denoPlugins({ configPath: `${Deno.cwd()}/deno.json` })],
+        plugins: [...denoPlugins({ configPath: CONFIG_PATH })],
         external: ["preact", "preact/hooks", "preact/jsx-runtime"],
         jsx: "automatic",
         jsxImportSource: "preact",

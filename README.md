@@ -43,7 +43,7 @@ Run the interactive installer to set up Salvia for your Rails project:
 $ bundle exec salvia install
 ```
 
-This creates the `salvia/` directory structure and configures your app.
+This creates the `salvia/` directory structure and configures your app with a **Zero Config** setup (Preact + Signals).
 
 ### 2. Create a Page (Server Component)
 

@@ -17,22 +17,14 @@ module Salvia
       say "===================", :bold
       say ""
 
-      # 1. Select Frontend Framework
-      frontend = ask("1. Which frontend framework do you want to use?", :yellow, limited_to: ["preact", "react", "vue", "solid", "hono"], default: "preact")
-      
-      if frontend != "preact"
-        say "⚠️  Currently only Preact is fully supported in v0.1.0. Falling back to Preact.", :red
-        frontend = "preact"
-      end
+      # 1. Backend Framework
+      backend = ask("1. Which backend framework are you using?", :yellow, limited_to: ["sinatra", "rails", "hanami", "other"], default: "sinatra")
 
-      # 2. Select Backend Framework
-      backend = ask("2. Which backend framework are you using?", :yellow, limited_to: ["sinatra", "rails", "hanami", "other"], default: "sinatra")
-
-      # 3. Tailwind CSS
-      install_tailwind = yes?("3. Do you want to install Tailwind CSS (via tailwindcss-ruby)? (y/N)", :yellow)
+      # 2. Tailwind CSS
+      install_tailwind = yes?("2. Do you want to install Tailwind CSS (via tailwindcss-ruby)? (y/N)", :yellow)
 
       say ""
-      say "🚀 Installing Salvia with #{frontend} for #{backend}...", :green
+      say "🚀 Installing Salvia (Preact + Signals) for #{backend}...", :green
       say ""
 
       # Create directories
@@ -46,10 +38,6 @@ module Salvia
       # Copy files
       # Note: source_root is 'salvia/', so paths are relative to that
       copy_file "assets/scripts/deno.json", "salvia/deno.json"
-      copy_file "assets/scripts/build.ts", "salvia/build.ts"
-      copy_file "assets/scripts/sidecar.ts", "salvia/sidecar.ts"
-      copy_file "assets/scripts/vendor_setup.ts", "salvia/vendor_setup.ts"
-      copy_file "assets/javascripts/islands.js", "public/assets/javascripts/islands.js"
       
       create_file "salvia/.gitignore", "/server/\n"
 
@@ -103,16 +91,11 @@ module Salvia
         say "   - app/assets/stylesheets/ : Tailwind CSS entry point created (v4)"
       end
 
-      chmod "salvia/build.ts", 0755
-      chmod "salvia/sidecar.ts", 0755
-
       say ""
       say "✅ Salvia SSR installed!", :green
       say "   - salvia/app/islands/    : Put your interactive Island components here"
       say "   - salvia/app/pages/      : Put your static Server Components here (JS-free)"
       say "   - salvia/app/components/ : Put your shared/static components here"
-      say "   - salvia/build.ts        : Build script"
-      say "   - salvia/deno.json       : Deno configuration"
       say ""
       say "Next steps:", :yellow
       say "  1. Install Deno: https://deno.land"
@@ -132,8 +115,11 @@ module Salvia
       
       say "🏝️  Building Island components...", :green
       
-      # Use deno task defined in salvia/deno.json
-      cmd = "deno task --config salvia/deno.json build"
+      # Use internal build script
+      build_script = File.expand_path("../../../assets/scripts/build.ts", __FILE__)
+      config_path = File.expand_path("../../../assets/scripts/deno.json", __FILE__)
+      
+      cmd = "deno run --allow-all --config #{config_path} #{build_script}"
       cmd += " --verbose" if options[:verbose]
       
       success = system(cmd)
@@ -142,7 +128,6 @@ module Salvia
         say "✅ SSR build completed!", :green
       else
         say "❌ SSR build failed", :red
-        say "Make sure you have run 'salvia install' and have a salvia/deno.json file.", :yellow
         exit 1
       end
     end
@@ -154,7 +139,11 @@ module Salvia
       
       say "👀 Watching Island components...", :green
       
-      cmd = "deno task --config salvia/deno.json watch"
+      # Use internal build script
+      build_script = File.expand_path("../../../assets/scripts/build.ts", __FILE__)
+      config_path = File.expand_path("../../../assets/scripts/deno.json", __FILE__)
+      
+      cmd = "deno run --allow-all --config #{config_path} #{build_script} --watch"
       cmd += " --verbose" if options[:verbose]
       
       exec cmd

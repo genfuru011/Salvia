@@ -164,17 +164,15 @@ module Salvia
       end
       
       def load_vendor_bundle!
-        vendor_path = File.join(Salvia.root, "salvia/vendor_setup.ts")
-        unless File.exist?(vendor_path)
-          vendor_path = File.join(Salvia.root, "vendor_setup.ts")
-        end
-
+        # Use internal vendor_setup.ts for Zero Config
+        vendor_path = File.expand_path("../../../assets/scripts/vendor_setup.ts", __dir__)
+        
         if File.exist?(vendor_path)
           code = Salvia::Compiler.bundle(vendor_path, format: "iife")
           eval_js(code)
-          log_info("Loaded Vendor bundle (JIT)")
+          log_info("Loaded Vendor bundle (Internal)")
         else
-          log_warn("vendor_setup.ts not found. JIT mode might fail.")
+          log_error("Internal vendor_setup.ts not found at #{vendor_path}")
         end
       rescue => e
         log_error("Failed to load vendor bundle: #{e.message}")

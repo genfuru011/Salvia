@@ -10,7 +10,14 @@ module Salvia
         @ssr_bundle_path = "salvia/server/ssr_bundle.js"
         @islands_dir = "salvia/app/islands"
         @build_dir = "public/assets"
-        @deno_config_path = "salvia/deno.json"
+        
+        user_deno_json = File.join(@root, "salvia/deno.json")
+        if File.exist?(user_deno_json)
+          @deno_config_path = user_deno_json
+        else
+          @deno_config_path = File.expand_path("../../../assets/scripts/deno.json", __dir__)
+        end
+        
         @island_inspector = nil
       end
 

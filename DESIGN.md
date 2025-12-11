@@ -36,8 +36,6 @@ my_app/
 │   └── models/
 ├── config/                # Rails/Sinatra Config
 ├── salvia/                # Frontend Root (Deno/TypeScript)
-│   ├── deno.json          # Import Map & Dependencies
-│   ├── vendor_setup.ts    # Bridge for SSR Global Scope
 │   └── app/
 │       ├── pages/         # Server Components (Entry Points)
 │       │   └── Home.tsx
@@ -48,47 +46,36 @@ my_app/
 └── public/                # Static Assets
 ```
 
-## 4. Unified Import Management (The "One Config" Strategy)
+## 4. Zero Config Architecture (Internalized Complexity)
 
-Salvia v0.2.0 introduces a unified way to manage frontend dependencies using `deno.json`. This single file controls imports for:
+Salvia v0.2.0 adopts a **Zero Config** philosophy, inspired by Next.js and Fresh.
+
+### Internalized Configuration
+Previously exposed configuration files like `deno.json` and `vendor_setup.ts` are now internalized within the Salvia gem. This means:
+
+1.  **No Boilerplate**: You don't need to manage complex build configurations or import maps.
+2.  **Preact Only**: Salvia is opinionated and strictly enforces a Preact + Signals architecture for maximum performance and compatibility.
+3.  **Automatic Import Maps**: Salvia automatically generates Import Maps for the browser based on its internal configuration, ensuring that `preact`, `preact/hooks`, and `@preact/signals` just work.
+
+### How it works under the hood
+
+Although hidden from the user, Salvia still uses `deno.json` internally to manage dependencies:
+
 1.  **Browser (Client-side)**: Via Import Maps generated in HTML.
-2.  **SSR (Server-side)**: Via Deno/QuickJS module resolution.
+2.  **SSR (Server-side)**: Via Deno/QuickJS module resolution using the internal `deno.json`.
 3.  **Type Checking**: Via Deno's native TypeScript support.
-
-### How it works
-
-You define your dependencies in `salvia/deno.json`. Salvia is opinionated and comes pre-configured with **Preact** and **Signals**.
-
-```json
-{
-  "imports": {
-    // Preact & Signals (Standard)
-    "preact": "npm:preact@10.19.3",
-    "preact/hooks": "npm:preact@10.19.3/hooks",
-    "preact/jsx-runtime": "npm:preact@10.19.3/jsx-runtime",
-    "preact-render-to-string": "npm:preact-render-to-string@6.3.1",
-    "@preact/signals": "npm:@preact/signals@1.2.2",
-
-    // Other Libraries
-    "uuid": "npm:uuid@9.0.1",
-    "canvas-confetti": "npm:canvas-confetti@1.9.2"
-  }
-}
-```
 
 **Key Concepts:**
 
 *   **Preact First**: Salvia is built on Preact for its lightweight nature and powerful Signals architecture.
-*   **`npm:` specifiers**: Deno uses these to fetch packages from npm. Salvia automatically converts these to `https://esm.sh/...` URLs when generating the Import Map for the browser, ensuring browser compatibility without a build step.
+*   **`npm:` specifiers**: Deno uses these to fetch packages from npm. Salvia automatically converts these to `https://esm.sh/...` URLs when generating the Import Map for the browser.
 
 ### `vendor_setup.ts` (The Bridge)
 
-To make these ESM modules available to the QuickJS SSR engine (which doesn't natively support `npm:` imports or complex module resolution), we use a bridge file called `salvia/vendor_setup.ts`.
-
-This file imports Preact and Signals and exposes them to the global scope for QuickJS.
+To make ESM modules available to the QuickJS SSR engine, Salvia uses an internal bridge file called `vendor_setup.ts`. This file imports Preact and Signals and exposes them to the global scope for QuickJS.
 
 ```typescript
-// salvia/vendor_setup.ts
+// Internal vendor_setup.ts
 import { h, Fragment } from "preact";
 import * as preact from "preact";
 import * as hooks from "preact/hooks";
@@ -101,14 +88,9 @@ import { renderToString } from "preact-render-to-string";
 (globalThis as any).PreactSignals = signals;
 (globalThis as any).renderToString = renderToString;
 (globalThis as any).h = h;
-
-// Setup other globals if needed
-import { v4 as uuidv4 } from "uuid";
-(globalThis as any).uuidv4 = uuidv4;
 ```
 
-**Why is this necessary?**
-QuickJS is a lightweight engine. By bundling `vendor_setup.ts` using Deno (which understands `npm:` and `deno.json`), we create a single self-contained JavaScript file (`vendor.js`) that contains all your dependencies. QuickJS simply loads this file, and *boom*, `h` and `renderToString` are available globally.
+This ensures that `h` and `renderToString` are always available globally in your SSR environment without any setup.
 
 ## 5. JIT Compilation & The Sidecar
 

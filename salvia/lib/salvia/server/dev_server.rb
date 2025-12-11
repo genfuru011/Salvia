@@ -26,6 +26,11 @@ module Salvia
       # /salvia/assets/islands/Counter.js -> islands/Counter.tsx
       path_info = request.path.sub("/salvia/assets/", "")
       
+      # Special handling for islands.js (Client Entry)
+      if path_info == "javascripts/islands.js"
+        return serve_islands_js
+      end
+      
       # Remove .js extension to find source
       base_name = path_info.sub(/\.js$/, "")
       
@@ -56,6 +61,22 @@ module Salvia
     
     def resolve_source_path(name)
       Salvia::Core::PathResolver.resolve(name)
+    end
+
+    def serve_islands_js
+      # Check user's islands.js
+      user_path = File.join(Salvia.root, "salvia/assets/javascripts/islands.js")
+      if File.exist?(user_path)
+        return [200, { "content-type" => "application/javascript" }, [File.read(user_path)]]
+      end
+      
+      # Fallback to internal islands.js
+      internal_path = File.expand_path("../../../assets/javascripts/islands.js", __dir__)
+      if File.exist?(internal_path)
+        return [200, { "content-type" => "application/javascript" }, [File.read(internal_path)]]
+      end
+      
+      [404, { "content-type" => "text/plain" }, ["islands.js not found"]]
     end
     end
   end

@@ -29,15 +29,7 @@ module Salvia
     private
 
     def find_deno_json
-      # Check salvia/deno.json
-      path = File.join(Salvia.root, "salvia", "deno.json")
-      return path if File.exist?(path)
-
-      # Check root deno.json
-      path = File.join(Salvia.root, "deno.json")
-      return path if File.exist?(path)
-
-      nil
+      Salvia.config.deno_config_path
     end
     end
   end
