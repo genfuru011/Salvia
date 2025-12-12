@@ -290,30 +290,6 @@ module Salvia
               __salvia_logs__ = [];
               return JSON.stringify(logs);
             };
-            
-            // Enhanced DOM Shim for better compatibility
-            if (typeof globalThis.document === 'undefined') {
-              globalThis.document = {
-                createElement: function(tag) {
-                  return {
-                    tagName: tag.toUpperCase(),
-                    setAttribute: function() {},
-                    appendChild: function() {},
-                    style: {}
-                  };
-                },
-                head: { appendChild: function() {} },
-                body: { appendChild: function() {} },
-                getElementById: function() { return null; },
-                addEventListener: function() {}
-              };
-            }
-            if (typeof globalThis.window === 'undefined') {
-              globalThis.window = globalThis;
-            }
-            if (typeof globalThis.navigator === 'undefined') {
-              globalThis.navigator = { userAgent: 'SalviaSSR' };
-            }
           })();
         JS
       end

@@ -12,12 +12,20 @@ module Salvia
             globalThis.addEventListener = function() {};
             globalThis.removeEventListener = function() {};
             globalThis.document = {
-              createElement: function() { return {}; },
+              createElement: function(tag) {
+                return {
+                  tagName: tag ? tag.toUpperCase() : 'DIV',
+                  setAttribute: function() {},
+                  appendChild: function() {},
+                  style: {}
+                };
+              },
               createTextNode: function() { return {}; },
               addEventListener: function() { },
               removeEventListener: function() { },
-              head: {},
-              body: {},
+              head: { appendChild: function() {} },
+              body: { appendChild: function() {} },
+              getElementById: function() { return null; },
               documentElement: {
                 addEventListener: function() { },
                 removeEventListener: function() { }
