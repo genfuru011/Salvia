@@ -1,0 +1,15 @@
+{
+  "imports": {
+    "preact": "https://esm.sh/preact@10.19.6",
+    "preact/hooks": "https://esm.sh/preact@10.19.6/hooks",
+    "preact/jsx-runtime": "https://esm.sh/preact@10.19.6/jsx-runtime",
+    "preact-render-to-string": "https://esm.sh/preact-render-to-string@6.3.1?external=preact",
+    "@preact/signals": "https://esm.sh/@preact/signals@1.2.2?external=preact",
+    "@hotwired/turbo": "https://esm.sh/@hotwired/turbo@8.0.0",
+    "@/": "./app/"
+  },
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "jsxImportSource": "preact"
+  }
+}

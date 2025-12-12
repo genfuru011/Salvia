@@ -1,0 +1,2 @@
+// Salvia Client Islands - Generated at 2025-12-12T13:51:36.719Z
+import{useState as d}from"preact/hooks";import{jsx as c,jsxs as u}from"preact/jsx-runtime";function n({count:t=0}){let[o,e]=d(t);return u("div",{class:"p-4 border rounded-lg",children:[u("p",{class:"text-lg mb-2",children:["Count: ",o]}),c("button",{onClick:()=>e(o+1),class:"px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600",children:"Increment"})]})}import{h as m,hydrate as p,render as b}from"preact";function h(t,o,e){let r=m(n,o);e&&e.hydrate?p(r,t):b(r,t)}export{h as mount};

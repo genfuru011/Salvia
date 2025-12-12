@@ -1,0 +1,12 @@
+source "https://rubygems.org"
+
+gem "sage", path: "/Users/hiroto/Salvia/packages/sage" # Local path for dev, change to version in real app
+gem "salvia", path: "/Users/hiroto/Salvia/packages/salvia"
+gem "falcon"
+gem "async"
+gem "activerecord"
+gem "sqlite3"
+gem "rake"
+gem "tailwindcss-ruby"
+
+gem 'tailwindcss-ruby'

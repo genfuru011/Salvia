@@ -12,8 +12,12 @@ module Sage
       @params = params
     end
 
-    def body
-      @req.body.read
+    def body(content = nil)
+      if content
+        @res.write(content)
+      else
+        @req.body.read
+      end
     end
 
     def json(data)
