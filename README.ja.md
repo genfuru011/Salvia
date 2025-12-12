@@ -140,23 +140,23 @@ export default function Home() {
 }
 ```
 
-### 4. Turbo Drive (オプション)
+### 5. Turbo Drive (オプション)
 
 SalviaはTurbo Driveとシームレスに連携し、SPAのようなナビゲーションを実現します。
 
-レイアウトファイル (例: `app/pages/layouts/Main.tsx`) にTurboを追加します:
+レイアウトファイル (例: `salvia/app/pages/layouts/Main.tsx`) にTurboを追加します:
 
 ```tsx
 <head>
   {/* ... */}
   <script type="module">
-    import * as Turbo from "https://esm.sh/@hotwired/turbo@8.0.0";
+    import * as Turbo from "@hotwired/turbo";
     Turbo.start();
   </script>
 </head>
 ```
 
-このアプローチはImport Mapとブラウザネイティブモジュールを活用し、バンドルサイズを小さく保ち、アーキテクチャを透明にします。
+`deno.json` で依存関係を管理しているため、URLを直接書く必要はありません。
 
 ## コアコンセプト: Pages vs Islands
 
