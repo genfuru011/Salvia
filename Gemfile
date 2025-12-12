@@ -5,4 +5,6 @@ gem "sage", path: "./packages/sage"
 
 group :development do
   gem "rake"
+  gem "minitest"
+  gem "rack-test"
 end

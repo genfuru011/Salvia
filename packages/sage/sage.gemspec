@@ -27,4 +27,7 @@ Gem::Specification.new do |spec|
 
   spec.add_dependency "falcon"
   spec.add_dependency "async"
+  spec.add_dependency "rack"
+  spec.add_development_dependency "rack-test"
+  spec.add_development_dependency "minitest"
 end
