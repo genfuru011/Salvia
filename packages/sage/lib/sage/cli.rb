@@ -28,7 +28,7 @@ module Sage
     end
     
     desc "server", "Start the Sage server"
-    method_option :port, aliases: "-p", default: 3000, desc: "Port to listen on"
+    method_option :port, aliases: "-p", type: :numeric, default: 3000, desc: "Port to listen on"
     def server
       require "sage"
       
@@ -43,6 +43,53 @@ module Sage
       
       port = options[:port].to_i
       Sage::Server.new(App.new).start(port: port)
+    end
+
+    desc "dev", "Start the Sage server in development mode with live reloading"
+    method_option :port, aliases: "-p", type: :numeric, default: 3000, desc: "Port to listen on"
+    def dev
+      require "listen"
+      
+      port = options[:port]
+      
+      say "🌿 Starting Sage development server...", :green
+      
+      # Function to start the server
+      start_server = proc do
+        pid = spawn("bundle exec sage server -p #{port}")
+        Process.detach(pid)
+        pid
+      end
+      
+      server_pid = start_server.call
+      
+      # Directories to watch
+      directories = ["app", "config", "lib"].select { |d| File.directory?(d) }
+      
+      listener = Listen.to(*directories, only: /\.rb$/) do |modified, added, removed|
+        say "🔄 File changed, restarting server...", :yellow
+        begin
+          Process.kill("TERM", server_pid)
+          Process.wait(server_pid)
+        rescue Errno::ESRCH, Errno::ECHILD
+          # Process already dead
+        end
+        server_pid = start_server.call
+      end
+      
+      listener.start
+      
+      # Handle Ctrl+C
+      trap("INT") do
+        listener.stop
+        begin
+          Process.kill("TERM", server_pid) if server_pid
+        rescue Errno::ESRCH
+        end
+        exit
+      end
+      
+      sleep
     end
   end
 end
