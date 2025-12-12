@@ -20,8 +20,10 @@ module Salvia
       # 1. Backend Framework
       backend = if File.exist?("bin/rails") || File.exist?("config/application.rb")
                   "rails"
+                elsif (File.read("Gemfile").include?('gem "sage"') rescue false)
+                  "sage"
                 else
-                  "other"
+                  ask_framework
                 end
 
       # 2. Tailwind CSS
@@ -65,6 +67,18 @@ module Salvia
           RUBY
         end
         say "   - Created config/initializers/salvia.rb"
+      when "sage"
+        create_file "config/salvia.rb" do
+          <<~RUBY
+            Salvia.configure do |config|
+              config.islands_dir = File.join(Dir.pwd, "salvia/app/islands")
+              config.build_dir = File.join(Dir.pwd, "public/assets")
+              config.ssr_bundle_path = File.join(Dir.pwd, "salvia/server/ssr_bundle.js")
+            end
+          RUBY
+        end
+        say "   - Created config/salvia.rb"
+        say "   - Please require this file in your app.rb: require_relative 'config/salvia'"
       end
 
       # Tailwind CSS Setup
@@ -214,6 +228,16 @@ module Salvia
         say "❌ Deno is not installed.", :red
         say "Please install Deno: https://deno.land", :yellow
         exit 1
+      end
+    end
+
+    def ask_framework
+      say "Which framework are you using?", :yellow
+      framework = ask("1. Rails\n2. Sage\n3. Other\n> ")
+      case framework
+      when "1", "rails" then "rails"
+      when "2", "sage" then "sage"
+      else "other"
       end
     end
   end

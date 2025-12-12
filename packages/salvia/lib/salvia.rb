@@ -67,3 +67,9 @@ module Salvia
 end
 
 require "salvia/railtie" if defined?(Rails)
+
+# Auto-detect Sage
+if defined?(Sage)
+  require "salvia/adapters/sage"
+  Salvia::Adapters::Sage.setup
+end
