@@ -6,6 +6,7 @@
     "preact-render-to-string": "https://esm.sh/preact-render-to-string@6.3.1?external=preact",
     "@preact/signals": "https://esm.sh/@preact/signals@1.2.2?external=preact",
     "@hotwired/turbo": "https://esm.sh/@hotwired/turbo@8.0.0",
+    "sage/script": "./app/components/Script.tsx",
     "@/": "./app/"
   },
   "compilerOptions": {

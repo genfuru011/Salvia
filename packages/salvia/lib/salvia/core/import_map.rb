@@ -82,10 +82,22 @@ module Salvia
               # We map it to /salvia/ + path without leading ./
               "/salvia/" + v.sub(/^\.\//, "")
             else
-              # In production, assets are compiled.
-              # This part is tricky without a full manifest for all files.
-              # For now, let's assume standard structure.
-              "/assets/" + v.sub(/^\.\//, "")
+              # In production, check manifest first
+              filename = File.basename(v, ".*")
+              manifest_path = File.join(Salvia.root, "salvia/server/manifest.json")
+              
+              mapped_path = nil
+              if File.exist?(manifest_path)
+                begin
+                  manifest = JSON.parse(File.read(manifest_path))
+                  if manifest[filename] && manifest[filename]["file"]
+                    mapped_path = "/assets/islands/" + manifest[filename]["file"]
+                  end
+                rescue JSON::ParserError
+                end
+              end
+              
+              mapped_path || "/assets/" + v.sub(/^\.\//, "")
             end
           else
             v

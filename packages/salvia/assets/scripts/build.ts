@@ -89,6 +89,7 @@ async function findIslandFiles(): Promise<IslandFile[]> {
 
   await scan(ISLANDS_DIR, false);
   await scan(PAGES_DIR, true);
+  await scan(COMPONENTS_DIR, false);
 
   if (files.length === 0) {
     console.log("📁 No components found in app/islands or app/pages.");

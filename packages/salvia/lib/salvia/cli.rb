@@ -46,6 +46,7 @@ module Salvia
       # Note: source_root is 'salvia/', so paths are relative to that
       copy_file "assets/scripts/deno.json", "salvia/deno.json"
       copy_file "assets/components/Island.tsx", "salvia/app/components/Island.tsx"
+      copy_file "assets/components/Script.tsx", "salvia/app/components/Script.tsx"
       copy_file "assets/islands/Counter.tsx", "salvia/app/islands/Counter.tsx"
       copy_file "assets/pages/Home.tsx", "salvia/app/pages/Home.tsx"
       

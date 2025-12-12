@@ -40,11 +40,6 @@ module Salvia
         return serve_islands_js
       end
 
-      # Special handling for internal components
-      if path_info.start_with?("components/")
-        return serve_internal_component(path_info)
-      end
-      
       # Remove extension to find source (supports .js, .tsx, .ts, .jsx)
       # Also handle requests without extension (from import map resolution)
       base_name = path_info.sub(/\.(js|tsx|ts|jsx)$/, "")
@@ -96,32 +91,6 @@ module Salvia
       end
       
       [404, { "content-type" => "text/plain" }, ["islands.js not found"]]
-    end
-
-    def serve_internal_component(path_info)
-      # components/Script.tsx -> packages/salvia/lib/salvia/server/components/Script.tsx
-      component_name = path_info.sub("components/", "")
-      
-      # Fix path resolution: __dir__ is lib/salvia/server, so ../components is lib/salvia/components
-      # But we created it in lib/salvia/server/components
-      internal_path = File.expand_path("components/#{component_name}", __dir__)
-      
-      unless File.exist?(internal_path)
-        return [404, { "content-type" => "text/plain" }, ["Component not found: #{component_name} (Path: #{internal_path})"]]
-      end
-
-      begin
-        externals = Salvia::Core::ImportMap.new.keys
-        js_code = Salvia::Compiler.bundle(
-          internal_path, 
-          externals: externals.uniq,
-          format: "esm"
-        )
-        [200, { "content-type" => "application/javascript" }, [js_code]]
-      rescue => e
-        [500, { "content-type" => "text/plain" }, ["Build Error: #{e.message}"]]
-      end
-    end
     end
   end
 end
