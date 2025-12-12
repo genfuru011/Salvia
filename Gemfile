@@ -7,4 +7,6 @@ group :development do
   gem "rake"
   gem "minitest"
   gem "rack-test"
+  gem "activerecord"
+  gem "sqlite3"
 end

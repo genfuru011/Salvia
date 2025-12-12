@@ -1,0 +1,9 @@
+source "https://rubygems.org"
+
+gem "sage", path: "<%= File.expand_path('../../..', __dir__) %>" # Local path for dev, change to version in real app
+gem "salvia", path: "<%= File.expand_path('../../../salvia', __dir__) %>"
+gem "falcon"
+gem "async"
+gem "activerecord"
+gem "sqlite3"
+gem "rake"

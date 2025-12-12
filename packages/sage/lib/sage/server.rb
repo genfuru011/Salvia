@@ -1,6 +1,7 @@
 require "async"
 require "falcon"
 require "falcon/server"
+require "async/http/endpoint"
 
 module Sage
   class Server
