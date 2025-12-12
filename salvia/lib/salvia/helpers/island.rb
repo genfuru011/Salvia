@@ -57,6 +57,16 @@ module Salvia
                        end
         default_map["imports"]["@/islands/"] = islands_path
 
+        # Production: Map specific islands to hashed filenames from manifest
+        if defined?(Salvia.env) && Salvia.env != "development"
+          manifest = Island.load_manifest
+          manifest.each do |name, info|
+            if info["file"]
+              default_map["imports"]["@/islands/#{name}"] = File.join(islands_path, info["file"])
+            end
+          end
+        end
+
         # deno.json から imports を読み込む
         begin
           deno_json_path = File.join(Salvia.root, "salvia/deno.json")

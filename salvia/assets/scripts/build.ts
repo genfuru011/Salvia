@@ -202,7 +202,7 @@ export function mount(element, props, options) {
     }
 
     try {
-      await esbuild.build({
+      const result = await esbuild.build({
         entryPoints: clientEntryPoints,
         bundle: true,
         format: "esm",
@@ -213,10 +213,51 @@ export function mount(element, props, options) {
         jsx: "automatic",
         jsxImportSource: "preact",
         minify: true,
+        entryNames: "[name]-[hash]",
+        metafile: true,
         banner: {
           js: `// Salvia Client Islands - Generated at ${new Date().toISOString()}`,
         },
       });
+
+      // Parse metafile to map original names to hashed filenames
+      const outputs = result.metafile?.outputs || {};
+      const fileMap: Record<string, string> = {};
+      
+      for (const [path, _info] of Object.entries(outputs)) {
+        // path is like "salvia/../public/assets/islands/Counter-HASH.js"
+        // We need to extract "Counter" and the filename "Counter-HASH.js"
+        const filename = path.split("/").pop();
+        if (!filename) continue;
+        
+        // Check if this is one of our entry points
+        for (const entry of clientEntryPoints) {
+          // entry.out is "Counter"
+          // filename starts with "Counter-" and ends with ".js"
+          if (filename.startsWith(`${entry.out}-`) && filename.endsWith(".js")) {
+            fileMap[entry.out] = filename;
+            break;
+          }
+        }
+      }
+
+      // Generate manifest (which Islands are client only + file paths)
+      const manifest = Object.fromEntries(
+        islandFiles.map(f => [
+          f.name, 
+          { 
+            clientOnly: f.clientOnly, 
+            serverOnly: f.isPage,
+            file: fileMap[f.name] // Add hashed filename if available
+          }
+        ])
+      );
+      await Deno.writeTextFile(
+        `${SSR_OUTPUT_DIR}/manifest.json`,
+        JSON.stringify(manifest, null, 2)
+      );
+      console.log(`✅ Manifest generated: ${SSR_OUTPUT_DIR}/manifest.json`);
+
     } finally {
       // Clean up temp files
       for (const entry of clientEntryPoints) {
@@ -229,16 +270,6 @@ export function mount(element, props, options) {
     }
     
     console.log(`✅ Client Islands built: ${CLIENT_OUTPUT_DIR}/ (${clientFiles.map(f => f.name).join(", ")})`);
-
-    // Generate manifest (which Islands are client only)
-    const manifest = Object.fromEntries(
-      islandFiles.map(f => [f.name, { clientOnly: f.clientOnly, serverOnly: f.isPage }])
-    );
-    await Deno.writeTextFile(
-      `${SSR_OUTPUT_DIR}/manifest.json`,
-      JSON.stringify(manifest, null, 2)
-    );
-    console.log(`✅ Manifest generated: ${SSR_OUTPUT_DIR}/manifest.json`);
 
     // Copy islands.js loader
     try {
