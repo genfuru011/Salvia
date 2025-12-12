@@ -15,21 +15,13 @@ module Salvia
         @last_build_error = nil
         @development = options.fetch(:development, true)
         
-        @vm = ::Quickjs::VM.new
-        
-        load_console_shim!
-        
-        if @development
-          load_vendor_bundle!
-        else
-          load_ssr_bundle!
-        end
+        # VM initialization is deferred to thread-local access
         
         mark_initialized!
       end
       
       def shutdown!
-        @vm = nil
+        Thread.current[:salvia_quickjs_vm] = nil
         @js_logs = []
         @initialized = false
         Salvia::Compiler.shutdown if @development
@@ -49,7 +41,20 @@ module Salvia
       private
 
       def vm
-        @vm
+        Thread.current[:salvia_quickjs_vm] ||= create_thread_local_vm
+      end
+
+      def create_thread_local_vm
+        new_vm = ::Quickjs::VM.new
+        load_console_shim!(new_vm)
+        
+        if @development
+          load_vendor_bundle!(new_vm)
+        else
+          load_ssr_bundle!(new_vm)
+        end
+        
+        new_vm
       end
 
       def render_jit(component_name, props)
@@ -148,7 +153,7 @@ module Salvia
       end
 
       def eval_js(code)
-        result = @vm.eval_code(code)
+        result = vm.eval_code(code)
         process_console_output
         result
       rescue => e
@@ -156,21 +161,21 @@ module Salvia
         raise e
       end
       
-      def load_console_shim!
+      def load_console_shim!(target_vm)
         shim = generate_console_shim
-        @vm.eval_code(shim)
-        @vm.eval_code(Salvia::SSR::DomMock.generate_shim)
+        target_vm.eval_code(shim)
+        target_vm.eval_code(Salvia::SSR::DomMock.generate_shim)
       rescue => e
         log_error("Failed to load console shim: #{e.message}")
       end
       
-      def load_vendor_bundle!
+      def load_vendor_bundle!(target_vm)
         # Use internal vendor_setup.ts for Zero Config
         vendor_path = File.expand_path("../../../assets/scripts/vendor_setup.ts", __dir__)
         
         if File.exist?(vendor_path)
           code = Salvia::Compiler.bundle(vendor_path, format: "iife")
-          eval_js(code)
+          target_vm.eval_code(code)
           log_info("Loaded Vendor bundle (Internal)")
         else
           log_error("Internal vendor_setup.ts not found at #{vendor_path}")
@@ -179,7 +184,7 @@ module Salvia
         log_error("Failed to load vendor bundle: #{e.message}")
       end
       
-      def load_ssr_bundle!
+      def load_ssr_bundle!(target_vm)
         bundle_path = options[:bundle_path] || default_bundle_path
         
         unless File.exist?(bundle_path)
@@ -187,7 +192,7 @@ module Salvia
         end
         
         bundle_content = File.read(bundle_path)
-        @vm.eval_code(bundle_content)
+        target_vm.eval_code(bundle_content)
         log_info("Loaded SSR bundle: #{bundle_path}")
       end
       
@@ -196,7 +201,7 @@ module Salvia
       end
       
       def process_console_output
-        logs_json = @vm.eval_code("globalThis.__salvia_flush_logs__()")
+        logs_json = vm.eval_code("globalThis.__salvia_flush_logs__()")
         return if logs_json.nil? || logs_json.empty?
         
         begin
