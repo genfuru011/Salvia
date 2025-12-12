@@ -8,7 +8,7 @@ Salviaは、Ruby on RailsのERBを **JSX/TSX** に置き換えるために設計
 
 ## ビジョン: Sageへの道
 
-Salviaは、将来のMVCフレームワーク **Sage** のためのコアエンジンです。
+Salviaは、将来のフレームワーク **Sage** (Express, Hono, Oakライクな設計) のためのコアエンジンです。
 Sageは完全なスタンドアロンフレームワークになりますが、Salviaは **Ruby on Rails** のView層のドロップイン代替品として *今日から* 利用可能です。
 
 ## 特徴

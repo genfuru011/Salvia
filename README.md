@@ -8,7 +8,7 @@ Salvia is a next-generation **Server-Side Rendering (SSR) engine** designed to r
 
 ## Vision: The Road to Sage
 
-Salvia is the core engine for a future MVC framework called **Sage**.
+Salvia is the core engine for a future framework called **Sage** (inspired by Express, Hono, and Oak).
 While Sage will be a complete standalone framework, Salvia is available *today* as a drop-in replacement for the View layer in **Ruby on Rails**.
 
 ## Features
