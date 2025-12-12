@@ -19,3 +19,13 @@ All notable changes to this project will be documented in this file.
 - Fixed an issue where `externals` were hardcoded in the build script.
 - Fixed an issue where Sidecar startup errors were swallowed by timeout exceptions.
 - Fixed an issue where CSS was not built during the `salvia build` process.
+
+## [0.1.0] - 2025-12-08
+
+### Added
+- **Initial Release**: Introduced Salvia as a next-generation SSR engine for Ruby on Rails.
+- **JSX/TSX Support**: Replace ERB views with modern TypeScript components.
+- **Islands Architecture**: Hydrate interactive components selectively using Preact.
+- **JIT Compilation**: "No Build" development experience powered by a Deno sidecar.
+- **QuickJS SSR**: Fast and safe server-side rendering within the Ruby process.
+- **Rails Integration**: Seamless integration with Rails controllers and routes via `ssr` helper.
