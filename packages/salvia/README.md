@@ -1,0 +1,260 @@
+# Salvia 🌿
+
+> **The Future of Rails View Layer**
+
+Salvia is a next-generation **Server-Side Rendering (SSR) engine** designed to replace ERB with **JSX/TSX** in Ruby on Rails. It brings the **Islands Architecture** and **True HTML First** philosophy to the Rails ecosystem.
+
+<img src="https://img.shields.io/gem/v/salvia?style=flat-square&color=ff6347" alt="Gem">
+
+## Vision: The Road to Sage
+
+Salvia is the core engine for a future framework called **Sage** (inspired by Express, Hono, and Oak).
+While Sage will be a complete standalone framework, Salvia is available *today* as a drop-in replacement for the View layer in **Ruby on Rails**.
+
+## Features
+
+*   🏝️ **Islands Architecture**: Render interactive components (Preact/React) only where needed. Zero JS for static content.
+*   🚀 **True HTML First**: Replace `app/views/**/*.erb` with `app/pages/**/*.tsx`.
+*   ⚡ **JIT Compilation**: No build steps during development. Just run `rails s`.
+*   💎 **Rails Native**: Seamless integration with Controllers, Routes, and Models.
+*   🦕 **Deno Powered**: Uses Deno for lightning-fast TypeScript compilation and formatting.
+
+## Requirements
+
+*   Ruby 3.1+
+*   Rails 7.0+ (Recommended)
+*   **Deno 1.30+** (Required for JIT compilation and tooling)
+
+## Installation
+
+### 1. Install Deno
+
+Salvia requires Deno. Follow the [official installation guide](https://deno.land/#installation).
+
+```bash
+# macOS / Linux
+$ curl -fsSL https://deno.land/x/install/install.sh | sh
+```
+
+### 2. Add Gem
+
+Add this line to your Rails application's Gemfile:
+
+```ruby
+gem 'salvia'
+```
+
+And then execute:
+
+```bash
+$ bundle install
+```
+
+## Getting Started
+
+### 1. Setup Salvia
+
+Run the interactive installer to set up Salvia for your Rails project:
+
+```bash
+$ bundle exec salvia install
+```
+
+This command will:
+1.  Create the `salvia/` directory structure.
+2.  Generate `deno.json` (Single Source of Truth for dependencies).
+3.  **Cache Deno dependencies** to ensure fast startup.
+4.  Configure Rails to automatically include `Salvia::Helpers` (providing the `ssr` method).
+
+#### Directory Structure
+
+```
+salvia/
+├── app/
+│   ├── components/  # Shared UI components (Buttons, Cards)
+│   ├── islands/     # Interactive components (Hydrated on client)
+│   └── pages/       # Server Components (SSR only, 0kb JS to client)
+└── deno.json        # Dependency management (Import Map)
+```
+
+### 2. Create a Page (Server Component)
+
+Delete `app/views/home/index.html.erb` and create `salvia/app/pages/home/Index.tsx`:
+
+```tsx
+import { h } from 'preact';
+
+export default function Home({ title }) {
+  return (
+    <div class="p-10">
+      <h1 class="text-3xl font-bold">{title}</h1>
+      <p>This is rendered on the server with 0kb JavaScript sent to the client.</p>
+    </div>
+  );
+}
+```
+
+### 3. Render in Controller (API Mode / Full Page SSR)
+
+In your Rails controller, use the `salvia_page` helper to render the component directly. This is the recommended "API Mode" or "Full Page SSR" approach, bypassing ERB entirely.
+
+```ruby
+class HomeController < ApplicationController
+  def index
+    # Renders salvia/app/pages/home/Index.tsx
+    # This returns a full HTML string including <!DOCTYPE html> and Import Maps
+    render html: salvia_page("home/Index", title: "Hello Salvia")
+  end
+end
+```
+
+> **Note**: The ERB helper `<%= island ... %>` is deprecated as of v0.2.0. We strongly recommend using the Controller-based rendering approach for a cleaner "True HTML First" architecture.
+
+### 4. Add Interactivity (Islands)
+
+Create an interactive component in `salvia/app/islands/Counter.tsx`:
+
+```tsx
+import { h } from 'preact';
+import { useState } from 'preact/hooks';
+
+export default function Counter() {
+  const [count, setCount] = useState(0);
+  return (
+    <button onClick={() => setCount(count + 1)} class="btn">
+      Count: {count}
+    </button>
+  );
+}
+```
+
+Use it in your Page:
+
+```tsx
+import Counter from '../../islands/Counter.tsx';
+
+export default function Home() {
+  return (
+    <div>
+      <h1>Interactive Island</h1>
+      <Counter />
+    </div>
+  );
+}
+```
+
+### 5. Turbo Drive (Optional)
+
+Salvia works seamlessly with Turbo Drive for SPA-like navigation.
+
+Add Turbo to your layout file (e.g., `salvia/app/pages/layouts/Main.tsx`):
+
+```tsx
+<head>
+  {/* ... */}
+  <script type="module">
+    import * as Turbo from "@hotwired/turbo";
+    Turbo.start();
+  </script>
+</head>
+```
+
+Since dependencies are managed in `deno.json`, you don't need to write full URLs.
+
+## Paradigm Shift: ERB vs JSX
+
+Salvia fundamentally changes how you build Views in Rails. Instead of mixing Ruby logic with HTML (ERB), you build pure components (JSX).
+
+| Feature | Traditional Rails (ERB) | Salvia (JSX/TSX) |
+| :--- | :--- | :--- |
+| **HTML Construction** | Ruby (`content_tag`, `render partial`) | **TSX (Preact)** |
+| **Layouts** | Ruby (`layout 'application'`) | **TSX (Layout Components)** |
+| **Links** | Ruby (`link_to`) | **TSX (`<a href="...">`)** |
+| **Forms** | Ruby (`form_with`) | **TSX (`<form>`)** |
+| **Data Passing** | Instance Variables (`@user`) | **Props (`user: @user`)** |
+
+## Core Concepts: Pages vs Islands
+
+Understanding the separation of concerns is crucial for "True HTML First" development.
+
+| Feature | **Pages (Server Components)** | **Islands (Client Components)** |
+| :--- | :--- | :--- |
+| **Path** | `salvia/app/pages/` | `salvia/app/islands/` |
+| **Environment** | Server (Ruby/QuickJS) | Client (Browser) |
+| **Interactivity** | ❌ Static HTML | ✅ Interactive (Event Listeners) |
+| **State** | ❌ Stateless | ✅ Stateful (Signals/Hooks) |
+| **Browser APIs** | ❌ No (`window`, `document` are mocked) | ✅ Yes |
+| **Usage** | Layouts, Initial Data Fetching | Forms, Modals, Dynamic UI |
+
+## Passing Rails Data to Components
+
+Since Salvia moves the View layer to TSX, you cannot use Rails helpers (like `link_to`, `form_with`, `image_tag`) directly inside your components. Instead, pass the necessary values (URLs, tokens, paths) as **Props** from your controller.
+
+### Example: Handling Forms & CSRF
+
+```ruby
+# app/controllers/sessions_controller.rb
+def new
+  render html: salvia_page("Login", 
+    # Pass CSRF token and form action URL
+    csrf_token: form_authenticity_token,
+    login_path: login_path
+  )
+end
+```
+
+```tsx
+// salvia/app/pages/Login.tsx
+export default function Login({ csrf_token, login_path }) {
+  return (
+    <form action={login_path} method="post">
+      <input type="hidden" name="authenticity_token" value={csrf_token} />
+      
+      <label>Email</label>
+      <input type="email" name="email" />
+      
+      <button type="submit">Log In</button>
+    </form>
+  );
+}
+```
+
+### Why this approach?
+This keeps your frontend (TSX) decoupled from the backend framework logic. Your components become pure functions that render UI based on data, making them easier to test and reuse.
+
+## Documentation
+
+*   **English**:
+    *   [**Wisdom for Salvia**](docs/en/DESIGN.md): Deep dive into the architecture, directory structure, and "True HTML First" philosophy.
+    *   [**Reference Guide**](docs/en/REFERENCE.md): Comprehensive guide on usage, API, and configuration.
+    *   [**Architecture**](docs/en/ARCHITECTURE.md): Internal design of the gem.
+*   **Japanese (日本語)**:
+    *   [**README**](README.ja.md): 日本語版README。
+
+## Framework Support
+
+Salvia is primarily designed for **Ruby on Rails** to pave the way for the **Sage** framework.
+
+*   **Ruby on Rails**: First-class support.
+
+## Zero Config Architecture
+
+Salvia v0.2.0 adopts a **Zero Config** philosophy.
+
+*   **`deno.json` is SSOT**: It manages dependencies for both Server (SSR) and Client (Browser).
+*   **Auto Import Map**: `npm:` specifiers in `deno.json` are automatically converted to `esm.sh` URLs for the browser.
+*   **No Build Config**: `build.ts` and `sidecar.ts` are managed internally, but you can extend globals via `salvia.globals` in `deno.json`.
+
+## Production & CI
+
+In production environments (e.g., Docker, Heroku, Render):
+
+1.  **Deno is required**: Ensure Deno is installed in your build/runtime environment.
+2.  **Build Step**: Run `bundle exec salvia build` during deployment.
+    *   This bundles Islands, generates Import Maps, and builds Tailwind CSS.
+    *   It generates hashed filenames for cache busting.
+    *   **Note**: While Salvia uses JIT compilation in development for a "No Build" experience, `salvia build` pre-compiles assets for production to ensure zero runtime compilation overhead.
+
+## License
+
+The gem is available as open source under the terms of the [MIT License](https://opensource.org/licenses/MIT).

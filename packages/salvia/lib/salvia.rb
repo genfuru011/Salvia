@@ -11,7 +11,8 @@ loader.ignore("#{__dir__}/salvia/version.rb")
 loader.inflector.inflect(
   "salvia" => "Salvia",
   "cli" => "CLI",
-  "ssr" => "SSR"
+  "ssr" => "SSR",
+  "quickjs" => "QuickJS"
 )
 loader.setup
 
