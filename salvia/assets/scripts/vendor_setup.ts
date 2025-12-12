@@ -23,3 +23,6 @@ import { renderToString } from "preact-render-to-string";
   if (moduleName === "preact-render-to-string") return { default: renderToString, renderToString };
   throw new Error("Module not found: " + moduleName);
 };
+
+// Shim for module.exports (used by sidecar global-externals)
+(globalThis as any).module = { exports: {} };

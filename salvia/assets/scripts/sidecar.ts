@@ -169,7 +169,8 @@ const handler = async (request: Request): Promise<Response> => {
 };
 
 const server = Deno.serve({ port: PORT }, handler);
-// Output the assigned port so Ruby can read it
+// Output JSON handshake for reliable parsing
+console.log(JSON.stringify({ port: server.addr.port, status: "ready" }));
 console.log(`[Deno Init] Listening on http://localhost:${server.addr.port}/`);
 
 // Handle cleanup on exit

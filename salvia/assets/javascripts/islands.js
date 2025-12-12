@@ -14,7 +14,8 @@ async function hydrateIsland(island) {
   
   try {
     // Use the import map alias which handles dev/prod paths
-    const module = await import(`@/islands/${name}.js`);
+    // We import without extension to let Import Map handle resolution (including hashing in prod)
+    const module = await import(`@/islands/${name}`);
     
     if (typeof module.mount === 'function') {
       module.mount(island, props, { hydrate: hasSSR });

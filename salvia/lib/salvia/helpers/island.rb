@@ -55,6 +55,7 @@ module Salvia
                        else
                          "/assets/islands/"
                        end
+        # Map @/islands/ to the directory, but specific files will be mapped below
         default_map["imports"]["@/islands/"] = islands_path
 
         # Production: Map specific islands to hashed filenames from manifest
@@ -62,16 +63,37 @@ module Salvia
           manifest = Island.load_manifest
           manifest.each do |name, info|
             if info["file"]
+              # Map "Counter" -> "Counter-HASH.js"
               default_map["imports"]["@/islands/#{name}"] = File.join(islands_path, info["file"])
             end
           end
+        else
+          # Development: Map "Counter" -> "Counter.js" (served by DevServer)
+          # This allows islands.js to import `@/islands/${name}` without extension
+          # and have it resolve correctly in both envs.
+          # We need to list all islands dynamically or use a pattern if supported (but import maps don't support patterns like that easily for this case without listing)
+          # For now, we rely on the fact that DevServer handles .js extension.
+          # But wait, if we import "Counter", browser looks for "Counter". DevServer needs to handle "Counter" request?
+          # Or we map "Counter" -> "Counter.js" here?
+          # Since we don't know all islands in dev without scanning, we can't map them one by one easily here without scanning.
+          # BUT, we can change islands.js to import without extension (done), 
+          # and here we can map the directory.
+          # If we map "@/islands/" -> "/salvia/assets/islands/", then import "@/islands/Counter" becomes "/salvia/assets/islands/Counter".
+          # DevServer needs to handle "/salvia/assets/islands/Counter" (no extension).
         end
 
         # deno.json から imports を読み込む
         begin
           deno_json_path = File.join(Salvia.root, "salvia/deno.json")
           if File.exist?(deno_json_path)
-            deno_config = JSON.parse(File.read(deno_json_path))
+            # キャッシュ機構: mtimeをチェックして変更があれば再読み込み
+            mtime = File.mtime(deno_json_path)
+            if @deno_json_cache.nil? || @deno_json_mtime != mtime
+              @deno_json_cache = JSON.parse(File.read(deno_json_path))
+              @deno_json_mtime = mtime
+            end
+            deno_config = @deno_json_cache
+
             if deno_config["imports"]
               # npm: スキームを https://esm.sh/ に変換してブラウザで使えるようにする
               imports = deno_config["imports"].transform_values do |v|
@@ -86,7 +108,10 @@ module Salvia
             end
           end
         rescue => e
-          # 読み込みエラー時は無視
+          # 読み込みエラー時はログ出力
+          if defined?(Salvia.logger)
+            Salvia.logger.warn("Failed to load deno.json: #{e.message}")
+          end
         end
 
         if additional_map.key?("imports")
@@ -200,8 +225,10 @@ module Salvia
       #
       # @param name [String] ページコンポーネント名 (例: "pages/Home")
       # @param props [Hash] プロパティ
+      # @param options [Hash] オプション
+      # @option options [Boolean] :doctype <!DOCTYPE html> を付与するか (デフォルト: true)
       # @return [String] 完全な HTML 文字列
-      def ssr(name, props = {})
+      def ssr(name, props = {}, options = {})
         # SSR で HTML を生成
         html = Salvia::SSR.render(name, props)
         
@@ -211,7 +238,11 @@ module Salvia
           html = html.sub("</head>", "#{import_map_html}</head>")
         end
         
-        result = "<!DOCTYPE html>\n" + html
+        result = html
+        if options.fetch(:doctype, true)
+          result = "<!DOCTYPE html>\n" + result
+        end
+        
         result.respond_to?(:html_safe) ? result.html_safe : result
       end
       

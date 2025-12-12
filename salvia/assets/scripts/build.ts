@@ -147,7 +147,9 @@ globalThis.SalviaSSR = {
     if (!Component) {
       throw new Error("Component not found: " + name);
     }
-    const vnode = h(Component, props);
+    // Handle default export if necessary
+    const Comp = Component.default || Component;
+    const vnode = h(Comp, props);
     return renderToString(vnode);
   }
 };

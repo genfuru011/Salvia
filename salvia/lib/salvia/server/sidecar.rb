@@ -15,35 +15,38 @@ module Salvia
     def initialize
       @pid = nil
       @port = nil
+      @mutex = Mutex.new
       at_exit { stop }
     end
 
     def start
-      return if running?
+      @mutex.synchronize do
+        return if running?
 
-      cmd = ["deno", "run", "--allow-all", SCRIPT_PATH]
-      
-      puts "🚀 Starting Salvia Sidecar..."
-      # Spawn process and capture stdout to find the port
-      # We use IO.popen to read the output stream
-      @io = IO.popen(cmd)
-      @pid = @io.pid
-      
-      # Wait for "Listening on http://localhost:PORT/"
-      wait_for_port
-      
-      # Detach so it runs in background, but we keep the IO open to read logs if needed
-      # Actually, for IO.popen, we shouldn't detach if we want to read from it.
-      # But we need to read in a non-blocking way or in a separate thread after finding the port.
-      
-      Thread.new do
-        begin
-          while line = @io.gets
-            # Forward Deno logs to stdout/logger
-            puts "[Deno] #{line}"
+        cmd = ["deno", "run", "--allow-net", "--allow-read", "--allow-env", SCRIPT_PATH]
+        
+        puts "🚀 Starting Salvia Sidecar..."
+        # Spawn process and capture stdout to find the port
+        # We use IO.popen to read the output stream
+        @io = IO.popen(cmd)
+        @pid = @io.pid
+        
+        # Wait for JSON handshake
+        wait_for_handshake
+        
+        # Detach so it runs in background, but we keep the IO open to read logs if needed
+        # Actually, for IO.popen, we shouldn't detach if we want to read from it.
+        # But we need to read in a non-blocking way or in a separate thread after finding the port.
+        
+        Thread.new do
+          begin
+            while line = @io.gets
+              # Forward Deno logs to stdout/logger
+              puts "[Deno] #{line}"
+            end
+          rescue IOError
+            # Stream closed
           end
-        rescue IOError
-          # Stream closed
         end
       end
     end
@@ -97,14 +100,24 @@ module Salvia
 
     private
 
-    def wait_for_port
+    def wait_for_handshake
       Timeout.timeout(30) do
         while line = @io.gets
-          puts "[Deno Init] #{line}"
-          if match = line.match(/Listening on http:\/\/localhost:(\d+)\//)
-            @port = match[1].to_i
-            puts "✅ Salvia Sidecar connected on port #{@port}"
-            return
+          # Try to parse JSON handshake
+          if line.strip.start_with?("{") && line.include?("port")
+            begin
+              data = JSON.parse(line)
+              if data["port"]
+                @port = data["port"]
+                puts "✅ Salvia Sidecar connected on port #{@port}"
+                return
+              end
+            rescue JSON::ParserError
+              # Not JSON, just log
+              puts "[Deno Init] #{line}"
+            end
+          else
+            puts "[Deno Init] #{line}"
           end
         end
         # If we exit the loop, it means EOF (process died)

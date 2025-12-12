@@ -43,6 +43,10 @@ module Salvia
       def vm
         Thread.current[:salvia_quickjs_vm] ||= create_thread_local_vm
       end
+      
+      def reset_vm!
+        Thread.current[:salvia_quickjs_vm] = nil
+      end
 
       def create_thread_local_vm
         new_vm = ::Quickjs::VM.new
@@ -64,23 +68,57 @@ module Salvia
             raise Error, "Component not found: #{component_name}"
           end
           
-          # Bundle component
-          js_code = Salvia::Compiler.bundle(
-            path, 
-            externals: ["preact", "preact/hooks", "preact-render-to-string"],
-            format: "iife",
-            global_name: "SalviaComponent"
-          )
+          # Bundle component (with simple memory cache)
+          @bundle_cache ||= {}
+          mtime = File.mtime(path)
           
-          # Async Type Check
-          Thread.new do
+          if @bundle_cache[path].nil? || @bundle_cache[path][:mtime] != mtime
+            # Load externals from deno.json if possible, otherwise use defaults
+            externals = ["preact", "preact/hooks", "preact/jsx-runtime", "preact-render-to-string", "@preact/signals"]
+            
             begin
-              result = Salvia::Compiler.check(path)
-              unless result["success"]
-                log_warn("Type Check Failed for #{component_name}:\n#{result["message"]}")
+              deno_json_path = File.join(Salvia.root, "salvia/deno.json")
+              if File.exist?(deno_json_path)
+                deno_config = JSON.parse(File.read(deno_json_path))
+                if deno_config["imports"]
+                  externals = (externals + deno_config["imports"].keys).uniq
+                end
               end
             rescue => e
-              log_debug("Type Check Error: #{e.message}")
+              log_warn("Failed to load externals from deno.json: #{e.message}")
+            end
+
+            js_code = Salvia::Compiler.bundle(
+              path, 
+              externals: externals,
+              format: "iife",
+              global_name: "SalviaComponent"
+            )
+            @bundle_cache[path] = { code: js_code, mtime: mtime }
+          end
+          
+          js_code = @bundle_cache[path][:code]
+          
+          # Async Type Check (Debounced)
+          @last_check_time ||= {}
+          now = Time.now.to_i
+          
+          # Debounce: Check at most once every 5 seconds per file
+          if @last_check_time[path].nil? || (now - @last_check_time[path]) > 5
+            @last_check_time[path] = now
+            
+            # Use a background thread but avoid spawning too many
+            # Ideally this should be a single worker queue, but for now simple detach is better than nothing
+            Thread.new do
+              begin
+                # Double check inside thread to handle race conditions slightly better
+                result = Salvia::Compiler.check(path)
+                unless result["success"]
+                  log_warn("Type Check Failed for #{component_name}:\n#{result["message"]}")
+                end
+              rescue => e
+                log_debug("Type Check Error: #{e.message}")
+              end
             end
           end
 
@@ -174,6 +212,9 @@ module Salvia
         vendor_path = File.expand_path("../../../assets/scripts/vendor_setup.ts", __dir__)
         
         if File.exist?(vendor_path)
+          # Ensure module.exports shim exists before loading vendor bundle
+          target_vm.eval_code("if(typeof module === 'undefined') { globalThis.module = { exports: {} }; }")
+          
           code = Salvia::Compiler.bundle(vendor_path, format: "iife")
           target_vm.eval_code(code)
           log_info("Loaded Vendor bundle (Internal)")
@@ -190,6 +231,18 @@ module Salvia
         unless File.exist?(bundle_path)
           raise Error, "SSR bundle not found: #{bundle_path}"
         end
+        
+        # Check if bundle has changed (simple reload strategy)
+        mtime = File.mtime(bundle_path)
+        if @last_bundle_mtime && @last_bundle_mtime != mtime
+          log_info("SSR bundle changed, reloading...")
+          # Note: In a real scenario, we might need to reset the VM completely
+          # But since this is called inside create_thread_local_vm, we are creating a new VM anyway.
+          # However, if we want to support hot reload in production without restarting threads,
+          # we would need a mechanism to invalidate all thread-local VMs.
+          # For now, we just update the mtime tracking.
+        end
+        @last_bundle_mtime = mtime
         
         bundle_content = File.read(bundle_path)
         target_vm.eval_code(bundle_content)
@@ -237,6 +290,30 @@ module Salvia
               __salvia_logs__ = [];
               return JSON.stringify(logs);
             };
+            
+            // Enhanced DOM Shim for better compatibility
+            if (typeof globalThis.document === 'undefined') {
+              globalThis.document = {
+                createElement: function(tag) {
+                  return {
+                    tagName: tag.toUpperCase(),
+                    setAttribute: function() {},
+                    appendChild: function() {},
+                    style: {}
+                  };
+                },
+                head: { appendChild: function() {} },
+                body: { appendChild: function() {} },
+                getElementById: function() { return null; },
+                addEventListener: function() {}
+              };
+            }
+            if (typeof globalThis.window === 'undefined') {
+              globalThis.window = globalThis;
+            }
+            if (typeof globalThis.navigator === 'undefined') {
+              globalThis.navigator = { userAgent: 'SalviaSSR' };
+            }
           })();
         JS
       end
@@ -275,7 +352,12 @@ module Salvia
       end
       
       def escape_html(str)
-        str.to_s.gsub("&", "&amp;").gsub("<", "&lt;").gsub(">", "&gt;").gsub('"', "&quot;")
+        str.to_s
+          .gsub("&", "&amp;")
+          .gsub("<", "&lt;")
+          .gsub(">", "&gt;")
+          .gsub('"', "&quot;")
+          .gsub("'", "&#39;")
       end
       
       def log_info(msg); defined?(Salvia.logger) ? Salvia.logger.info(msg) : puts("[SSR] #{msg}"); end

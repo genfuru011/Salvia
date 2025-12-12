@@ -46,7 +46,11 @@ module Salvia
       copy_file "assets/islands/Counter.tsx", "salvia/app/islands/Counter.tsx"
       copy_file "assets/pages/Home.tsx", "salvia/app/pages/Home.tsx"
       
-      create_file "salvia/.gitignore", "/server/\n"
+      if File.exist?("salvia/.gitignore")
+        append_to_file "salvia/.gitignore", "\n/server/\n"
+      else
+        create_file "salvia/.gitignore", "/server/\n"
+      end
 
       # Backend Setup
       case backend
@@ -58,12 +62,6 @@ module Salvia
               config.build_dir = Rails.root.join("public/assets")
               config.ssr_bundle_path = Rails.root.join("salvia/server/ssr_bundle.js")
             end
-            
-            # Initialize SSR Engine
-            Salvia::SSR.configure(
-              bundle_path: Salvia.config.ssr_bundle_path,
-              development: Rails.env.development?
-            )
           RUBY
         end
         say "   - Created config/initializers/salvia.rb"

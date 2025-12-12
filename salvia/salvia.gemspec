@@ -22,7 +22,9 @@ Gem::Specification.new do |spec|
 
   # Specify which files should be added to the gem when it is released.
   spec.files = Dir.chdir(__dir__) do
-    Dir["{lib,exe,templates,assets}/**/*", "LICENSE.txt", "README.md"]
+    `git ls-files -z`.split("\x0").reject do |f|
+      (f == __FILE__) || f.match(%r{\A(?:(?:test|spec|features)/|\.(?:git|travis|circleci)|appveyor)})
+    end
   end
   spec.bindir = "exe"
   spec.executables = ["salvia"]

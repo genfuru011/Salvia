@@ -7,9 +7,14 @@ module Salvia
 
     def call(env)
       # Only active in development
-      unless ENV["RACK_ENV"] == "development" || ENV["RAILS_ENV"] == "development"
-        return @app.call(env)
-      end
+      # Prefer Rails.env if available, otherwise check ENV
+      is_dev = if defined?(Rails) && Rails.respond_to?(:env)
+                 Rails.env.development?
+               else
+                 ENV["RACK_ENV"] == "development" || ENV["RAILS_ENV"] == "development"
+               end
+
+      return @app.call(env) unless is_dev
 
       request = Rack::Request.new(env)
       
@@ -31,7 +36,8 @@ module Salvia
         return serve_islands_js
       end
       
-      # Remove .js extension to find source
+      # Remove .js extension to find source (if present)
+      # Also handle requests without extension (from import map resolution)
       base_name = path_info.sub(/\.js$/, "")
       
       source_path = resolve_source_path(base_name)
@@ -44,8 +50,6 @@ module Salvia
         # Bundle for browser (ESM)
         # We externalize dependencies that should be handled by Import Map
         externals = Salvia::Core::ImportMap.new.keys
-        # Always externalize framework aliases just in case
-        externals += ["framework", "framework/hooks", "framework/jsx-runtime"]
         
         js_code = Salvia::Compiler.bundle(
           source_path, 
@@ -64,13 +68,19 @@ module Salvia
     end
 
     def serve_islands_js
-      # Check user's islands.js
+      # 1. Check public assets (Build output or user override)
+      public_path = File.join(Salvia.root, "public/assets/javascripts/islands.js")
+      if File.exist?(public_path)
+        return [200, { "content-type" => "application/javascript" }, [File.read(public_path)]]
+      end
+
+      # 2. Check user's source (salvia/assets/javascripts/islands.js) - Legacy/Custom path
       user_path = File.join(Salvia.root, "salvia/assets/javascripts/islands.js")
       if File.exist?(user_path)
         return [200, { "content-type" => "application/javascript" }, [File.read(user_path)]]
       end
       
-      # Fallback to internal islands.js
+      # 3. Fallback to internal islands.js
       internal_path = File.expand_path("../../../assets/javascripts/islands.js", __dir__)
       if File.exist?(internal_path)
         return [200, { "content-type" => "application/javascript" }, [File.read(internal_path)]]
