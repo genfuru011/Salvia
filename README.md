@@ -161,6 +161,18 @@ Add Turbo to your layout file (e.g., `salvia/app/pages/layouts/Main.tsx`):
 
 Since dependencies are managed in `deno.json`, you don't need to write full URLs.
 
+## Paradigm Shift: ERB vs JSX
+
+Salvia fundamentally changes how you build Views in Rails. Instead of mixing Ruby logic with HTML (ERB), you build pure components (JSX).
+
+| Feature | Traditional Rails (ERB) | Salvia (JSX/TSX) |
+| :--- | :--- | :--- |
+| **HTML Construction** | Ruby (`content_tag`, `render partial`) | **TSX (Preact)** |
+| **Layouts** | Ruby (`layout 'application'`) | **TSX (Layout Components)** |
+| **Links** | Ruby (`link_to`) | **TSX (`<a href="...">`)** |
+| **Forms** | Ruby (`form_with`) | **TSX (`<form>`)** |
+| **Data Passing** | Instance Variables (`@user`) | **Props (`user: @user`)** |
+
 ## Core Concepts: Pages vs Islands
 
 Understanding the separation of concerns is crucial for "True HTML First" development.

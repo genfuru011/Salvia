@@ -161,6 +161,18 @@ SalviaはTurbo Driveとシームレスに連携し、SPAのようなナビゲー
 
 `deno.json` で依存関係を管理しているため、URLを直接書く必要はありません。
 
+## パラダイムシフト: ERB vs JSX
+
+SalviaはRailsのView構築方法を根本的に変えます。RubyロジックとHTMLを混ぜる（ERB）のではなく、純粋なコンポーネント（JSX）を構築します。
+
+| 機能 | 従来のRails (ERB) | Salvia (JSX/TSX) |
+| :--- | :--- | :--- |
+| **HTML構築** | Ruby (`content_tag`, `render partial`) | **TSX (Preact)** |
+| **レイアウト** | Ruby (`layout 'application'`) | **TSX (Layoutコンポーネント)** |
+| **リンク生成** | Ruby (`link_to`) | **TSX (`<a href="...">`)** |
+| **フォーム** | Ruby (`form_with`) | **TSX (`<form>`)** |
+| **データ渡し** | インスタンス変数 (`@user`) | **Props (`user: @user`)** |
+
 ## コアコンセプト: Pages vs Islands
 
 「真のHTMLファースト」開発において、関心の分離を理解することは重要です。

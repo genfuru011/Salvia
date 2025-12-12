@@ -25,6 +25,16 @@ In Salvia, your Rails controller fetches data from the database (ActiveRecord) a
 *   **Zero JS by default**: Static content is just HTML.
 *   **Islands Architecture**: Only interactive parts (Islands) are hydrated with JavaScript.
 
+### Development Style Comparison
+
+| Feature | Traditional Rails (ERB) | Salvia (JSX/TSX) |
+| :--- | :--- | :--- |
+| **HTML Construction** | Ruby (`content_tag`, `render partial`) | **TSX (Preact)** |
+| **Layouts** | Ruby (`layout 'application'`) | **TSX (Layout Components)** |
+| **Links** | Ruby (`link_to`) | **TSX (`<a href="...">`)** |
+| **Forms** | Ruby (`form_with`) | **TSX (`<form>`)** |
+| **Data Passing** | Instance Variables (`@user`) | **Props (`user: @user`)** |
+
 ## 3. Directory Structure (The "Salvia" Directory)
 
 To separate the frontend concerns from the Ruby backend, Salvia introduces a `salvia/` directory at the project root.
