@@ -70,6 +70,9 @@ require "salvia/railtie" if defined?(Rails)
 
 # Auto-detect Sage
 if defined?(Sage)
+  # Ensure Sage::Context is loaded before setup
+  require "sage/context" if defined?(Sage::Context).nil?
+  
   require "salvia/adapters/sage"
   Salvia::Adapters::Sage.setup
 end
