@@ -1,8 +1,8 @@
 import { h } from "preact";
 import { useState } from "preact/hooks";
 
-export default function Counter() {
-  const [count, setCount] = useState(0);
+export default function Counter({ count: initialCount = 0 }: { count?: number }) {
+  const [count, setCount] = useState(initialCount);
   return (
     <div class="p-4 border rounded-lg">
       <p class="text-lg mb-2">Count: {count}</p>

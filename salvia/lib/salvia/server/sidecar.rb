@@ -6,7 +6,7 @@ require 'timeout'
 module Salvia
   module Server
     class Sidecar
-    SCRIPT_PATH = File.join(__dir__, "sidecar.ts")
+    SCRIPT_PATH = File.expand_path("../../../assets/scripts/sidecar.ts", __dir__)
 
     def self.instance
       @instance ||= new
@@ -23,12 +23,12 @@ module Salvia
       @mutex.synchronize do
         return if running?
 
-        cmd = ["deno", "run", "--allow-net", "--allow-read", "--allow-env", SCRIPT_PATH]
+        cmd = ["deno", "run", "--allow-net", "--allow-read", "--allow-env", "--allow-run", SCRIPT_PATH]
         
         puts "🚀 Starting Salvia Sidecar..."
         # Spawn process and capture stdout to find the port
         # We use IO.popen to read the output stream
-        @io = IO.popen(cmd)
+        @io = IO.popen(cmd, err: [:child, :out])
         @pid = @io.pid
         
         # Wait for JSON handshake
