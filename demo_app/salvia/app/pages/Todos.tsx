@@ -10,7 +10,7 @@ export default function Todos({ todos }: { todos: any[] }) {
         <title>Sage Todo</title>
         <script src="https://cdn.tailwindcss.com"></script>
         <script type="module">
-          import * as Turbo from "https://esm.sh/@hotwired/turbo@7.3.0";
+          import "https://esm.sh/@hotwired/turbo@7.3.0";
         </script>
         <script type="module" src="/assets/javascripts/islands.js"></script>
       </head>
