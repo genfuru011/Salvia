@@ -20,6 +20,10 @@ module Salvia
       
       if request.path.start_with?("/salvia/assets/")
         handle_asset_request(request)
+      elsif request.path == "/assets/javascripts/islands.js"
+        # Handle islands.js specifically for development convenience
+        # This matches the path used in Home.tsx template and ensures it works without build
+        serve_islands_js
       else
         @app.call(env)
       end
