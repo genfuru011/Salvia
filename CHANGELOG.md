@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.1] - 2025-12-12
+
+### Added
+- **Cache Busting**: Production builds now generate hashed filenames (e.g., `Counter-a1b2c3d4.js`) to prevent browser caching issues.
+- **Thread Safety**: The QuickJS SSR engine is now thread-safe using Thread Local Storage, preventing crashes in multi-threaded environments (e.g., Puma).
+
+### Changed
+- **Documentation**: Centralized detailed documentation to English (`docs/en/`) to prevent drift. Japanese documentation is now simplified in `README.ja.md`.
+
 ## [0.2.0] - 2025-12-12
 
 ### Added
