@@ -40,92 +40,11 @@ module Salvia
       
       # Import Map タグを生成する
       def salvia_import_map(additional_map = {})
-        default_map = {
-          "imports" => {
-            "preact" => "https://esm.sh/preact@10.19.6",
-            "preact/hooks" => "https://esm.sh/preact@10.19.6/hooks",
-            "preact/jsx-runtime" => "https://esm.sh/preact@10.19.6/jsx-runtime",
-            "@hotwired/turbo" => "https://esm.sh/@hotwired/turbo@8.0.0"
-          }
-        }
-
-        # Islands path mapping
-        islands_path = if defined?(Salvia.env) && Salvia.env == "development"
-                         "/salvia/assets/islands/"
-                       else
-                         "/assets/islands/"
-                       end
-        # Map @/islands/ to the directory, but specific files will be mapped below
-        default_map["imports"]["@/islands/"] = islands_path
-
-        # Production: Map specific islands to hashed filenames from manifest
-        if defined?(Salvia.env) && Salvia.env != "development"
-          manifest = Island.load_manifest
-          manifest.each do |name, info|
-            if info["file"]
-              # Map "Counter" -> "Counter-HASH.js"
-              default_map["imports"]["@/islands/#{name}"] = File.join(islands_path, info["file"])
-            end
-          end
-        else
-          # Development: Map "Counter" -> "Counter.js" (served by DevServer)
-          # This allows islands.js to import `@/islands/${name}` without extension
-          # and have it resolve correctly in both envs.
-          # We need to list all islands dynamically or use a pattern if supported (but import maps don't support patterns like that easily for this case without listing)
-          # For now, we rely on the fact that DevServer handles .js extension.
-          # But wait, if we import "Counter", browser looks for "Counter". DevServer needs to handle "Counter" request?
-          # Or we map "Counter" -> "Counter.js" here?
-          # Since we don't know all islands in dev without scanning, we can't map them one by one easily here without scanning.
-          # BUT, we can change islands.js to import without extension (done), 
-          # and here we can map the directory.
-          # If we map "@/islands/" -> "/salvia/assets/islands/", then import "@/islands/Counter" becomes "/salvia/assets/islands/Counter".
-          # DevServer needs to handle "/salvia/assets/islands/Counter" (no extension).
-        end
-
-        # deno.json から imports を読み込む
-        begin
-          deno_json_path = File.join(Salvia.root, "salvia/deno.json")
-          if File.exist?(deno_json_path)
-            # キャッシュ機構: mtimeをチェックして変更があれば再読み込み
-            mtime = File.mtime(deno_json_path)
-            if @deno_json_cache.nil? || @deno_json_mtime != mtime
-              @deno_json_cache = JSON.parse(File.read(deno_json_path))
-              @deno_json_mtime = mtime
-            end
-            deno_config = @deno_json_cache
-
-            if deno_config["imports"]
-              # npm: スキームを https://esm.sh/ に変換してブラウザで使えるようにする
-              imports = deno_config["imports"].transform_values do |v|
-                if v.is_a?(String) && v.start_with?("npm:")
-                  package = v.sub("npm:", "")
-                  "https://esm.sh/#{package}"
-                else
-                  v
-                end
-              end
-              default_map["imports"].merge!(imports)
-            end
-          end
-        rescue => e
-          # 読み込みエラー時はログ出力
-          if defined?(Salvia.logger)
-            Salvia.logger.warn("Failed to load deno.json: #{e.message}")
-          end
-        end
-
-        if additional_map.key?("imports")
-          default_map["imports"].merge!(additional_map["imports"])
-        end
-        
-        additional_map.each do |k, v|
-          next if k == "imports"
-          default_map[k] = v
-        end
+        map = Salvia::Core::ImportMap.generate(additional_map)
         
         html = <<~HTML
           <script type="importmap">
-            #{default_map.to_json}
+            #{map.to_json}
           </script>
         HTML
         
