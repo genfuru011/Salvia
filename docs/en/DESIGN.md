@@ -228,7 +228,67 @@ This "All-in-One" configuration is the **"Sweet Spot" (Optimal Solution) for Web
 
 Since each focuses only on what it does best, there is no waste, and it is extremely powerful. If you are building an app from scratch, we strongly recommend starting with this "Full Set".
 
-## 8. Props vs Signals: A Paradigm Shift in State Management
+## 8. State-free Development
+
+"State-free Development" refers to an experience where **"the area where developers must consciously code for 'state management' approaches zero."**
+
+With the combination of Salvia + Turbo + Signals, the "3 types of state" that plague web app development are handled (or eliminated) as follows:
+
+### 1. Where did they go? The "3 States"
+
+#### ① Server State (The Data Itself)
+* **Previously (SPA):** Fetch JSON from API and manage it with Redux, etc.
+* **From now on (Salvia):** **Data on the server is the "truth", and HTML is its snapshot.** No need to hold or synchronize data on the client side.
+    * **→ State Eliminated (Solved by Server Components)**
+
+#### ② URL/Navigation State (Where am I?)
+* **Previously (SPA):** Monitor current path and parameters with JS using `react-router`, etc.
+* **From now on (Turbo Drive):** **The URL itself is the state.** Clicking a link lets Turbo automatically fetch and replace the next HTML.
+    * **→ State Eliminated (Solved by Turbo)**
+
+#### ③ UI State (Inputting, Toggling, Temporary Changes)
+* **Previously (React):** Manage with `useState`, share via props drilling or Context API.
+* **From now on (Signals):** **Just define `signal()` where needed and update `.value`.** It doesn't even trigger component re-rendering.
+    * **→ State Management becomes "just variable assignment".**
+
+### 2. Feeling "State-free": Shopping Cart Example
+
+Comparing the action of "adding an item to the cart", the difference is obvious.
+
+#### 😫 Traditional SPA (Stateful)
+1.  Define Action Creator (`addToCart`).
+2.  Write state update logic in Reducer (`state.items.push(...)`).
+3.  Use `useDispatch` and `useSelector` in components.
+4.  Dispatch when button is pressed.
+5.  Call API asynchronously, and write rollback logic for failure.
+
+#### 😌 Salvia + Turbo + Signals (State-free like)
+
+**Pattern A: Turbo Streams (Completely Stateless)**
+1.  **JS:** None.
+2.  **View:** Write `<form action="/cart" method="post">`.
+3.  **Server:** Add to cart and response with **"updated header HTML"**.
+4.  **Turbo:** Replaces the header.
+    * **→ Zero JS state management.**
+
+**Pattern B: Signals (Optimistic UI)**
+1.  **Global Signal:** `export const count = signal(0);`
+2.  **Button:** `onClick={() => count.value++}` (Updates appearance instantly)
+3.  **Background:** Send `fetch("/cart", ...)` in the background (Ignore result, or revert only on failure).
+    * **→ State management is just one line: `count.value++`.**
+
+### 3. The True Nature of this Architecture
+
+This is a **return to the "Original Form of the Web (Stateless HTTP)".**
+
+Salvia (Turbo + Signals) takes the approach of **"Returning to stateless (server-driven) basics, while using Signals—the 'strongest modern tool'—only for the 10% that absolutely needs to be rich."**
+
+* **Tedious things (Data sync, Routing)** → **Don't do it (Leave it to Server and Turbo).**
+* **Fun things (Animation, Interaction)** → **Do it with Signals.**
+
+This is the experience worthy of being called **"State-free Development"**.
+
+## 9. Props vs Signals: A Paradigm Shift in State Management
 
 In Salvia, understanding data flow and choosing the right tool is crucial.
 
