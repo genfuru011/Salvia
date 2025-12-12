@@ -50,6 +50,7 @@ module Salvia
         
         html.respond_to?(:html_safe) ? html.html_safe : html
       end
+      module_function :salvia_import_map
 
       # Island コンポーネントをレンダリングする
       #
