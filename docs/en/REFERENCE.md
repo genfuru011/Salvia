@@ -196,30 +196,36 @@ This command:
 
 Ensure this command is run during your deployment process (e.g., in your Dockerfile or CI/CD pipeline).
 
-## 8. Configuration (deno.json)
+## 9. API Reference
 
-Since Salvia v0.2.0, `salvia/deno.json` is the Single Source of Truth (SSOT) for dependencies.
+### Helpers (Controllers & Views)
 
-### Adding Dependencies
-Add them to the `imports` section. `npm:` specifiers are automatically converted to `esm.sh` for the browser.
+These helpers are available in Rails Controllers and Views.
 
-```json
-{
-  "imports": {
-    "uuid": "npm:uuid@9.0.0"
-  }
-}
-```
+#### `salvia_page(name, props = {}, options = {})`
 
-### Extending Globals (SSR)
-If you need to expose specific libraries as global variables in the SSR environment (e.g., `uuid`), use `salvia.globals`.
+Renders a Server Component (Page) as a full HTML document.
+**Use this for standard page rendering in Controllers.**
 
-```json
-{
-  "salvia": {
-    "globals": {
-      "uuid": "globalThis.UUID"
-    }
-  }
-}
-```
+*   **name** (String): Path to the component relative to `salvia/app/pages/` (e.g., `"home/Index"`).
+*   **props** (Hash): Props to pass to the component.
+*   **options** (Hash):
+    *   `doctype` (Boolean): Whether to prepend `<!DOCTYPE html>` (default: `true`).
+*   **Returns**: `String` (HTML safe). Automatically injects Import Maps.
+
+#### `salvia_component(name, props = {})`
+
+Renders a component as an HTML fragment.
+**Use this for Turbo Streams, Partials, or embedding in other HTML.**
+
+*   **name** (String): Path to the component relative to `salvia/app/` (e.g., `"components/Card"`, `"islands/Counter"`).
+*   **props** (Hash): Props to pass to the component.
+*   **Returns**: `String` (HTML safe). Does **not** inject Import Maps or DOCTYPE.
+
+### Deprecated Helpers
+
+#### `ssr(name, props = {}, options = {})`
+*   **Deprecated**: Use `salvia_page` instead.
+
+#### `island(name, props = {}, options = {})`
+*   **Deprecated**: Use `salvia_page` (in Controller) or `salvia_component` instead.

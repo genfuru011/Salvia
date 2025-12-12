@@ -205,6 +205,40 @@ Salvia v0.2.0 は **ゼロコンフィグ** 哲学を採用しています。
     *   Islands のバンドル、Import Map の生成、Tailwind CSS のビルドを行います。
     *   キャッシュバスティング用にハッシュ付きファイル名を生成します。
 
+## 9. API リファレンス
+
+### ヘルパーメソッド (Controller / View)
+
+Railsのコントローラーおよびビューで使用可能なヘルパーです。
+
+#### `salvia_page(name, props = {}, options = {})`
+
+サーバーコンポーネント (Page) を完全なHTMLドキュメントとしてレンダリングします。
+**コントローラーでの通常のページレンダリングにはこれを使用してください。**
+
+*   **name** (String): `salvia/app/pages/` からの相対パス (例: `"home/Index"`).
+*   **props** (Hash): コンポーネントに渡すプロパティ.
+*   **options** (Hash):
+    *   `doctype` (Boolean): `<!DOCTYPE html>` を付与するかどうか (デフォルト: `true`).
+*   **戻り値**: `String` (HTML safe). Import Map を自動的に注入します。
+
+#### `salvia_component(name, props = {})`
+
+コンポーネントをHTMLフラグメント（断片）としてレンダリングします。
+**Turbo Streams、パーシャル、または他のHTMLへの埋め込みに使用してください。**
+
+*   **name** (String): `salvia/app/` からの相対パス (例: `"components/Card"`, `"islands/Counter"`).
+*   **props** (Hash): コンポーネントに渡すプロパティ.
+*   **戻り値**: `String` (HTML safe). Import Map や DOCTYPE は**付与しません**。
+
+### 非推奨のヘルパー
+
+#### `ssr(name, props = {}, options = {})`
+*   **非推奨**: `salvia_page` を使用してください。
+
+#### `island(name, props = {}, options = {})`
+*   **非推奨**: コントローラーで `salvia_page` を使用するか、部分更新には `salvia_component` を使用してください。
+
 ## ライセンス
 
 このgemは [MIT License](https://opensource.org/licenses/MIT) の下でオープンソースとして利用可能です。
