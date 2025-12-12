@@ -202,6 +202,7 @@ In production environments (e.g., Docker, Heroku, Render):
 2.  **Build Step**: Run `bundle exec salvia build` during deployment.
     *   This bundles Islands, generates Import Maps, and builds Tailwind CSS.
     *   It generates hashed filenames for cache busting.
+    *   **Note**: While Salvia uses JIT compilation in development for a "No Build" experience, `salvia build` pre-compiles assets for production to ensure zero runtime compilation overhead.
 
 ## License
 
