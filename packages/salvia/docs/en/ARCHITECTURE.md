@@ -125,6 +125,20 @@ my_app/
 
 Salvia is designed to be framework-agnostic.
 
+### Sage Integration (Native)
+
+Salvia is the core view engine for **Sage**. It integrates deeply with Sage's `Context` and `Resource` system.
+
+```ruby
+# app/resources/home_resource.rb
+class HomeResource < Sage::Resource
+  get "/" do |ctx|
+    # Renders salvia/app/pages/Home.tsx
+    ctx.render "Home", title: "Hello Sage"
+  end
+end
+```
+
 ### Rails Integration
 
 Salvia provides a Railtie that automatically:

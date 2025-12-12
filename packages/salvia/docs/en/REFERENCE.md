@@ -191,14 +191,16 @@ export default function Login({ csrf_token, login_path }) {
 Salvia is designed to work with Turbo Drive for SPA-like navigation without complex client-side routing.
 
 ### Setup
-Ensure Turbo is loaded in your layout (e.g., `salvia/app/pages/layouts/Main.tsx`).
+Ensure Turbo is loaded in your layout (e.g., `salvia/app/pages/layouts/Main.tsx`) using the `sage/script` helper.
 
 ```tsx
+import Script from "sage/script";
+
 <head>
-  <script type="module">
-    import * as Turbo from "https://esm.sh/@hotwired/turbo@8.0.0";
+  <Script type="module">
+    import * as Turbo from "@hotwired/turbo";
     Turbo.start();
-  </script>
+  </Script>
 </head>
 ```
 
@@ -239,10 +241,13 @@ Add them to the `imports` section. `npm:` specifiers are automatically converted
 ```json
 {
   "imports": {
-    "uuid": "npm:uuid@9.0.0"
+    "uuid": "npm:uuid@9.0.0",
+    "sage/script": "http://localhost:3000/salvia/assets/components/Script.tsx"
   }
 }
 ```
+
+Note: `sage/script` is automatically served by the dev server.
 
 ### Extending Globals (SSR)
 If you need to expose specific libraries as global variables in the SSR environment (e.g., `uuid`), use `salvia.globals`.
@@ -257,7 +262,31 @@ If you need to expose specific libraries as global variables in the SSR environm
 }
 ```
 
-## 10. API Reference
+## 10. Sage Integration
+
+Salvia is the default view engine for the **Sage** framework.
+
+```ruby
+# config/application.rb
+require "sage"
+require "salvia"
+
+class App < Sage::Base
+  # ...
+end
+```
+
+When used with Sage, `salvia_page` and `salvia_component` are available via the `ctx` object in your resources.
+
+```ruby
+class HomeResource < Sage::Resource
+  get "/" do |ctx|
+    ctx.render "Home", title: "Welcome to Sage"
+  end
+end
+```
+
+## 11. API Reference
 
 ### Helpers (Controllers & Views)
 

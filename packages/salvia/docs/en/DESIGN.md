@@ -66,6 +66,8 @@ Previously exposed configuration files like `vendor_setup.ts` are now internaliz
 1.  **No Boilerplate**: You don't need to manage complex build configurations or import maps.
 2.  **Preact Only**: Salvia is opinionated and strictly enforces a Preact + Signals architecture for maximum performance and compatibility.
 3.  **Automatic Import Maps**: Salvia automatically generates Import Maps for the browser based on its internal configuration, ensuring that `preact`, `preact/hooks`, and `@preact/signals` just work.
+4.  **Built-in Helpers**: `sage/script` and `sage/client` are automatically available.
+4.  **Built-in Helpers**: `sage/script` and `sage/client` are automatically available.
 
 ### How it works under the hood
 
@@ -79,6 +81,7 @@ While complex configuration files like `vendor_setup.ts` are hidden, `deno.json`
 
 *   **Preact First**: Salvia is built on Preact for its lightweight nature and powerful Signals architecture.
 *   **`npm:` specifiers**: Deno uses these to fetch packages from npm. Salvia automatically converts these to `https://esm.sh/...` URLs when generating the Import Map for the browser.
+*   **`sage/script`**: A virtual module served by the DevServer to handle script injection safely.
 
 ### `vendor_setup.ts` (The Bridge)
 
