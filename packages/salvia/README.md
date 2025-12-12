@@ -236,6 +236,19 @@ This keeps your frontend (TSX) decoupled from the backend framework logic. Your 
 Salvia is primarily designed for **Ruby on Rails** to pave the way for the **Sage** framework.
 
 *   **Ruby on Rails**: First-class support.
+*   **Sage**: The native framework for Salvia.
+
+## Script Helper (`sage/script`)
+
+Salvia provides a built-in component to inject raw JavaScript or import modules without escaping.
+
+```tsx
+import Script from "sage/script";
+
+<Script type="module">
+  import "@hotwired/turbo";
+</Script>
+```
 
 ## Zero Config Architecture
 

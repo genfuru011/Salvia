@@ -125,13 +125,13 @@ class TodosResource < Sage::Resource
   # ... standard routes ...
 
   # Define an RPC method
-  rpc :toggle do |id: Integer|
+  rpc :toggle, params: { id: Integer } do |ctx, id|
     todo = Todo.find(id)
     todo.update(completed: !todo.completed)
     todo # Return value is sent back as JSON
   end
   
-  rpc :stats do
+  rpc :stats do |ctx|
     { total: Todo.count, completed: Todo.where(completed: true).count }
   end
 end
@@ -211,29 +211,47 @@ import Counter from "../islands/Counter.tsx";
 
 ### Script Helper (`sage/script`)
 
-Inject raw JavaScript without escaping (useful for libraries like Turbo).
+Sage provides a built-in component to inject raw JavaScript or import modules without escaping. This is essential for libraries like Turbo that require inline script tags.
 
 ```tsx
 import Script from "sage/script";
 
+// Import a module
 <Script type="module">
   import "@hotwired/turbo";
+</Script>
+
+// Inline script
+<Script>
+  console.log("Hello from client!");
 </Script>
 ```
 
 ### Import Maps (`salvia/deno.json`)
 
-Manage frontend dependencies in `salvia/deno.json`.
+Manage frontend dependencies in `salvia/deno.json`. Sage automatically injects these into your HTML head.
 
 ```json
 {
   "imports": {
     "preact": "https://esm.sh/preact@10.19.6",
+    "preact/hooks": "https://esm.sh/preact@10.19.6/hooks",
+    "preact/jsx-runtime": "https://esm.sh/preact@10.19.6/jsx-runtime",
+    "@hotwired/turbo": "https://esm.sh/@hotwired/turbo@8.0.0",
     "sage/client": "./app/client.ts",
+    "sage/script": "http://localhost:3000/salvia/assets/components/Script.tsx",
     "@/": "./app/"
   }
 }
 ```
+
+Note: `sage/script` is automatically served by the dev server.
+
+### Sidecar (Deno)
+
+Sage uses a Deno sidecar process to bundle TypeScript code on the fly.
+- **Development**: `sage dev` starts the sidecar automatically. It watches for changes and provides type checking.
+- **Production**: `salvia build` uses the sidecar to generate optimized bundles.
 
 ---
 
