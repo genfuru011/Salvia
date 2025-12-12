@@ -23,7 +23,7 @@ module Salvia
       @mutex.synchronize do
         return if running?
 
-        cmd = ["deno", "run", "--allow-net", "--allow-read", "--allow-env", "--allow-run", SCRIPT_PATH]
+        cmd = ["deno", "run", "--allow-net", "--allow-read", "--allow-env", "--allow-run", "--allow-import", SCRIPT_PATH]
         
         puts "🚀 Starting Salvia Sidecar..."
         # Spawn process and capture stdout to find the port
