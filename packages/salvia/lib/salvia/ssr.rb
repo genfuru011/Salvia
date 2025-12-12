@@ -98,7 +98,18 @@ module Salvia
         html = render(component_name, props)
         
         # <head> がある場合、Import Map を自動注入
-        if html.include?("</head>")
+        # Import Map は他のモジュールスクリプトより前に定義する必要があるため、
+        # <head> の直後に注入する
+        if html.include?("<head>")
+          map = Salvia::Core::ImportMap.generate
+          import_map_html = <<~HTML
+            <script type="importmap">
+              #{map.to_json}
+            </script>
+          HTML
+          html = html.sub("<head>", "<head>#{import_map_html}")
+        elsif html.include?("</head>")
+          # <head> タグが見つからない場合のフォールバック (非推奨)
           map = Salvia::Core::ImportMap.generate
           import_map_html = <<~HTML
             <script type="importmap">
