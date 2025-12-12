@@ -96,9 +96,9 @@ export default function Counter() {
 
 Salvia relies on standard Rails routing and controllers.
 
-### The `Salvia::SSR.render_page` Method
+### The `salvia_page` Helper
 
-To render a Salvia Page from a Rails controller, use the `Salvia::SSR.render_page` method. This is the recommended approach for Full Page SSR.
+To render a Salvia Page from a Rails controller, use the `salvia_page` helper method. This is the recommended approach for Full Page SSR.
 
 ```ruby
 # app/controllers/posts_controller.rb
@@ -107,7 +107,7 @@ class PostsController < ApplicationController
     @posts = Post.all
     # Renders salvia/app/pages/posts/Index.tsx
     # Returns full HTML with <!DOCTYPE html> and Import Maps
-    render html: Salvia::SSR.render_page("posts/Index", posts: @posts).html_safe
+    render html: salvia_page("posts/Index", posts: @posts)
   end
 end
 ```
@@ -115,7 +115,7 @@ end
 *   **First argument**: The path to the component relative to `salvia/app/pages/`.
 *   **Second argument**: A hash of props to pass to the component.
 
-> **Note**: The `ssr` helper and `<%= island ... %>` ERB helper are deprecated. Please use `Salvia::SSR.render_page` (for full pages) or `Salvia::SSR.render` (for partials) in your controllers.
+> **Note**: The `ssr` helper and `<%= island ... %>` ERB helper are deprecated. Please use `salvia_page` (for full pages) or `salvia_component` (for partials) in your controllers.
 
 ## 5. Data Flow
 
@@ -124,7 +124,7 @@ Data flows from your Rails controller to your Page, and then to Islands via **Pr
 
 ```ruby
 # Controller
-render html: Salvia::SSR.render_page("Show", user: @user).html_safe
+render html: salvia_page("Show", user: @user)
 ```
 
 ```tsx
@@ -175,8 +175,8 @@ You can return Turbo Stream responses from Rails controllers to update parts of 
 ```ruby
 def create
   @comment = Comment.create(params[:comment])
-  # Use Salvia::SSR.render for partials (no DOCTYPE/ImportMap injection)
-  render turbo_stream: turbo_stream.append("comments", html: Salvia::SSR.render("components/Comment", comment: @comment))
+  # Use salvia_component for partials (no DOCTYPE/ImportMap injection)
+  render turbo_stream: turbo_stream.append("comments", html: salvia_component("components/Comment", comment: @comment))
 end
 ```
 

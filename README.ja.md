@@ -96,14 +96,14 @@ export default function Home({ title }) {
 
 ### 3. コントローラーでのレンダリング (API Mode / Full Page SSR)
 
-Railsコントローラーで、`Salvia::SSR.render_page` を使用してコンポーネントを直接レンダリングします。これはERBを完全にバイパスする、推奨される「APIモード」または「Full Page SSR」アプローチです。
+Railsコントローラーで、`salvia_page` ヘルパーを使用してコンポーネントを直接レンダリングします。これはERBを完全にバイパスする、推奨される「APIモード」または「Full Page SSR」アプローチです。
 
 ```ruby
 class HomeController < ApplicationController
   def index
     # salvia/app/pages/home/Index.tsx をレンダリング
     # <!DOCTYPE html> と Import Map を含む完全なHTML文字列を返します
-    render html: Salvia::SSR.render_page("home/Index", title: "Hello Salvia").html_safe
+    render html: salvia_page("home/Index", title: "Hello Salvia")
   end
 end
 ```

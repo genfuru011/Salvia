@@ -96,14 +96,14 @@ export default function Home({ title }) {
 
 ### 3. Render in Controller (API Mode / Full Page SSR)
 
-In your Rails controller, use `Salvia::SSR.render_page` to render the component directly. This is the recommended "API Mode" or "Full Page SSR" approach, bypassing ERB entirely.
+In your Rails controller, use the `salvia_page` helper to render the component directly. This is the recommended "API Mode" or "Full Page SSR" approach, bypassing ERB entirely.
 
 ```ruby
 class HomeController < ApplicationController
   def index
     # Renders salvia/app/pages/home/Index.tsx
     # This returns a full HTML string including <!DOCTYPE html> and Import Maps
-    render html: Salvia::SSR.render_page("home/Index", title: "Hello Salvia").html_safe
+    render html: salvia_page("home/Index", title: "Hello Salvia")
   end
 end
 ```

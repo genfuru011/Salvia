@@ -149,13 +149,28 @@ module Salvia
       # @param options [Hash] オプション
       # @option options [Boolean] :doctype <!DOCTYPE html> を付与するか (デフォルト: true)
       # @return [String] 完全な HTML 文字列
-      def ssr(name, props = {}, options = {})
+      def salvia_page(name, props = {}, options = {})
         result = Salvia::SSR.render_page(name, props, options)
         result.respond_to?(:html_safe) ? result.html_safe : result
       end
-      
-      # 後方互換性のため
-      alias_method :salvia_page, :ssr
+
+      # コンポーネントをレンダリングする (Turbo Streams / Partials用)
+      #
+      # HTMLフラグメントのみを返します (DOCTYPEやImport Mapは付与しません)。
+      #
+      # @param name [String] コンポーネント名 (例: "components/Card")
+      # @param props [Hash] プロパティ
+      # @return [String] HTML文字列
+      def salvia_component(name, props = {})
+        result = Salvia::SSR.render(name, props)
+        result.respond_to?(:html_safe) ? result.html_safe : result
+      end
+
+      # @deprecated Use salvia_page instead.
+      def ssr(name, props = {}, options = {})
+        warn "[DEPRECATION] `ssr` helper is deprecated. Please use `salvia_page` instead."
+        salvia_page(name, props, options)
+      end
 
       private
       
