@@ -124,7 +124,7 @@ const handler = async (request: Request): Promise<Response> => {
     if (command === "check") {
       const { entryPoint, configPath } = params;
       const cmd = new Deno.Command("deno", {
-        args: ["check", "--config", configPath || "deno.json", entryPoint],
+        args: ["check", "--allow-import", "--config", configPath || "deno.json", entryPoint],
         stdout: "piped",
         stderr: "piped",
         cwd: Deno.cwd(),
