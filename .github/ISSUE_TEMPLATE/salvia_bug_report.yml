@@ -1,0 +1,36 @@
+name: 🐛 Salvia Bug Report
+description: Create a report to help us improve Salvia (View Engine)
+title: "[Salvia] "
+labels: ["package: salvia", "bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report!
+  - type: textarea
+    id: description
+    attributes:
+      label: Describe the bug
+      description: A clear and concise description of what the bug is.
+      placeholder: The component failed to render...
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction Steps
+      description: How can we reproduce this issue?
+      placeholder: |
+        1. Create a new Page component
+        2. Add this code...
+        3. Visit the page
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Salvia Version
+      description: What version of Salvia are you using?
+      placeholder: 0.2.3
+    validations:
+      required: true

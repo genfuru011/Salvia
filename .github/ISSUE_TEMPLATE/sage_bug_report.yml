@@ -1,0 +1,36 @@
+name: 🐛 Sage Bug Report
+description: Create a report to help us improve Sage (Backend Framework)
+title: "[Sage] "
+labels: ["package: sage", "bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report!
+  - type: textarea
+    id: description
+    attributes:
+      label: Describe the bug
+      description: A clear and concise description of what the bug is.
+      placeholder: I tried to define a route but...
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction Steps
+      description: How can we reproduce this issue?
+      placeholder: |
+        1. Create a new Sage app
+        2. Add this route...
+        3. Run `bundle exec sage s`
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Sage Version
+      description: What version of Sage are you using?
+      placeholder: 0.1.0
+    validations:
+      required: true

@@ -7,7 +7,8 @@ on:
     branches: [ main ]
 
 jobs:
-  test:
+  salvia:
+    name: Salvia (View Engine)
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -22,7 +23,7 @@ jobs:
       with:
         ruby-version: ${{ matrix.ruby-version }}
         bundler-cache: true
-        working-directory: salvia
+        working-directory: packages/salvia
 
     - name: Set up Deno
       uses: denoland/setup-deno@v1
@@ -30,7 +31,7 @@ jobs:
         deno-version: ${{ matrix.deno-version }}
 
     - name: Install dependencies
-      working-directory: salvia
+      working-directory: packages/salvia
       run: |
         bundle install
         # Install Deno dependencies for caching
@@ -38,5 +39,30 @@ jobs:
         deno cache --config assets/scripts/deno.json assets/scripts/build.ts
 
     - name: Run tests
-      working-directory: salvia
+      working-directory: packages/salvia
+      run: bundle exec rake test
+
+  sage:
+    name: Sage (Backend Framework)
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        ruby-version: ['3.1', '3.2', '3.3']
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Ruby
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: ${{ matrix.ruby-version }}
+        bundler-cache: true
+        working-directory: packages/sage
+
+    - name: Install dependencies
+      working-directory: packages/sage
+      run: bundle install
+
+    - name: Run tests
+      working-directory: packages/sage
       run: bundle exec rake test
