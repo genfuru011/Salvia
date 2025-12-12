@@ -98,6 +98,25 @@ module Salvia
         say "   - app/assets/stylesheets/ : Tailwind CSS entry point created (v4)"
       end
 
+      # Cache Deno dependencies
+      say ""
+      say "📦 Caching Deno dependencies...", :green
+      sidecar_script = File.expand_path("../../../assets/scripts/sidecar.ts", __FILE__)
+      
+      # Use user's deno.json if available, otherwise fallback to internal
+      user_config = File.expand_path("salvia/deno.json")
+      config_path = if File.exist?(user_config)
+                      user_config
+                    else
+                      File.expand_path("../../../assets/scripts/deno.json", __FILE__)
+                    end
+
+      if system("deno cache --config #{config_path} #{sidecar_script}")
+        say "   - Dependencies cached successfully"
+      else
+        say "   - Warning: Failed to cache dependencies (non-fatal)", :yellow
+      end
+
       say ""
       say "✅ Salvia SSR installed!", :green
       say "   - salvia/app/islands/    : Put your interactive Island components here"

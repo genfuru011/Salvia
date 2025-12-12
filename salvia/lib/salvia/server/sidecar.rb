@@ -98,7 +98,7 @@ module Salvia
     private
 
     def wait_for_port
-      Timeout.timeout(10) do
+      Timeout.timeout(30) do
         while line = @io.gets
           puts "[Deno Init] #{line}"
           if match = line.match(/Listening on http:\/\/localhost:(\d+)\//)
@@ -107,6 +107,8 @@ module Salvia
             return
           end
         end
+        # If we exit the loop, it means EOF (process died)
+        raise "Deno Sidecar crashed unexpectedly. Check logs."
       end
     rescue Timeout::Error
       stop
