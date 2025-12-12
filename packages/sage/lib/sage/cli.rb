@@ -58,45 +58,7 @@ module Sage
       end
     end
 
-    private
-
-    def generate_client
-      require "sage"
-      
-      app_file = File.join(Dir.pwd, "config/application.rb")
-      unless File.exist?(app_file)
-        say "❌ config/application.rb not found. Are you in a Sage project?", :red
-        exit 1
-      end
-      
-      require app_file
-      
-      # Try to find the App class
-      app_class = Object.const_get("App") if Object.const_defined?("App")
-      
-      unless app_class && app_class < Sage::Base
-        say "❌ Could not find 'App' class inheriting from Sage::Base.", :red
-        exit 1
-      end
-      
-      generator = Sage::Generator.new(app_class)
-      
-      # Output directory
-      output_dir = File.join(Dir.pwd, "salvia/app")
-      FileUtils.mkdir_p(output_dir)
-      
-      File.write(File.join(output_dir, "client.d.ts"), generator.generate_dts)
-      File.write(File.join(output_dir, "client.ts"), generator.generate_client)
-      
-      say "✅ Generated RPC client:", :green
-      say "   - #{File.join(output_dir, "client.d.ts")}"
-      say "   - #{File.join(output_dir, "client.ts")}"
-      say ""
-      say "Add this to your import map (deno.json):", :yellow
-      say '  "imports": {'
-      say '    "sage/client": "./salvia/app/client.ts"'
-      say '  }'
-    end
+    desc "dev", "Start the Sage server in development mode with live reloading"
     method_option :port, aliases: "-p", type: :numeric, default: 3000, desc: "Port to listen on"
     def dev
       require "listen"
@@ -150,6 +112,46 @@ module Sage
       end
       
       sleep
+    end
+
+    private
+
+    def generate_client
+      require "sage"
+      
+      app_file = File.join(Dir.pwd, "config/application.rb")
+      unless File.exist?(app_file)
+        say "❌ config/application.rb not found. Are you in a Sage project?", :red
+        exit 1
+      end
+      
+      require app_file
+      
+      # Try to find the App class
+      app_class = Object.const_get("App") if Object.const_defined?("App")
+      
+      unless app_class && app_class < Sage::Base
+        say "❌ Could not find 'App' class inheriting from Sage::Base.", :red
+        exit 1
+      end
+      
+      generator = Sage::Generator.new(app_class)
+      
+      # Output directory
+      output_dir = File.join(Dir.pwd, "salvia/app")
+      FileUtils.mkdir_p(output_dir)
+      
+      File.write(File.join(output_dir, "client.d.ts"), generator.generate_dts)
+      File.write(File.join(output_dir, "client.ts"), generator.generate_client)
+      
+      say "✅ Generated RPC client:", :green
+      say "   - #{File.join(output_dir, "client.d.ts")}"
+      say "   - #{File.join(output_dir, "client.ts")}"
+      say ""
+      say "Add this to your import map (deno.json):", :yellow
+      say '  "imports": {'
+      say '    "sage/client": "./salvia/app/client.ts"'
+      say '  }'
     end
   end
 end
