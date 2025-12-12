@@ -74,7 +74,9 @@ module Salvia
       # @example ハイドレーションを無効化 (静的 HTML のみ)
       #   <%= island "StaticCard", title: "Hello", hydrate: false %>
       #
+      # @deprecated Use Salvia::SSR.render in controller instead.
       def island(name, props = {}, options = {})
+        warn "[DEPRECATION] `island` helper is deprecated. Please use `Salvia::SSR.render` in your controller (API Mode) instead."
         tag_name = options.delete(:tag) || :div
         
         # デフォルトの hydrate 値を決定
