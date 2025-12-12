@@ -165,6 +165,7 @@ module Salvia
         result = Salvia::SSR.render(name, props)
         result.respond_to?(:html_safe) ? result.html_safe : result
       end
+      module_function :salvia_component
 
       # @deprecated Use salvia_page instead.
       def ssr(name, props = {}, options = {})
