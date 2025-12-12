@@ -1,5 +1,6 @@
 import { h } from "preact";
 import Island from "../components/Island.tsx";
+import Script from "../components/Script.tsx";
 import TodoItem from "../components/TodoItem.tsx";
 import Stats from "../islands/Stats.tsx";
 
@@ -9,7 +10,9 @@ export default function Todos({ todos }: { todos: any[] }) {
       <head>
         <title>Sage Todo</title>
         <script src="https://cdn.tailwindcss.com"></script>
-        <script type="module" src="/assets/javascripts/init_turbo.js"></script>
+        <Script type="module">
+          import "@hotwired/turbo";
+        </Script>
         <script type="module" src="/assets/javascripts/islands.js"></script>
       </head>
       <body class="bg-gray-100 min-h-screen py-10">
