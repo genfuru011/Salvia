@@ -22,6 +22,7 @@ jobs:
       with:
         ruby-version: ${{ matrix.ruby-version }}
         bundler-cache: true
+        working-directory: salvia
 
     - name: Set up Deno
       uses: denoland/setup-deno@v1
@@ -29,11 +30,13 @@ jobs:
         deno-version: ${{ matrix.deno-version }}
 
     - name: Install dependencies
+      working-directory: salvia
       run: |
         bundle install
         # Install Deno dependencies for caching
-        deno cache salvia/assets/scripts/sidecar.ts
-        deno cache salvia/assets/scripts/build.ts
+        deno cache --config assets/scripts/deno.json assets/scripts/sidecar.ts
+        deno cache --config assets/scripts/deno.json assets/scripts/build.ts
 
     - name: Run tests
+      working-directory: salvia
       run: bundle exec rake test
