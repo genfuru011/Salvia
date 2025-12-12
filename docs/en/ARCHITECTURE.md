@@ -32,7 +32,7 @@ Unlike traditional approaches that embed React components into ERB templates, Sa
 ┌─────────────────────────────────────────────────────────────────────┐
 │                      Runtime (Ruby + QuickJS)                       │
 │                                                                     │
-│  1. Controller: render ssr("Home", props)                           │
+│  1. Controller: render salvia_page("Home", props)                   │
 │                         │                                           │
 │                         ▼                                           │
 │  2. QuickJS: SSR.renderToString("Home", props) → HTML (0.3ms)       │
@@ -138,7 +138,8 @@ class PostsController < ApplicationController
   def index
     @posts = Post.all
     # Renders salvia/app/pages/posts/Index.tsx
-    render html: ssr("posts/Index", { posts: @posts })
+    # Uses salvia_page helper for Full Page SSR (injects DOCTYPE & Import Maps)
+    render html: salvia_page("posts/Index", { posts: @posts })
   end
 end
 ```

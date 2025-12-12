@@ -2,11 +2,36 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.3] - 2025-12-12
+
+### Added
+- **New Helpers**: Introduced `salvia_page` (for Full Page SSR) and `salvia_component` (for Partials/Turbo) helpers.
+- **API Reference**: Added comprehensive API reference to documentation.
+
+### Deprecated
+- **Legacy Helpers**: Deprecated `ssr` and `island` helpers in favor of the new explicit helpers.
+
+## [0.2.2] - 2025-12-12
+
+### Added
+- **Full Page SSR Support**: Added `Salvia::SSR.render_page` to automatically inject `<!DOCTYPE html>` and Import Maps.
+
+### Fixed
+- **DevServer Routing**: Fixed an issue where requests with extensions (e.g., `.tsx`) were not correctly resolved by the DevServer.
+- **Import Map Injection**: Fixed `Uncaught TypeError` in browsers by ensuring Import Maps are present in API Mode responses.
+
 ## [0.2.1] - 2025-12-12
+
+### Fixed
+- **Sidecar Stability**: Fixed a race condition in Sidecar startup using `onListen` callback.
+- **CI/CD**: Fixed CI failures by updating Deno version and workflow configuration.
+- **Process Management**: Improved Sidecar process termination logic.
+- **Path Handling**: Fixed `build.ts` to handle paths more robustly.
+- **Module Compatibility**: Fixed `module.exports` shim in `vendor_setup.ts` for better compatibility.
 
 ### Added
 - **Cache Busting**: Production builds now generate hashed filenames (e.g., `Counter-a1b2c3d4.js`) to prevent browser caching issues.
-- **Thread Safety**: The QuickJS SSR engine is now thread-safe using Thread Local Storage, preventing crashes in multi-threaded environments (e.g., Puma).
+- **Thread Safety**: The QuickJS SSR engine is now thread-safe using Thread Local Storage.
 
 ### Changed
 - **Documentation**: Centralized detailed documentation to English (`docs/en/`) to prevent drift. Japanese documentation is now simplified in `README.ja.md`.
