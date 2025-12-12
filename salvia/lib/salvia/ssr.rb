@@ -85,19 +85,19 @@ module Salvia
       # @param props [Hash] プロパティ
       # @return [String] レンダリングされた HTML
       def render(component_name, props = {})
-        raise Error, "SSR not configured. Call Salvia::SSR.configure first." unless current_adapter
+        ensure_configured!
         current_adapter.render(component_name, props)
       end
 
       # コンポーネントを登録
       def register_component(name, code)
-        raise Error, "SSR not configured. Call Salvia::SSR.configure first." unless current_adapter
+        ensure_configured!
         current_adapter.register_component(name, code)
       end
       
       # バンドルをリロード (開発モード用)
       def reload!
-        return unless current_adapter
+        return unless configured?
         current_adapter.reload_bundle! if current_adapter.respond_to?(:reload_bundle!)
       end
       
@@ -132,6 +132,23 @@ module Salvia
       # 設定済みか確認
       def configured?
         !current_adapter.nil? && current_adapter.initialized?
+      end
+
+      private
+
+      def ensure_configured!
+        return if configured?
+        
+        # Auto-configure using defaults from Salvia.config
+        # This handles cases where Salvia.configure wasn't explicitly called
+        # or called before SSR module was fully loaded
+        configure(
+          bundle_path: Salvia.config.ssr_bundle_path,
+          development: Salvia.development?
+        )
+      rescue => e
+        # If auto-configuration fails, we raise the original error to avoid masking it
+        raise Error, "SSR not configured and auto-configuration failed: #{e.message}. Call Salvia::SSR.configure explicitly."
       end
     end
   end
