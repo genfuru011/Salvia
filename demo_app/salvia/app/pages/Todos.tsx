@@ -9,9 +9,7 @@ export default function Todos({ todos }: { todos: any[] }) {
       <head>
         <title>Sage Todo</title>
         <script src="https://cdn.tailwindcss.com"></script>
-        <script type="module">
-          import "@hotwired/turbo";
-        </script>
+        <script type="module" dangerouslySetInnerHTML={{ __html: 'import "@hotwired/turbo";' }} />
         <script type="module" src="/assets/javascripts/islands.js"></script>
       </head>
       <body class="bg-gray-100 min-h-screen py-10">
