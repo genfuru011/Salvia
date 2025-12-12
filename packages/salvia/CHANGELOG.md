@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.0] - 2025-12-12
+
+### Added
+- **Sage Framework Support**: Added official adapter `Salvia::Adapters::Sage` for the Sage framework.
+- **Internal Components**: Introduced `sage/script` component for easy script injection with Import Map support.
+- **Production Build**: Updated `salvia build` to include `app/components` in the build artifacts.
+- **Manifest Support**: Enhanced Import Map generation to use `manifest.json` for resolving hashed filenames in production.
+
+### Changed
+- **Sidecar**: Added `--allow-import` flag to the Deno sidecar `check` command to support internal component imports.
+- **CLI**: Updated `salvia install` to support non-interactive mode with `--yes` flag.
+
 ## [0.2.3] - 2025-12-12
 
 ### Added
