@@ -53,10 +53,32 @@ module Salvia
 
     def stop
       return unless @pid
-      Process.kill("TERM", @pid)
-      @pid = nil
-      @port = nil
-      @io.close if @io && !@io.closed?
+      
+      begin
+        Process.kill("TERM", @pid)
+        
+        # Wait up to 5 seconds for graceful shutdown
+        50.times do
+          pid = Process.waitpid(@pid, Process::WNOHANG)
+          if pid
+            @pid = nil
+            break
+          end
+          sleep 0.1
+        end
+        
+        # Force kill if still running
+        if @pid
+          Process.kill("KILL", @pid)
+          Process.waitpid(@pid, Process::WNOHANG) rescue nil
+        end
+      rescue Errno::ESRCH, Errno::ECHILD
+        # Process already dead
+      ensure
+        @pid = nil
+        @port = nil
+        @io.close if @io && !@io.closed?
+      end
     end
 
     def running?
