@@ -20,13 +20,15 @@ module Sage
       # Run bundle install
       inside app_name do
         run "bundle install"
+        
+        say "🏝️  Installing Salvia frontend...", :green
+        run "bundle exec salvia install --yes"
       end
       
       say ""
       say "✅ #{app_name} created successfully!", :green
       say "To get started:"
       say "  cd #{app_name}"
-      say "  bundle exec salvia install  # Install frontend (SSR)"
       say "  bundle exec sage dev        # Start dev server"
     end
     

@@ -29,6 +29,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency "async"
   spec.add_dependency "rack"
   spec.add_dependency "thor"
+  spec.add_dependency "salvia"
   spec.add_dependency "zeitwerk"
   spec.add_dependency "listen"
   spec.add_development_dependency "rack-test"

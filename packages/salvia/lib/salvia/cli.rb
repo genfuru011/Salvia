@@ -12,22 +12,23 @@ module Salvia
     end
 
     desc "install", "Install Salvia SSR files into your application"
+    method_option :yes, aliases: "-y", type: :boolean, default: false, desc: "Skip prompts and assume yes"
     def install
       say "🌿 Salvia Installer", :bold
       say "===================", :bold
       say ""
 
       # 1. Backend Framework
-      backend = if File.exist?("bin/rails") || File.exist?("config/application.rb")
+      backend = if File.exist?("bin/rails") || File.exist?("config/environment.rb")
                   "rails"
                 elsif (File.read("Gemfile").include?('gem "sage"') rescue false)
                   "sage"
                 else
-                  ask_framework
+                  options[:yes] ? "sage" : ask_framework
                 end
 
       # 2. Tailwind CSS
-      install_tailwind = yes?("1. Do you want to install Tailwind CSS (via tailwindcss-ruby)? (y/N)", :yellow)
+      install_tailwind = options[:yes] || yes?("1. Do you want to install Tailwind CSS (via tailwindcss-ruby)? (y/N)", :yellow)
 
       say ""
       say "🚀 Installing Salvia (Preact + Signals) for #{backend}...", :green
