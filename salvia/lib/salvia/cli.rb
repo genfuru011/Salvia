@@ -163,6 +163,20 @@ module Salvia
         say "❌ SSR build failed", :red
         exit 1
       end
+
+      # Build Tailwind CSS if available
+      if File.exist?("bin/rails")
+        say "🎨 Building Tailwind CSS...", :green
+        # Check if tailwindcss:build task exists
+        if system("bin/rails -T | grep tailwindcss:build > /dev/null 2>&1")
+          if system("bin/rails tailwindcss:build")
+            say "✅ Tailwind CSS build completed!", :green
+          else
+            say "❌ Tailwind CSS build failed", :red
+            # Don't exit here, as SSR build succeeded
+          end
+        end
+      end
     end
 
     desc "watch", "Watch and rebuild Island components"
