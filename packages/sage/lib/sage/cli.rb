@@ -77,7 +77,8 @@ module Sage
       
       # Function to start the server
       start_server = proc do
-        pid = spawn("bundle exec sage server -p #{port}")
+        env = { "RACK_ENV" => "development" }
+        pid = spawn(env, "bundle exec sage server -p #{port}")
         Process.detach(pid)
         pid
       end
