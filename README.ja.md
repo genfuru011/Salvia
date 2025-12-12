@@ -239,6 +239,42 @@ Railsのコントローラーおよびビューで使用可能なヘルパーで
 #### `island(name, props = {}, options = {})`
 *   **非推奨**: コントローラーで `salvia_page` を使用するか、部分更新には `salvia_component` を使用してください。
 
+## 10. Railsデータのコンポーネントへの渡し方
+
+SalviaではView層をTSXに移行するため、`link_to` や `form_with`、`image_tag` などのRailsヘルパーをコンポーネント内で直接使用することはできません。代わりに、必要な値（URL、トークン、パスなど）を **Props** としてコントローラーから渡します。
+
+### 例: フォームとCSRFトークンの扱い
+
+```ruby
+# app/controllers/sessions_controller.rb
+def new
+  render html: salvia_page("Login", 
+    # CSRFトークンとフォームのアクションURLを渡す
+    csrf_token: form_authenticity_token,
+    login_path: login_path
+  )
+end
+```
+
+```tsx
+// salvia/app/pages/Login.tsx
+export default function Login({ csrf_token, login_path }) {
+  return (
+    <form action={login_path} method="post">
+      <input type="hidden" name="authenticity_token" value={csrf_token} />
+      
+      <label>Email</label>
+      <input type="email" name="email" />
+      
+      <button type="submit">Log In</button>
+    </form>
+  );
+}
+```
+
+### なぜこのアプローチなのか？
+これにより、フロントエンド (TSX) をバックエンドフレームワークのロジックから切り離すことができます。コンポーネントはデータに基づいてUIをレンダリングする純粋な関数となり、テストや再利用が容易になります。
+
 ## ライセンス
 
 このgemは [MIT License](https://opensource.org/licenses/MIT) の下でオープンソースとして利用可能です。
