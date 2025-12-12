@@ -16,11 +16,13 @@ import { denoPlugins } from "jsr:@luca/esbuild-deno-loader@0.11";
 const WATCH_MODE = Deno.args.includes("--watch");
 const VERBOSE = Deno.args.includes("--verbose");
 
+import * as path from "https://deno.land/std@0.224.0/path/mod.ts";
+
 // Resolve deno.json relative to this script
 let CONFIG_PATH = new URL("./deno.json", import.meta.url).pathname;
 
 // Check for user config in project root
-const USER_CONFIG_PATH = `${Deno.cwd()}/salvia/deno.json`;
+const USER_CONFIG_PATH = path.join(Deno.cwd(), "salvia", "deno.json");
 try {
   await Deno.stat(USER_CONFIG_PATH);
   CONFIG_PATH = USER_CONFIG_PATH;
@@ -47,11 +49,11 @@ try {
 // When running via `deno task --config salvia/deno.json`, CWD is usually the project root.
 // But if running from inside salvia/, it's different.
 const ROOT_DIR = Deno.cwd().endsWith("/salvia") ? "." : "salvia";
-const ISLANDS_DIR = `${ROOT_DIR}/app/islands`;
-const PAGES_DIR = `${ROOT_DIR}/app/pages`;
-const COMPONENTS_DIR = `${ROOT_DIR}/app/components`;
-const SSR_OUTPUT_DIR = `${ROOT_DIR}/server`;
-const CLIENT_OUTPUT_DIR = `${ROOT_DIR}/../public/assets/islands`;
+const ISLANDS_DIR = path.join(ROOT_DIR, "app", "islands");
+const PAGES_DIR = path.join(ROOT_DIR, "app", "pages");
+const COMPONENTS_DIR = path.join(ROOT_DIR, "app", "components");
+const SSR_OUTPUT_DIR = path.join(ROOT_DIR, "server");
+const CLIENT_OUTPUT_DIR = path.join(ROOT_DIR, "..", "public", "assets", "islands");
 
 // ============================================
 // SSR Islands Build
@@ -72,12 +74,12 @@ async function findIslandFiles(): Promise<IslandFile[]> {
       for await (const entry of Deno.readDir(dir)) {
         if (entry.isFile && (entry.name.endsWith(".tsx") || entry.name.endsWith(".jsx") || entry.name.endsWith(".js"))) {
           if (entry.name.startsWith("_")) continue; // Skip internal files
-          const path = `${dir}/${entry.name}`;
-          const content = await Deno.readTextFile(path);
+          const filePath = path.join(dir, entry.name);
+          const content = await Deno.readTextFile(filePath);
           const clientOnly = content.trimStart().startsWith('"client only"') || 
                             content.trimStart().startsWith("'client only'");
           const name = entry.name.replace(/\.(tsx|jsx|js)$/, "");
-          files.push({ path, name, clientOnly, isPage });
+          files.push({ path: filePath, name, clientOnly, isPage });
         }
       }
     } catch {
@@ -121,16 +123,11 @@ async function buildSSR() {
       // Create a virtual entry point that exports all components
       // Get just the filename from the path
       const entryCode = ssrFiles.map(f => {
-        let importPath = f.path;
-        // f.path is like "../app/islands/Counter.tsx" or "../app/pages/Home.tsx"
-        // We are writing _ssr_entry.js to ISLANDS_DIR ("../app/islands")
-        
-        if (f.path.startsWith(ISLANDS_DIR)) {
-          importPath = `./${f.path.split("/").pop()}`;
-        } else if (f.path.startsWith(PAGES_DIR)) {
-          // From ../app/islands to ../app/pages is ../pages
-          importPath = `../pages/${f.path.split("/").pop()}`;
-        }
+        // Calculate relative path from ISLANDS_DIR (where _ssr_entry.js will be) to the component file
+        // This handles nested directories and different source roots correctly
+        const relativePath = path.relative(ISLANDS_DIR, f.path);
+        // Ensure path starts with ./ or ../ for import
+        const importPath = relativePath.startsWith(".") ? relativePath : `./${relativePath}`;
         return `import ${f.name} from "${importPath}";`;
       }).join("\n") + `
 import { h } from "preact";
@@ -155,14 +152,14 @@ globalThis.SalviaSSR = {
 };
 export default {}; // Ensure it's a module
 `;
-      const entryPath = `${ISLANDS_DIR}/_ssr_entry.js`;
+      const entryPath = path.join(ISLANDS_DIR, "_ssr_entry.js");
       await Deno.writeTextFile(entryPath, entryCode);
 
       await esbuild.build({
         entryPoints: [entryPath],
         bundle: true,
         format: "iife",
-        outfile: `${SSR_OUTPUT_DIR}/ssr_bundle.js`,
+        outfile: path.join(SSR_OUTPUT_DIR, "ssr_bundle.js"),
         platform: "neutral",
         plugins: [...denoPlugins({ configPath: CONFIG_PATH })],
         external: [],
@@ -176,7 +173,7 @@ export default {}; // Ensure it's a module
       // Clean up temp file
       await Deno.remove(entryPath);
       
-      console.log(`✅ SSR bundle built: ${SSR_OUTPUT_DIR}/ssr_bundle.js (${ssrFiles.map(f => f.name).join(", ")})`);
+      console.log(`✅ SSR bundle built: ${path.join(SSR_OUTPUT_DIR, "ssr_bundle.js")} (${ssrFiles.map(f => f.name).join(", ")})`);
     }
 
     // Client bundle (for hydration) - all files
@@ -184,9 +181,12 @@ export default {}; // Ensure it's a module
     const clientEntryPoints = [];
     
     for (const file of clientFiles) {
-      const filename = file.path.split("/").pop();
+      const filename = path.basename(file.path);
+      const relativePath = path.relative(ISLANDS_DIR, file.path);
+      const importPath = relativePath.startsWith(".") ? relativePath : `./${relativePath}`;
+      
       const wrapperCode = `
-import Component from "./${filename}";
+import Component from "${importPath}";
 import { h, hydrate, render } from "preact";
 
 export function mount(element, props, options) {
@@ -198,7 +198,7 @@ export function mount(element, props, options) {
   }
 }
 `;
-      const wrapperPath = `${ISLANDS_DIR}/_client_${file.name}.js`;
+      const wrapperPath = path.join(ISLANDS_DIR, `_client_${file.name}.js`);
       await Deno.writeTextFile(wrapperPath, wrapperCode);
       clientEntryPoints.push({ in: wrapperPath, out: file.name });
     }

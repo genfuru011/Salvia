@@ -62,11 +62,20 @@ module Salvia
 
       # SSR エンジンを設定
       # @param options [Hash] エンジンオプション
+      # @option options [Symbol] :engine エンジン名 (:quickjs)
       # @option options [String] :bundle_path SSR バンドルのパス
       # @option options [Boolean] :development 開発モード
       def configure(options = {})
-        require_relative "ssr/quickjs"
-        @current_adapter = QuickJS.new(options)
+        engine = options.fetch(:engine, :quickjs)
+        
+        case engine
+        when :quickjs
+          require_relative "ssr/quickjs"
+          @current_adapter = QuickJS.new(options)
+        else
+          raise EngineNotFoundError, "Unknown SSR engine: #{engine}"
+        end
+
         @current_adapter.setup!
         @current_adapter
       end
@@ -96,6 +105,16 @@ module Salvia
       def set_build_error(error)
         @last_build_error = error
         current_adapter.last_build_error = error if current_adapter&.respond_to?(:last_build_error=)
+      end
+      
+      # ビルドエラーを取得
+      def build_error
+        @last_build_error || (current_adapter&.respond_to?(:last_build_error) ? current_adapter.last_build_error : nil)
+      end
+
+      # ビルドエラーがあるか確認
+      def build_error?
+        !build_error.nil?
       end
       
       # ビルドエラーをクリア
