@@ -14,14 +14,19 @@ import { renderToString } from "preact-render-to-string";
 (globalThis as any).h = h;
 (globalThis as any).Fragment = Fragment;
 
+// Module registry for require shim
+const moduleRegistry: Record<string, any> = {
+  "preact": preact,
+  "preact/hooks": hooks,
+  "@preact/signals": signals,
+  "preact/jsx-runtime": jsxRuntime,
+  "preact-render-to-string": { default: renderToString, renderToString }
+};
+
 // Simple require shim for JIT bundles
 (globalThis as any).require = function(moduleName: string) {
-  if (moduleName === "preact") return preact;
-  if (moduleName === "preact/hooks") return hooks;
-  if (moduleName === "@preact/signals") return signals;
-  if (moduleName === "preact/jsx-runtime") return jsxRuntime;
-  if (moduleName === "preact-render-to-string") return { default: renderToString, renderToString };
-  throw new Error("Module not found: " + moduleName);
+  if (moduleRegistry[moduleName]) return moduleRegistry[moduleName];
+  throw new Error(`[Salvia SSR] Module not found: "${moduleName}". If this is an external dependency, ensure it is registered in vendor_setup.ts.`);
 };
 
 // Shim for module.exports (used by sidecar global-externals)
