@@ -170,10 +170,15 @@ const handler = async (request: Request): Promise<Response> => {
   }
 };
 
-const server = Deno.serve({ port: PORT }, handler);
-// Output JSON handshake for reliable parsing
-console.log(JSON.stringify({ port: server.addr.port, status: "ready" }));
-console.log(`[Deno Init] Listening on http://localhost:${server.addr.port}/`);
+const server = Deno.serve({ 
+  port: PORT,
+  onListen: ({ port, hostname }) => {
+    // Output JSON handshake for reliable parsing
+    const msg = JSON.stringify({ port, status: "ready" });
+    console.log(msg);
+    console.log(`[Deno Init] Listening on http://${hostname}:${port}/`);
+  }
+}, handler);
 
 // Handle cleanup on exit
 const cleanup = () => {
