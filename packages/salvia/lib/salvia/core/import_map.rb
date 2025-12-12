@@ -70,6 +70,22 @@ module Salvia
           if v.is_a?(String) && v.start_with?("npm:")
             package = v.sub("npm:", "")
             "https://esm.sh/#{package}"
+          elsif v.is_a?(String) && v.start_with?("./")
+            # Resolve relative paths relative to app root
+            # In browser, @/ -> /salvia/app/ (dev) or /assets/app/ (prod)
+            # But here we are mapping keys like "@/".
+            # If v is "./app/", we want it to be "/salvia/app/" in dev.
+            
+            if Salvia.development?
+              # Assuming v starts with "./" and points to something inside project root
+              # We map it to /salvia/ + path without leading ./
+              "/salvia/" + v.sub(/^\.\//, "")
+            else
+              # In production, assets are compiled.
+              # This part is tricky without a full manifest for all files.
+              # For now, let's assume standard structure.
+              "/assets/" + v.sub(/^\.\//, "")
+            end
           else
             v
           end
