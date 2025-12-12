@@ -6,22 +6,31 @@ This guide provides a comprehensive reference for using Salvia in your Ruby on R
 
 To add Salvia to your Rails application:
 
-1.  Add the gem to your `Gemfile`:
+1.  **Install Deno** (Required):
+    ```bash
+    curl -fsSL https://deno.land/x/install/install.sh | sh
+    ```
+
+2.  Add the gem to your `Gemfile`:
     ```ruby
     gem 'salvia'
     ```
 
-2.  Install the gem:
+3.  Install the gem:
     ```bash
     bundle install
     ```
 
-3.  Run the Salvia installer:
+4.  Run the Salvia installer:
     ```bash
     bundle exec salvia install
     ```
 
-This will create the `salvia/` directory structure and necessary configuration files.
+This will:
+*   Create the `salvia/` directory structure.
+*   Generate `deno.json` (SSOT for dependencies).
+*   **Cache Deno dependencies** (for faster first run).
+*   Update Rails configuration (inject `Salvia::Helpers`).
 
 ## 2. Directory Structure
 
@@ -169,7 +178,7 @@ end
 
 ## 7. Deployment
 
-For production, you need to build the JavaScript assets.
+For production, you need to build the JavaScript assets and CSS.
 
 ```bash
 bundle exec salvia build
@@ -177,7 +186,36 @@ bundle exec salvia build
 
 This command:
 1.  Scans `salvia/app/islands/` for interactive components.
-2.  Bundles them into `public/assets/islands/`.
-3.  Generates an import map for production use.
+2.  Bundles them into `public/assets/islands/` (**with hashed filenames**).
+3.  Generates a production Import Map (`manifest.json`).
+4.  **Builds Tailwind CSS** (executes `bin/rails tailwindcss:build`).
 
 Ensure this command is run during your deployment process (e.g., in your Dockerfile or CI/CD pipeline).
+
+## 8. Configuration (deno.json)
+
+Since Salvia v0.2.0, `salvia/deno.json` is the Single Source of Truth (SSOT) for dependencies.
+
+### Adding Dependencies
+Add them to the `imports` section. `npm:` specifiers are automatically converted to `esm.sh` for the browser.
+
+```json
+{
+  "imports": {
+    "uuid": "npm:uuid@9.0.0"
+  }
+}
+```
+
+### Extending Globals (SSR)
+If you need to expose specific libraries as global variables in the SSR environment (e.g., `uuid`), use `salvia.globals`.
+
+```json
+{
+  "salvia": {
+    "globals": {
+      "uuid": "globalThis.UUID"
+    }
+  }
+}
+```

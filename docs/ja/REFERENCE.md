@@ -6,22 +6,31 @@
 
 Salvia を Rails アプリケーションに追加するには:
 
-1.  `Gemfile` に gem を追加します:
+1.  **Deno をインストールします** (必須):
+    ```bash
+    curl -fsSL https://deno.land/x/install/install.sh | sh
+    ```
+
+2.  `Gemfile` に gem を追加します:
     ```ruby
     gem 'salvia'
     ```
 
-2.  gem をインストールします:
+3.  gem をインストールします:
     ```bash
     bundle install
     ```
 
-3.  Salvia インストーラーを実行します:
+4.  Salvia インストーラーを実行します:
     ```bash
     bundle exec salvia install
     ```
 
-これにより、`salvia/` ディレクトリ構造と必要な設定ファイルが作成されます。
+これにより、以下の処理が行われます:
+*   `salvia/` ディレクトリ構造の作成
+*   `deno.json` (依存関係の SSOT) の生成
+*   **Deno 依存関係のキャッシュ** (初回起動の高速化)
+*   Rails 設定の更新 (`Salvia::Helpers` の注入)
 
 ## 2. ディレクトリ構造
 
@@ -169,7 +178,7 @@ end
 
 ## 7. デプロイ
 
-本番環境では、JavaScript アセットをビルドする必要があります。
+本番環境では、JavaScript アセットと CSS をビルドする必要があります。
 
 ```bash
 bundle exec salvia build
@@ -177,7 +186,36 @@ bundle exec salvia build
 
 このコマンドは以下の処理を行います:
 1.  `salvia/app/islands/` をスキャンしてインタラクティブなコンポーネントを探します。
-2.  それらを `public/assets/islands/` にバンドルします。
-3.  本番用の Import Map を生成します。
+2.  それらを `public/assets/islands/` にバンドルします (**ハッシュ付きファイル名**)。
+3.  本番用の Import Map (`manifest.json`) を生成します。
+4.  **Tailwind CSS をビルドします** (`bin/rails tailwindcss:build` を実行)。
 
 デプロイプロセス（例: Dockerfile や CI/CD パイプライン）の中でこのコマンドを実行するようにしてください。
+
+## 8. 設定 (deno.json)
+
+Salvia v0.2.0 以降、`salvia/deno.json` が依存関係の唯一の信頼できる情報源 (SSOT) です。
+
+### 依存関係の追加
+`imports` セクションに追加します。`npm:` 指定子は自動的に `esm.sh` に変換されます。
+
+```json
+{
+  "imports": {
+    "uuid": "npm:uuid@9.0.0"
+  }
+}
+```
+
+### グローバル変数の拡張 (SSR)
+SSR 環境で特定のライブラリをグローバル変数として公開したい場合 (例: `uuid` など)、`salvia.globals` を使用します。
+
+```json
+{
+  "salvia": {
+    "globals": {
+      "uuid": "globalThis.UUID"
+    }
+  }
+}
+```
