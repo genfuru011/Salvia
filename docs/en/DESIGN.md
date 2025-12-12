@@ -185,7 +185,8 @@ def create
   task = Task.create(params[:task])
   
   # Return "Append" instruction and "HTML" via Turbo Stream
-  render turbo_stream: turbo_stream.append("todo_list", html: ssr("islands/TaskCard", task: task))
+  # Use Salvia::SSR.render for partials
+  render turbo_stream: turbo_stream.append("todo_list", html: Salvia::SSR.render("islands/TaskCard", task: task))
 end
 ```
 

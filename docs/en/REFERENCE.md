@@ -96,9 +96,9 @@ export default function Counter() {
 
 Salvia relies on standard Rails routing and controllers.
 
-### The `ssr` Helper
+### The `Salvia::SSR.render_page` Method
 
-To render a Salvia Page from a Rails controller, use the `ssr` helper method.
+To render a Salvia Page from a Rails controller, use the `Salvia::SSR.render_page` method. This is the recommended approach for Full Page SSR.
 
 ```ruby
 # app/controllers/posts_controller.rb
@@ -106,13 +106,16 @@ class PostsController < ApplicationController
   def index
     @posts = Post.all
     # Renders salvia/app/pages/posts/Index.tsx
-    render html: ssr("posts/Index", posts: @posts)
+    # Returns full HTML with <!DOCTYPE html> and Import Maps
+    render html: Salvia::SSR.render_page("posts/Index", posts: @posts).html_safe
   end
 end
 ```
 
 *   **First argument**: The path to the component relative to `salvia/app/pages/`.
 *   **Second argument**: A hash of props to pass to the component.
+
+> **Note**: The `ssr` helper and `<%= island ... %>` ERB helper are deprecated. Please use `Salvia::SSR.render_page` (for full pages) or `Salvia::SSR.render` (for partials) in your controllers.
 
 ## 5. Data Flow
 
@@ -121,7 +124,7 @@ Data flows from your Rails controller to your Page, and then to Islands via **Pr
 
 ```ruby
 # Controller
-render html: ssr("Show", user: @user)
+render html: Salvia::SSR.render_page("Show", user: @user).html_safe
 ```
 
 ```tsx
@@ -172,7 +175,8 @@ You can return Turbo Stream responses from Rails controllers to update parts of 
 ```ruby
 def create
   @comment = Comment.create(params[:comment])
-  render turbo_stream: turbo_stream.append("comments", html: ssr("components/Comment", comment: @comment))
+  # Use Salvia::SSR.render for partials (no DOCTYPE/ImportMap injection)
+  render turbo_stream: turbo_stream.append("comments", html: Salvia::SSR.render("components/Comment", comment: @comment))
 end
 ```
 
