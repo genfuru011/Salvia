@@ -174,6 +174,42 @@ Understanding the separation of concerns is crucial for "True HTML First" develo
 | **Browser APIs** | ❌ No (`window`, `document` are mocked) | ✅ Yes |
 | **Usage** | Layouts, Initial Data Fetching | Forms, Modals, Dynamic UI |
 
+## Passing Rails Data to Components
+
+Since Salvia moves the View layer to TSX, you cannot use Rails helpers (like `link_to`, `form_with`, `image_tag`) directly inside your components. Instead, pass the necessary values (URLs, tokens, paths) as **Props** from your controller.
+
+### Example: Handling Forms & CSRF
+
+```ruby
+# app/controllers/sessions_controller.rb
+def new
+  render html: salvia_page("Login", 
+    # Pass CSRF token and form action URL
+    csrf_token: form_authenticity_token,
+    login_path: login_path
+  )
+end
+```
+
+```tsx
+// salvia/app/pages/Login.tsx
+export default function Login({ csrf_token, login_path }) {
+  return (
+    <form action={login_path} method="post">
+      <input type="hidden" name="authenticity_token" value={csrf_token} />
+      
+      <label>Email</label>
+      <input type="email" name="email" />
+      
+      <button type="submit">Log In</button>
+    </form>
+  );
+}
+```
+
+### Why this approach?
+This keeps your frontend (TSX) decoupled from the backend framework logic. Your components become pure functions that render UI based on data, making them easier to test and reuse.
+
 ## Documentation
 
 *   **English**:

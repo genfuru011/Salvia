@@ -153,7 +153,40 @@ export default function Counter() {
 }
 ```
 
-## 6. Turbo Integration
+## 6. Passing Rails Data to Components
+
+Since Salvia moves the View layer to TSX, you cannot use Rails helpers (like `link_to`, `form_with`, `image_tag`) directly inside your components. Instead, pass the necessary values (URLs, tokens, paths) as **Props** from your controller.
+
+### Example: Handling Forms & CSRF
+
+```ruby
+# app/controllers/sessions_controller.rb
+def new
+  render html: salvia_page("Login", 
+    # Pass CSRF token and form action URL
+    csrf_token: form_authenticity_token,
+    login_path: login_path
+  )
+end
+```
+
+```tsx
+// salvia/app/pages/Login.tsx
+export default function Login({ csrf_token, login_path }) {
+  return (
+    <form action={login_path} method="post">
+      <input type="hidden" name="authenticity_token" value={csrf_token} />
+      
+      <label>Email</label>
+      <input type="email" name="email" />
+      
+      <button type="submit">Log In</button>
+    </form>
+  );
+}
+```
+
+## 7. Turbo Integration
 
 Salvia is designed to work with Turbo Drive for SPA-like navigation without complex client-side routing.
 
@@ -180,7 +213,7 @@ def create
 end
 ```
 
-## 7. Deployment
+## 8. Deployment
 
 For production, you need to build the JavaScript assets and CSS.
 
@@ -196,7 +229,35 @@ This command:
 
 Ensure this command is run during your deployment process (e.g., in your Dockerfile or CI/CD pipeline).
 
-## 9. API Reference
+## 9. Configuration (deno.json)
+
+Since Salvia v0.2.0, `salvia/deno.json` is the Single Source of Truth (SSOT) for dependencies.
+
+### Adding Dependencies
+Add them to the `imports` section. `npm:` specifiers are automatically converted to `esm.sh` for the browser.
+
+```json
+{
+  "imports": {
+    "uuid": "npm:uuid@9.0.0"
+  }
+}
+```
+
+### Extending Globals (SSR)
+If you need to expose specific libraries as global variables in the SSR environment (e.g., `uuid`), use `salvia.globals`.
+
+```json
+{
+  "salvia": {
+    "globals": {
+      "uuid": "globalThis.UUID"
+    }
+  }
+}
+```
+
+## 10. API Reference
 
 ### Helpers (Controllers & Views)
 
