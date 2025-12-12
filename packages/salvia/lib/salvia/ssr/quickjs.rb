@@ -8,6 +8,13 @@ module Salvia
       attr_reader :js_logs
       attr_accessor :last_build_error
 
+      class << self
+        attr_accessor :vendor_bundle_cache
+        attr_reader :mutex
+      end
+      
+      @mutex = Mutex.new
+
       def setup!
         require_quickjs!
         
@@ -215,9 +222,18 @@ module Salvia
           # Ensure module.exports shim exists before loading vendor bundle
           target_vm.eval_code("if(typeof module === 'undefined') { globalThis.module = { exports: {} }; }")
           
-          code = Salvia::Compiler.bundle(vendor_path, format: "iife")
-          target_vm.eval_code(code)
-          log_info("Loaded Vendor bundle (Internal)")
+          # Cache the bundled code to avoid recompiling for every new VM
+          unless self.class.vendor_bundle_cache
+            self.class.mutex.synchronize do
+              unless self.class.vendor_bundle_cache
+                self.class.vendor_bundle_cache = Salvia::Compiler.bundle(vendor_path, format: "iife")
+                log_info("Bundled Vendor (Internal)")
+              end
+            end
+          end
+          
+          target_vm.eval_code(self.class.vendor_bundle_cache)
+          log_info("Loaded Vendor bundle (Internal) to VM")
         else
           log_error("Internal vendor_setup.ts not found at #{vendor_path}")
         end

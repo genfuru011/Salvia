@@ -35,6 +35,7 @@ module Sage
       Async do
         server = Falcon::Server.new(app, endpoint)
         puts "🌿 Sage is running on http://0.0.0.0:#{port}"
+        puts "🔥 YJIT Enabled" if defined?(RubyVM::YJIT) && RubyVM::YJIT.enabled?
         server.run
       end
     end

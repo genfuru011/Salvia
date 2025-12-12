@@ -1,8 +1,9 @@
 import * as esbuild from "https://deno.land/x/esbuild@v0.24.2/mod.js";
 import { denoPlugins } from "jsr:@luca/esbuild-deno-loader@0.11";
 
-// Use port 0 to let OS assign a free port
-const PORT = 0;
+// Use port 0 to let OS assign a free port, or UDS if specified
+const SOCKET_PATH = Deno.env.get("SALVIA_SOCKET_PATH");
+const PORT = SOCKET_PATH ? undefined : 0;
 
 console.log(`[Deno Init] 🚀 Salvia Sidecar starting...`);
 
@@ -170,15 +171,24 @@ const handler = async (request: Request): Promise<Response> => {
   }
 };
 
-const server = Deno.serve({ 
-  port: PORT,
-  onListen: ({ port, hostname }) => {
-    // Output JSON handshake for reliable parsing
-    const msg = JSON.stringify({ port, status: "ready" });
-    console.log(msg);
-    console.log(`[Deno Init] Listening on http://${hostname}:${port}/`);
-  }
-}, handler);
+const server = SOCKET_PATH 
+  ? Deno.serve({
+      path: SOCKET_PATH,
+      onListen: () => {
+        const msg = JSON.stringify({ socket: SOCKET_PATH, status: "ready" });
+        console.log(msg);
+        console.log(`[Deno Init] Listening on unix:${SOCKET_PATH}`);
+      }
+    }, handler)
+  : Deno.serve({ 
+      port: PORT,
+      onListen: ({ port, hostname }) => {
+        // Output JSON handshake for reliable parsing
+        const msg = JSON.stringify({ port, status: "ready" });
+        console.log(msg);
+        console.log(`[Deno Init] Listening on http://${hostname}:${port}/`);
+      }
+    }, handler);
 
 // Handle cleanup on exit
 const cleanup = () => {

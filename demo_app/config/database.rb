@@ -9,6 +9,14 @@ db_config = {
 
 ActiveRecord::Base.establish_connection(db_config)
 
+# Enable WAL mode for better concurrency
+begin
+  ActiveRecord::Base.connection.execute("PRAGMA journal_mode=WAL;")
+  ActiveRecord::Base.connection.execute("PRAGMA synchronous=NORMAL;")
+rescue => e
+  puts "Failed to enable WAL mode: #{e.message}"
+end
+
 # Create DB directory
 FileUtils.mkdir_p("db")
 

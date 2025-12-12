@@ -79,7 +79,7 @@ module Sage
       
       # Function to start the server
       start_server = proc do
-        env = { "RACK_ENV" => "development" }
+        env = { "RACK_ENV" => "development", "RUBY_YJIT_ENABLE" => "1" }
         pid = spawn(env, "bundle exec sage server -p #{port}")
         Process.detach(pid)
         pid

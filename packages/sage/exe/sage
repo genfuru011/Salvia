@@ -1,5 +1,11 @@
 #!/usr/bin/env ruby
 
+# Enable YJIT by default if available
+if defined?(RubyVM::YJIT) && !RubyVM::YJIT.enabled? && ENV["RUBY_YJIT_ENABLE"] != "0"
+  ENV["RUBY_YJIT_ENABLE"] = "1"
+  exec(Gem.ruby, $0, *ARGV)
+end
+
 require "sage/cli"
 
 Sage::CLI.start(ARGV)
