@@ -62,6 +62,8 @@ const handler = async (request: Request): Promise<Response> => {
               build.onLoad({ filter: /.*/, namespace: "global-external" }, (args: any) => {
                 const globalVar = allGlobals[args.path];
                 if (globalVar) {
+                  // Use module.exports to support both default and named imports via esbuild's CommonJS interop.
+                  // This requires a minimal CommonJS shim (module.exports) in the execution environment (vendor_setup.ts).
                   return { contents: `module.exports = ${globalVar};`, loader: "js" };
                 }
                 return null;

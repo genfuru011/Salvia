@@ -30,4 +30,6 @@ const moduleRegistry: Record<string, any> = {
 };
 
 // Shim for module.exports (used by sidecar global-externals)
-(globalThis as any).module = { exports: {} };
+if (typeof (globalThis as any).module === 'undefined') {
+  (globalThis as any).module = { exports: {} };
+}
