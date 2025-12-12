@@ -19,7 +19,24 @@ While Sage will be a complete standalone framework, Salvia is available *today* 
 *   💎 **Rails Native**: Seamless integration with Controllers, Routes, and Models.
 *   🦕 **Deno Powered**: Uses Deno for lightning-fast TypeScript compilation and formatting.
 
+## Requirements
+
+*   Ruby 3.1+
+*   Rails 7.0+ (Recommended)
+*   **Deno 1.30+** (Required for JIT compilation and tooling)
+
 ## Installation
+
+### 1. Install Deno
+
+Salvia requires Deno. Follow the [official installation guide](https://deno.land/#installation).
+
+```bash
+# macOS / Linux
+$ curl -fsSL https://deno.land/x/install/install.sh | sh
+```
+
+### 2. Add Gem
 
 Add this line to your Rails application's Gemfile:
 
@@ -35,7 +52,7 @@ $ bundle install
 
 ## Getting Started
 
-### 1. Install Salvia
+### 1. Setup Salvia
 
 Run the interactive installer to set up Salvia for your Rails project:
 
@@ -43,7 +60,11 @@ Run the interactive installer to set up Salvia for your Rails project:
 $ bundle exec salvia install
 ```
 
-This creates the `salvia/` directory structure and configures your app with a **Zero Config** setup (Preact + Signals).
+This command will:
+1.  Create the `salvia/` directory structure.
+2.  Generate `deno.json` (Single Source of Truth for dependencies).
+3.  **Cache Deno dependencies** to ensure fast startup.
+4.  Configure Rails to automatically include `Salvia::Helpers` (providing the `ssr` method).
 
 #### Directory Structure
 
@@ -137,6 +158,19 @@ Add Turbo to your layout file (e.g., `app/pages/layouts/Main.tsx`):
 
 This approach leverages Import Maps and browser-native modules, keeping your bundle size small and your architecture transparent.
 
+## Core Concepts: Pages vs Islands
+
+Understanding the separation of concerns is crucial for "True HTML First" development.
+
+| Feature | **Pages (Server Components)** | **Islands (Client Components)** |
+| :--- | :--- | :--- |
+| **Path** | `salvia/app/pages/` | `salvia/app/islands/` |
+| **Environment** | Server (Ruby/QuickJS) | Client (Browser) |
+| **Interactivity** | ❌ Static HTML | ✅ Interactive (Event Listeners) |
+| **State** | ❌ Stateless | ✅ Stateful (Signals/Hooks) |
+| **Browser APIs** | ❌ No (`window`, `document` are mocked) | ✅ Yes |
+| **Usage** | Layouts, Initial Data Fetching | Forms, Modals, Dynamic UI |
+
 ## Documentation
 
 *   **English**:
@@ -155,11 +189,22 @@ Salvia is primarily designed for **Ruby on Rails** to pave the way for the **Sag
 
 *   **Ruby on Rails**: First-class support.
 
-## Requirements
+## Zero Config Architecture
 
-*   Ruby 3.1+
-*   Rails 7.0+ (Recommended)
-*   Deno (for JIT compilation and tooling)
+Salvia v0.2.0 adopts a **Zero Config** philosophy.
+
+*   **`deno.json` is SSOT**: It manages dependencies for both Server (SSR) and Client (Browser).
+*   **Auto Import Map**: `npm:` specifiers in `deno.json` are automatically converted to `esm.sh` URLs for the browser.
+*   **No Build Config**: `build.ts` and `sidecar.ts` are managed internally, but you can extend globals via `salvia.globals` in `deno.json`.
+
+## Production & CI
+
+In production environments (e.g., Docker, Heroku, Render):
+
+1.  **Deno is required**: Ensure Deno is installed in your build/runtime environment.
+2.  **Build Step**: Run `bundle exec salvia build` during deployment.
+    *   This bundles Islands, generates Import Maps, and builds Tailwind CSS.
+    *   It generates hashed filenames for cache busting.
 
 ## License
 
