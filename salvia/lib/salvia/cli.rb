@@ -150,7 +150,7 @@ module Salvia
                       File.expand_path("../../../assets/scripts/deno.json", __FILE__)
                     end
       
-      cmd = "deno run --allow-all --config #{config_path} #{build_script}"
+      cmd = "deno run --allow-read --allow-write --allow-net --allow-env --allow-run --config #{config_path} #{build_script}"
       cmd += " --verbose" if options[:verbose]
       
       success = system(cmd)
@@ -195,7 +195,7 @@ module Salvia
                       File.expand_path("../../../assets/scripts/deno.json", __FILE__)
                     end
       
-      cmd = "deno run --allow-all --config #{config_path} #{build_script} --watch"
+      cmd = "deno run --allow-read --allow-write --allow-net --allow-env --allow-run --config #{config_path} #{build_script} --watch"
       cmd += " --verbose" if options[:verbose]
       
       exec cmd
