@@ -8,8 +8,8 @@ Gem::Specification.new do |spec|
   spec.authors = ["Hiroto Furugen"]
   spec.email = ["hiro_genfuru0119@icloud.com"]
 
-  spec.summary = "Ruby Islands Architecture Engine"
-  spec.description = "A standalone SSR engine for Ruby, bringing Islands Architecture to any Rack application without Node.js."
+  spec.summary = "Ruby Islands Architecture Engine: SSR with JSX/TSX for Rails & Rack"
+  spec.description = "A standalone SSR engine for Ruby that brings Islands Architecture to any Rack application. Write JSX/TSX components and render them server-side without Node.js, JSON APIs, or complex build steps."
   spec.homepage = "https://github.com/genfuru011/Salvia"
   spec.license = "MIT"
   spec.required_ruby_version = ">= 3.1.0"
