@@ -1,79 +1,79 @@
-# Sage Syntax Design (Final)
+# Sage Syntax Guide
 
-## 1. The App (Entry Point)
-Simple, flat, and intuitive.
+## Routes (`config/routes.rb`)
 
 ```ruby
-# app.rb
-require "sage"
+Sage::Router.draw do
+  # Root path
+  root to: "HomeResource"
+  
+  # Mount a resource
+  mount "/todos", to: "TodosResource"
+  
+  # Group routes
+  group "/api" do
+    mount "/users", to: "UsersResource"
+  end
+end
+```
 
-class App < Sage::Base
-  # Standard Route (SSR)
+## Resources (`app/resources/*_resource.rb`)
+
+```ruby
+class TodosResource < Sage::Resource
+  # GET /
   get "/" do |ctx|
-    ctx.render "Home", title: "Welcome to Sage"
+    ctx.render "Todos", todos: Todo.all
   end
 
-  # Grouping
-  group "/users" do
-    get "/" do |ctx|
-      # ...
-    end
+  # POST /
+  post "/" do |ctx|
+    Todo.create(title: ctx.params[:title])
+    ctx.redirect "/todos"
   end
 
-  # Mounting Resources
-  mount "/posts", PostsResource
-end
-```
-
-## 2. The Resource (Hybrid Controller)
-Combines Standard Routing and RPC in one class.
-
-```ruby
-# app/resources/posts_resource.rb
-class PostsResource < Sage::Resource
-  # --- Standard Routing (HTML/SSR) ---
+  # GET /:id
+  get "/:id" do |ctx|
+    todo = Todo.find(ctx.params[:id])
+    ctx.render "Todo", todo: todo
+  end
   
-  # Method-based (Rails-like)
-  def index
-    @posts = Post.all
-    render "Posts/Index", posts: @posts
-  end
-
-  def show(id)
-    @post = Post.find(id)
-    render "Posts/Show", post: @post
-  end
-
-  # Block-based (Sinatra-like) is also allowed
-  get "/archive" do |ctx|
-    ctx.render "Posts/Archive"
-  end
-
-  # --- RPC (Server Actions) ---
-  
-  # Define RPC with 'rpc' keyword
-  # Generates: POST /posts/like
-  # TS Client: rpc.posts.like({ id: 1 })
-  rpc :like do |id: Integer|
-    post = Post.find(id)
-    post.increment!(:likes)
-    { likes: post.likes } # Returns JSON
-  end
-
-  # RPC with complex params
-  rpc :create_comment do |post_id: Integer, content: String|
-    Comment.create!(post_id: post_id, content: content)
-    { success: true }
+  # RPC Method (POST /toggle)
+  rpc :toggle, params: { id: Integer } do |ctx, id|
+    todo = Todo.find(id)
+    todo.update(completed: !todo.completed)
+    todo
   end
 end
 ```
 
-## 3. The Client (TSX)
-Import `rpc` from virtual module.
+## Frontend (`salvia/app/pages/*.tsx`)
 
 ```tsx
-import { rpc } from "sage/client";
+import { h } from "preact";
+import Island from "../components/Island.tsx";
+import Counter from "../islands/Counter.tsx";
+import Script from "sage/script";
 
-// ...
-await rpc.posts.like({ id: 1 });
+export default function Page({ todos }) {
+  return (
+    <html>
+      <head>
+        <title>Todos</title>
+        <Script type="module">
+          import "@hotwired/turbo";
+        </Script>
+      </head>
+      <body>
+        <h1>Todos</h1>
+        <ul>
+          {todos.map(todo => (
+            <li>{todo.title}</li>
+          ))}
+        </ul>
+        <Island component={Counter} />
+      </body>
+    </html>
+  );
+}
 ```
