@@ -40,9 +40,9 @@ module Salvia
         return serve_islands_js
       end
       
-      # Remove .js extension to find source (if present)
+      # Remove extension to find source (supports .js, .tsx, .ts, .jsx)
       # Also handle requests without extension (from import map resolution)
-      base_name = path_info.sub(/\.js$/, "")
+      base_name = path_info.sub(/\.(js|tsx|ts|jsx)$/, "")
       
       source_path = resolve_source_path(base_name)
       
