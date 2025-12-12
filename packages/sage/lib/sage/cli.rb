@@ -141,11 +141,9 @@ module Sage
       output_dir = File.join(Dir.pwd, "salvia/app")
       FileUtils.mkdir_p(output_dir)
       
-      File.write(File.join(output_dir, "client.d.ts"), generator.generate_dts)
       File.write(File.join(output_dir, "client.ts"), generator.generate_client)
       
       say "✅ Generated RPC client:", :green
-      say "   - #{File.join(output_dir, "client.d.ts")}"
       say "   - #{File.join(output_dir, "client.ts")}"
       say ""
       say "Add this to your import map (deno.json):", :yellow

@@ -3,9 +3,10 @@ require "json"
 
 module Sage
   class Context
-    attr_reader :req, :res, :params
+    attr_reader :req, :res, :params, :env
 
     def initialize(env, params = {})
+      @env = env
       @req = Rack::Request.new(env)
       @res = Rack::Response.new
       @params = params
