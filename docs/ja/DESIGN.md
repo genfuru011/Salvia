@@ -228,7 +228,67 @@ export default function Header() {
 
 それぞれが得意なことだけに集中しているため、無駄がなく、非常に強力です。もしこれからアプリを作るなら、迷わずこの「フルセット」で始めることをお勧めします。
 
-## 8. Props vs Signals: 状態管理のパラダイムシフト
+## 8. ステートフリー開発 (State-free Development)
+
+「ステートフリー開発」とは、**「開発者が『状態管理』として意識してコーディングしなければならない領域が、極限までゼロに近づく」** という体験を指します。
+
+Salvia + Turbo + Signals の組み合わせにより、Webアプリ開発で我々を苦しめる「3つの状態」は以下のように処理（または消滅）されます。
+
+### 1. どこへ消えた？ 「3つのState」
+
+#### ① Server State（データそのもの）
+* **これまで (SPA):** API から JSON を fetch し、Redux 等で管理する。
+* **これからは (Salvia):** **サーバーにあるデータが「正」であり、HTML がそのスナップショット。** クライアント側でデータを保持・同期する必要がない。
+    * **→ State 消滅 (Server Components が解決)**
+
+#### ② URL/Navigation State（今どこにいるか）
+* **これまで (SPA):** `react-router` 等で現在のパスやパラメータを JS で監視する。
+* **これからは (Turbo Drive):** **URL こそが状態。** リンクを踏めば Turbo が勝手に次の HTML を取ってきて書き換える。
+    * **→ State 消滅 (Turbo が解決)**
+
+#### ③ UI State（入力中、開閉、一時的な変化）
+* **これまで (React):** `useState` で管理し、バケツリレーや Context API で共有する。
+* **これからは (Signals):** **必要な場所で `signal()` を定義して、`.value` を書き換えるだけ。** コンポーネントの再レンダリングすら発生しない。
+    * **→ State 管理が「ただの変数代入」になる。**
+
+### 2. 「ステートフリー」の実感： ショッピングカートの例
+
+「商品をカートに入れる」という動作で比較すると、その差は歴然です。
+
+#### 😫 従来の SPA (Stateful)
+1.  Action Creator を定義 (`addToCart`)。
+2.  Reducer で状態更新ロジックを書く (`state.items.push(...)`)。
+3.  コンポーネントで `useDispatch` と `useSelector` する。
+4.  ボタンを押したら dispatch。
+5.  非同期で API を叩き、失敗したらロールバックする処理を書く。
+
+#### 😌 Salvia + Turbo + Signals (State-free like)
+
+**パターンA: Turbo Streams (完全ステートレス)**
+1.  **JS:** なし。
+2.  **View:** `<form action="/cart" method="post">` を書く。
+3.  **Server:** カートに追加し、**「更新されたヘッダーのHTML」** をレスポンスする。
+4.  **Turbo:** ヘッダーを書き換える。
+    * **→ JS の状態管理ゼロ。**
+
+**パターンB: Signals (楽観的UI)**
+1.  **Global Signal:** `export const count = signal(0);`
+2.  **Button:** `onClick={() => count.value++}` (見た目を即座に更新)
+3.  **Background:** 裏で `fetch("/cart", ...)` を投げる（結果は気にしない、または失敗時だけ戻す）。
+    * **→ 状態管理は `count.value++` の 1行だけ。**
+
+### 3. このアーキテクチャの正体
+
+これは **「Web 本来の姿（Stateless HTTP）」への回帰** です。
+
+Salvia (Turbo + Signals) は、**「基本はステートレス（サーバー主導）に戻りつつ、どうしてもリッチにしたい 10% の部分だけ、Signals という『現代最強の飛び道具』を使う」** というアプローチです。
+
+* **面倒なこと（データ同期、ルーティング）** → **やらない（サーバーとTurboに任せる）。**
+* **楽しいこと（アニメーション、インタラクション）** → **Signals でやる。**
+
+これが、**「ステートフリー開発」** と呼ぶにふさわしい体験です。
+
+## 9. Props vs Signals: 状態管理のパラダイムシフト
 
 Salvia では、データの流れを理解し、適切なツールを選ぶことが重要です。
 
