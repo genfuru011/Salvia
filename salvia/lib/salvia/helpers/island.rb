@@ -150,20 +150,7 @@ module Salvia
       # @option options [Boolean] :doctype <!DOCTYPE html> を付与するか (デフォルト: true)
       # @return [String] 完全な HTML 文字列
       def ssr(name, props = {}, options = {})
-        # SSR で HTML を生成
-        html = Salvia::SSR.render(name, props)
-        
-        # <head> がある場合、Import Map を自動注入
-        if html.include?("</head>")
-          import_map_html = salvia_import_map
-          html = html.sub("</head>", "#{import_map_html}</head>")
-        end
-        
-        result = html
-        if options.fetch(:doctype, true)
-          result = "<!DOCTYPE html>\n" + result
-        end
-        
+        result = Salvia::SSR.render_page(name, props, options)
         result.respond_to?(:html_safe) ? result.html_safe : result
       end
       

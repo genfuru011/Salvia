@@ -89,6 +89,32 @@ module Salvia
         current_adapter.render(component_name, props)
       end
 
+      # ページコンポーネントをレンダリング (Import Map 注入 + DOCTYPE)
+      # @param component_name [String] コンポーネント名
+      # @param props [Hash] プロパティ
+      # @param options [Hash] オプション
+      # @return [String] 完全な HTML 文字列
+      def render_page(component_name, props = {}, options = {})
+        html = render(component_name, props)
+        
+        # <head> がある場合、Import Map を自動注入
+        if html.include?("</head>")
+          map = Salvia::Core::ImportMap.generate
+          import_map_html = <<~HTML
+            <script type="importmap">
+              #{map.to_json}
+            </script>
+          HTML
+          html = html.sub("</head>", "#{import_map_html}</head>")
+        end
+        
+        if options.fetch(:doctype, true)
+          html = "<!DOCTYPE html>\n" + html
+        end
+        
+        html
+      end
+
       # コンポーネントを登録
       def register_component(name, code)
         ensure_configured!
