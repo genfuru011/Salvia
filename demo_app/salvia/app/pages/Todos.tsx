@@ -1,6 +1,6 @@
 import { h } from "preact";
 import Island from "../components/Island.tsx";
-import Script from "../components/Script.tsx";
+import Script from "sage/script";
 import TodoItem from "../components/TodoItem.tsx";
 import Stats from "../islands/Stats.tsx";
 

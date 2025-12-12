@@ -6,6 +6,7 @@ PATH
       falcon
       listen
       rack
+      salvia
       thor
       zeitwerk
 
