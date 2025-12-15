@@ -1,13 +1,13 @@
 # Sage Framework
 
-Sage is a lightweight, high-performance REST framework for Ruby, built on Falcon.
+Sage is a lightweight, high-performance full-stack framework for Ruby, built on Falcon and Deno.
 
 ## Features
 
 - **Resource-based Routing**: Clean and explicit routing syntax.
-- **RPC Support**: Built-in RPC for seamless frontend integration.
+- **Deno Sidecar**: Integrated Deno process for SSR and asset serving.
 - **High Performance**: Built on Falcon and Async for non-blocking I/O.
-- **Salvia Integration**: First-class support for Salvia SSR engine.
+- **Zero Build Step**: On-demand compilation of TSX files using esbuild.
 
 ## Installation
 
@@ -17,4 +17,4 @@ gem install sage
 
 ## Usage
 
-See the [Reference Guide](../../REFERENCE.md) in the root directory.
+See the [Reference Guide](docs/REFERENCE.md).

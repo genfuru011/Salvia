@@ -95,16 +95,18 @@ Uses `Deno.serve` to listen on the Unix Socket.
 
 Uses Server-Sent Events (SSE).
 
-1.  **Browser**: Connects to `/_sage/reload` (handled by Ruby).
+1.  **Browser**: Connects to `/_sage/reload` (handled by Ruby `Sage::Middleware::HMR`).
 2.  **Deno**: Watches file system (`Deno.watchFs`).
-3.  **Change Detected**: Deno sends `POST /rpc/notify_change` to Ruby.
+3.  **Change Detected**: Deno sends `POST http://localhost:3000/_sage/notify` to Ruby.
 4.  **Ruby**: Pushes `data: reload` event to all connected SSE clients.
-5.  **Browser**: Reloads the page or re-fetches assets.
+5.  **Browser**: Reloads the page.
 
-## 6. Implementation Plan
+## 6. Implementation Status
 
-1.  **Cleanup**: Remove old Salvia gem code.
-2.  **Deno Adapter**: Implement `adapter/server.ts` with `Deno.serve`.
-3.  **Sage Core**: Implement `Sage::Sidecar` and `Sage::Middleware::AssetProxy`.
-4.  **Context**: Update `Sage::Context#render` to use RPC.
-5.  **HMR**: Implement SSE logic.
+- [x] **Cleanup**: Remove old Salvia gem code.
+- [x] **Deno Adapter**: Implement `adapter/server.ts` with `Deno.serve`.
+- [x] **Sage Core**: Implement `Sage::Sidecar` and `Sage::Middleware::AssetProxy`.
+- [x] **Context**: Update `Sage::Context#render` to use RPC.
+- [x] **HMR**: Implement SSE logic.
+- [x] **esbuild**: Implement on-demand compilation in Deno.
+- [x] **npm: Support**: Implement automatic `npm:` to `esm.sh` transformation.

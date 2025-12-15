@@ -7,11 +7,9 @@ Sage is a modern Ruby web framework designed for simplicity, performance, and se
 1. [Getting Started](#getting-started)
 2. [Project Structure](#project-structure)
 3. [Routing & Resources](#routing--resources)
-4. [RPC (Remote Procedure Call)](#rpc-remote-procedure-call)
-5. [Frontend Integration (Salvia)](#frontend-integration-salvia)
-6. [Database (ActiveRecord)](#database-activerecord)
-7. [CLI Commands](#cli-commands)
-8. [Configuration](#configuration)
+4. [Frontend Integration (Deno)](#frontend-integration-deno)
+5. [Database (ActiveRecord)](#database-activerecord)
+6. [CLI Commands](#cli-commands)
 
 ---
 
@@ -29,7 +27,6 @@ gem install sage
 sage new my_app
 cd my_app
 bundle install
-bundle exec salvia install  # Install frontend dependencies
 ```
 
 ### Starting the Development Server
@@ -37,7 +34,8 @@ bundle exec salvia install  # Install frontend dependencies
 ```bash
 bundle exec sage dev
 ```
-This starts the Sage server on port 3000 with live reloading and the Salvia sidecar for TypeScript compilation.
+
+This starts the Sage server on port 3000 with live reloading and the Deno sidecar for SSR and asset compilation.
 
 ---
 
@@ -45,21 +43,20 @@ This starts the Sage server on port 3000 with live reloading and the Salvia side
 
 ```
 my_app/
+├── adapter/            # Deno Sidecar Adapter
+│   ├── server.ts       # Deno Server Entry
+│   ├── client.ts       # Client-side Entry
+│   └── deno.json       # Import Map & Dependencies
 ├── app/
 │   ├── models/         # ActiveRecord models
 │   ├── resources/      # Sage resources (Controllers)
-│   └── pages/          # Salvia pages (TSX)
+│   ├── pages/          # SSR Pages (TSX)
+│   └── components/     # Shared Components (TSX)
 ├── config/
 │   ├── application.rb  # App configuration
 │   └── routes.rb       # Route definitions
 ├── db/                 # Database migrations and schema
 ├── public/             # Static assets
-├── salvia/             # Frontend source code
-│   ├── app/
-│   │   ├── components/ # Shared components
-│   │   ├── islands/    # Interactive islands
-│   │   └── pages/      # Page components
-│   └── deno.json       # Import Map configuration
 └── Gemfile
 ```
 
@@ -93,7 +90,7 @@ class TodosResource < Sage::Resource
   # Standard HTTP handlers
   get "/" do |ctx|
     @todos = Todo.all
-    # Render a Salvia page (TSX)
+    # Render a Page (app/pages/Todos.tsx)
     ctx.render "Todos", todos: @todos
   end
 
@@ -107,68 +104,30 @@ class TodosResource < Sage::Resource
     todo = Todo.find(ctx.params[:id])
     ctx.render "Todo", todo: todo
   end
-end
-```
 
----
-
-## RPC (Remote Procedure Call)
-
-Sage provides a built-in RPC mechanism to call Ruby methods directly from your TypeScript frontend.
-
-### Defining RPC Methods
-
-In your resource:
-
-```ruby
-class TodosResource < Sage::Resource
-  # ... standard routes ...
-
-  # Define an RPC method
-  rpc :toggle, params: { id: Integer } do |ctx, id|
-    todo = Todo.find(id)
+  # Turbo Stream Response
+  post "/:id/toggle" do |ctx|
+    todo = Todo.find(ctx.params[:id])
     todo.update(completed: !todo.completed)
-    todo # Return value is sent back as JSON
-  end
-  
-  rpc :stats do |ctx|
-    { total: Todo.count, completed: Todo.where(completed: true).count }
+    
+    # Render a Component (app/components/TodoItem.tsx) wrapped in a Turbo Stream
+    ctx.turbo_stream :replace, "todo_#{todo.id}", "components/TodoItem", todo: todo
   end
 end
 ```
 
-### Generating the Client
-
-Run the generator to create a type-safe TypeScript client:
-
-```bash
-bundle exec sage generate client
-```
-
-This creates `salvia/app/client.ts`.
-
-### Using RPC in Frontend
-
-```tsx
-import { rpc } from "sage/client";
-
-// Call the RPC method
-const result = await rpc.todos.toggle({ id: 1 });
-const stats = await rpc.todos.stats({});
-```
-
 ---
 
-## Frontend Integration (Salvia)
+## Frontend Integration (Deno)
 
-Sage integrates tightly with Salvia for SSR and Island Architecture.
+Sage uses a Deno sidecar process to handle Server-Side Rendering (SSR) and on-demand asset compilation.
 
-### Pages (`salvia/app/pages/`)
+### Pages (`app/pages/`)
 
-Pages are TSX components rendered on the server.
+Pages are TSX components rendered on the server. They are the entry points for your views.
 
 ```tsx
-// salvia/app/pages/Home.tsx
+// app/pages/Home.tsx
 import { h } from "preact";
 
 export default function Home({ title }: { title: string }) {
@@ -176,6 +135,7 @@ export default function Home({ title }: { title: string }) {
     <html>
       <head>
         <title>{title}</title>
+        <script type="module" src="/assets/sage/client.js"></script>
       </head>
       <body>
         <h1>Hello, {title}!</h1>
@@ -185,12 +145,51 @@ export default function Home({ title }: { title: string }) {
 }
 ```
 
-### Islands (`salvia/app/islands/`)
+### Components (`app/components/`)
 
-Islands are interactive components hydrated on the client.
+Components are reusable UI parts. They can be rendered as part of a page or individually via Turbo Streams.
 
 ```tsx
-// salvia/app/islands/Counter.tsx
+// app/components/TodoItem.tsx
+import { h } from "preact";
+
+export default function TodoItem({ todo }) {
+  return (
+    <div class={todo.completed ? "completed" : ""}>
+      {todo.title}
+    </div>
+  );
+}
+```
+
+### Managing Dependencies (`adapter/deno.json`)
+
+You can add npm packages to `adapter/deno.json`. Sage automatically handles the resolution for both SSR (Deno) and Browser (via esm.sh).
+
+```json
+{
+  "imports": {
+    "preact": "npm:preact@10.19.6",
+    "preact/": "npm:preact@10.19.6/",
+    "@hotwired/turbo": "npm:@hotwired/turbo@8.0.4",
+    "canvas-confetti": "npm:canvas-confetti@1.9.2"
+  }
+}
+```
+
+In your code:
+
+```tsx
+import confetti from "canvas-confetti";
+```
+
+### Client-Side Logic
+
+Since Sage compiles `.tsx` files on demand, you can write client-side logic directly in your components.
+
+```tsx
+// app/components/Counter.tsx
+import { h } from "preact";
 import { useSignal } from "@preact/signals";
 
 export default function Counter() {
@@ -198,60 +197,6 @@ export default function Counter() {
   return <button onClick={() => count.value++}>{count.value}</button>;
 }
 ```
-
-### Using Islands in Pages
-
-```tsx
-import Island from "../components/Island.tsx";
-import Counter from "../islands/Counter.tsx";
-
-// In your page
-<Island component={Counter} />
-```
-
-### Script Helper (`sage/script`)
-
-Sage provides a built-in component to inject raw JavaScript or import modules without escaping. This is essential for libraries like Turbo that require inline script tags.
-
-```tsx
-import Script from "sage/script";
-
-// Import a module
-<Script type="module">
-  import "@hotwired/turbo";
-</Script>
-
-// Inline script
-<Script>
-  console.log("Hello from client!");
-</Script>
-```
-
-### Import Maps (`salvia/deno.json`)
-
-Manage frontend dependencies in `salvia/deno.json`. Sage automatically injects these into your HTML head.
-
-```json
-{
-  "imports": {
-    "preact": "https://esm.sh/preact@10.19.6",
-    "preact/hooks": "https://esm.sh/preact@10.19.6/hooks",
-    "preact/jsx-runtime": "https://esm.sh/preact@10.19.6/jsx-runtime",
-    "@hotwired/turbo": "https://esm.sh/@hotwired/turbo@8.0.0",
-    "sage/client": "./app/client.ts",
-    "sage/script": "http://localhost:3000/salvia/assets/components/Script.tsx",
-    "@/": "./app/"
-  }
-}
-```
-
-Note: `sage/script` is automatically served by the dev server.
-
-### Sidecar (Deno)
-
-Sage uses a Deno sidecar process to bundle TypeScript code on the fly.
-- **Development**: `sage dev` starts the sidecar automatically. It watches for changes and provides type checking.
-- **Production**: `salvia build` uses the sidecar to generate optimized bundles.
 
 ---
 
@@ -284,36 +229,3 @@ end
 | `sage new <name>` | Create a new Sage project |
 | `sage dev` | Start development server with live reload |
 | `sage server` | Start production server |
-| `sage generate client` | Generate RPC client code |
-| `salvia install` | Install frontend dependencies |
-| `salvia build` | Build frontend for production |
-
----
-
-## Configuration
-
-### `config/application.rb`
-
-```ruby
-require "sage"
-require "salvia"
-
-class App < Sage::Base
-  # Middleware
-  use Rack::Session::Cookie, secret: "secret"
-  
-  # Mount routes
-  mount "/", to: "HomeResource"
-end
-```
-
-### `config/salvia.rb` (Optional)
-
-Configure Salvia specific settings.
-
-```ruby
-Salvia.configure do |config|
-  config.root = Dir.pwd
-  config.islands_dir = "salvia/app/islands"
-end
-```
