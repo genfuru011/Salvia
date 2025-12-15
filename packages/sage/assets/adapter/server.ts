@@ -1,9 +1,11 @@
-import { renderToString } from "preact-render-to-string";
-import { h } from "preact";
-import * as esbuild from "esbuild";
+import { renderToString } from "https://esm.sh/preact-render-to-string@6.3.1";
+import { h } from "https://esm.sh/preact@10.19.6";
+import * as esbuild from "https://deno.land/x/esbuild@v0.20.1/mod.js";
 import { denoPlugins } from "https://deno.land/x/esbuild_deno_loader@0.9.0/mod.ts";
+import { join, resolve } from "https://deno.land/std@0.213.0/path/mod.ts";
 
 const SOCKET_PATH = Deno.env.get("SOCKET_PATH") || "tmp/sockets/sage_deno.sock";
+const PROJECT_ROOT = Deno.cwd();
 
 async function handleRpc(command: string, params: any) {
   if (command === "render_page") {
@@ -11,13 +13,15 @@ async function handleRpc(command: string, params: any) {
     try {
       // Dynamic import using the import map defined in deno.json
       // Add cache buster for dev mode
-      const mod = await import(`@/pages/${page}.tsx?t=${Date.now()}`);
+      // We need to resolve the path relative to the project root
+      const pagePath = `file://${join(PROJECT_ROOT, "app", "pages", `${page}.tsx`)}?t=${Date.now()}`;
+      const mod = await import(pagePath);
       const Page = mod.default;
 
       const body = renderToString(h(Page, props));
 
       // Read import map to inject into HTML
-      const denoJson = JSON.parse(await Deno.readTextFile(new URL("./deno.json", import.meta.url)));
+      const denoJson = JSON.parse(await Deno.readTextFile(join(PROJECT_ROOT, "deno.json")));
       
       // Transform npm: imports to esm.sh for browser
       const browserImports: Record<string, string> = {};
@@ -94,7 +98,7 @@ async function handleRpc(command: string, params: any) {
     try {
       // Dynamic import
       // Note: path should be relative to app/ e.g. "components/TodoItem"
-      const importPath = `@/${path}.tsx?t=${Date.now()}`;
+      const importPath = `file://${join(PROJECT_ROOT, "app", `${path}.tsx`)}?t=${Date.now()}`;
       console.log(`Loading component: ${importPath}`);
       const mod = await import(importPath);
       const Component = mod.default;
@@ -129,20 +133,24 @@ async function handleAsset(path: string) {
     sourcePath = new URL("./client.ts", import.meta.url).pathname;
   } else {
     // Resolve absolute path for esbuild
-    sourcePath = new URL(`../${relativePath}`, import.meta.url).pathname.replace(/\.js$/, ".tsx");
+    // relativePath includes "app/...", so we join with PROJECT_ROOT's parent? No, relativePath is "app/components/..."
+    // Wait, path is "/assets/app/components/TodoItem.js"
+    // relativePath is "app/components/TodoItem.js"
+    // We want "PROJECT_ROOT/app/components/TodoItem.tsx"
+    sourcePath = join(PROJECT_ROOT, relativePath.replace(/\.js$/, ".tsx"));
   }
   
   console.log(`Building asset: ${path} -> ${sourcePath}`);
 
   // Read deno.json to get external dependencies and compiler options
-  const denoJson = JSON.parse(await Deno.readTextFile(new URL("./deno.json", import.meta.url)));
+  const denoJson = JSON.parse(await Deno.readTextFile(join(PROJECT_ROOT, "deno.json")));
   // Exclude local aliases like "@/" from externals, we want to bundle those
   const external = Object.keys(denoJson.imports).filter(k => !k.startsWith("@/"));
   const compilerOptions = denoJson.compilerOptions || {};
 
   try {
     const result = await esbuild.build({
-      plugins: [...denoPlugins({ configPath: new URL("./deno.json", import.meta.url).pathname })],
+      plugins: [...denoPlugins({ configPath: join(PROJECT_ROOT, "deno.json") })],
       entryPoints: [sourcePath],
       write: false,
       bundle: true,
@@ -174,7 +182,7 @@ if (import.meta.main) {
 
   // Watch for changes in app directory
   (async () => {
-    const watcher = Deno.watchFs("app");
+    const watcher = Deno.watchFs(join(PROJECT_ROOT, "app"));
     let timeout = null;
     for await (const event of watcher) {
       if (event.kind === "modify" || event.kind === "create" || event.kind === "remove") {

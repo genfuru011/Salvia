@@ -16,10 +16,6 @@ The `salvia/` directory is replaced by `adapter/` and `app/` structure.
 
 ```text
 my_app/
-├── adapter/           # Deno Sidecar
-│   ├── server.ts      # HTTP Server (UDS)
-│   ├── client.ts      # Client Hydration Entry
-│   └── deno.json      # Dependencies (SSOT)
 ├── app/
 │   ├── models/        # ActiveRecord Models
 │   ├── pages/         # TSX Pages (SSR Entry)
@@ -27,8 +23,11 @@ my_app/
 │   └── resources/     # Sage Resources (Controllers)
 ├── config/
 ├── public/
+├── deno.json          # Dependencies (SSOT)
 └── Gemfile
 ```
+
+Note: The Deno adapter implementation (`server.ts`, `client.ts`) is hidden within the Sage gem (`packages/sage/assets/adapter/`) to keep the user project clean. `deno.json` remains in the project root for managing dependencies.
 
 ## 3. Communication Architecture
 

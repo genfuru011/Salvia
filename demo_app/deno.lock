@@ -1,0 +1,19 @@
+{
+  "version": "5",
+  "specifiers": {
+    "npm:preact@10.19.6": "10.19.6"
+  },
+  "npm": {
+    "preact@10.19.6": {
+      "integrity": "sha512-gympg+T2Z1fG1unB8NH29yHJwnEaCH37Z32diPDku316OTnRPeMbiRV9kTrfZpocXjdfnWuFUl/Mj4BHaf6gnw=="
+    }
+  },
+  "workspace": {
+    "dependencies": [
+      "npm:@hotwired/turbo@8.0.4",
+      "npm:@preact/signals@1.2.2",
+      "npm:preact-render-to-string@6.3.1",
+      "npm:preact@10.19.6"
+    ]
+  }
+}

@@ -80,10 +80,12 @@ module Sage
         
         File.unlink(SOCKET_PATH) if File.exist?(SOCKET_PATH)
 
-        # Assuming adapter/server.ts is in the project root
+        # Resolve path to server.ts in the gem
+        server_path = File.expand_path("../../assets/adapter/server.ts", __dir__)
+
         pid = spawn(
           { "SOCKET_PATH" => SOCKET_PATH },
-          "deno run -A --unstable-net adapter/server.ts"
+          "deno run -A --unstable-net #{server_path}"
         )
         
         File.write(PID_FILE, pid)

@@ -43,10 +43,6 @@ This starts the Sage server on port 3000 with live reloading and the Deno sideca
 
 ```
 my_app/
-├── adapter/            # Deno Sidecar Adapter
-│   ├── server.ts       # Deno Server Entry
-│   ├── client.ts       # Client-side Entry
-│   └── deno.json       # Import Map & Dependencies
 ├── app/
 │   ├── models/         # ActiveRecord models
 │   ├── resources/      # Sage resources (Controllers)
@@ -57,6 +53,7 @@ my_app/
 │   └── routes.rb       # Route definitions
 ├── db/                 # Database migrations and schema
 ├── public/             # Static assets
+├── deno.json           # Import Map & Dependencies
 └── Gemfile
 ```
 
@@ -162,9 +159,9 @@ export default function TodoItem({ todo }) {
 }
 ```
 
-### Managing Dependencies (`adapter/deno.json`)
+### Managing Dependencies (`deno.json`)
 
-You can add npm packages to `adapter/deno.json`. Sage automatically handles the resolution for both SSR (Deno) and Browser (via esm.sh).
+You can add npm packages to `deno.json` in the project root. Sage automatically handles the resolution for both SSR (Deno) and Browser (via esm.sh).
 
 ```json
 {
