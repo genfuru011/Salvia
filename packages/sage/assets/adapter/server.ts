@@ -1,5 +1,5 @@
-import { renderToString } from "https://esm.sh/preact-render-to-string@6.3.1";
-import { h } from "https://esm.sh/preact@10.19.6";
+import { renderToString } from "npm:preact-render-to-string@6.3.1";
+import { h } from "npm:preact@10.19.6";
 import * as esbuild from "https://deno.land/x/esbuild@v0.20.1/mod.js";
 import { denoPlugins } from "https://deno.land/x/esbuild_deno_loader@0.9.0/mod.ts";
 import { join, resolve } from "https://deno.land/std@0.213.0/path/mod.ts";

@@ -85,7 +85,7 @@ module Sage
 
         pid = spawn(
           { "SOCKET_PATH" => SOCKET_PATH },
-          "deno run -A --unstable-net #{server_path}"
+          "deno run -A --unstable-net --config deno.json #{server_path}"
         )
         
         File.write(PID_FILE, pid)
