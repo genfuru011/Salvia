@@ -3,12 +3,12 @@
     "start": "deno run -A --unstable-net server.ts"
   },
   "imports": {
-    "preact": "npm:preact@10.19.6",
-    "preact/jsx-runtime": "npm:preact@10.19.6/jsx-runtime",
-    "preact/hooks": "npm:preact@10.19.6/hooks",
-    "preact-render-to-string": "npm:preact-render-to-string@6.3.1",
-    "@preact/signals": "npm:@preact/signals@1.2.2",
-    "@hotwired/turbo": "npm:@hotwired/turbo@8.0.4",
+    "preact": "https://esm.sh/preact@10.19.6",
+    "preact/jsx-runtime": "https://esm.sh/preact@10.19.6/jsx-runtime?external=preact",
+    "preact/hooks": "https://esm.sh/preact@10.19.6/hooks?external=preact",
+    "preact-render-to-string": "https://esm.sh/preact-render-to-string@6.3.1?external=preact",
+    "@preact/signals": "https://esm.sh/@preact/signals@1.2.2?external=preact",
+    "@hotwired/turbo": "https://esm.sh/@hotwired/turbo@8.0.4",
     "esbuild": "https://deno.land/x/esbuild@v0.20.1/mod.js",
     "@/": "./app/"
   },
