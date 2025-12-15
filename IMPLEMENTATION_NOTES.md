@@ -1,135 +1,51 @@
-# Sage Native Deno Integration Implementation Notes
+# Implementation Notes - Sage Native Deno Integration
 
-## 概要
-Sageのアーキテクチャを刷新し、Rubyをバックエンド（データ処理・ビジネスロジック）、Denoをフロントエンド（レンダリング・アセット配信）に完全に分離する「Sage Native」構成を実装しました。
+## Overview
+We have successfully integrated Deno as a sidecar process for Sage, replacing the legacy Salvia gem. This provides a robust, high-performance SSR and asset pipeline.
 
-## アーキテクチャ: "The Dumb Pipe"
-Ruby側はHTMLの中身に関知せず、Denoにレンダリングを委譲する「土管」として機能します。
+## Key Changes
 
-```text
-Browser  <-->  [Sage Middleware]  <-->  (HTTP over UDS)  <-->  [Deno Sidecar]
-   |                  |                                          |
-   |            (Asset Request) --------------------------->  Serve Static/Build
-   |                                                             |
-   |            (Page Request)                                   |
-   |       [Sage Resource] -> [Context] ------------------->  Render HTML (SSR)
-```
+### 1. Architecture
+- **Ruby (Sage)**: Handles routing, database, and business logic.
+- **Deno (Adapter)**: Handles SSR (Preact), asset bundling (esbuild), and client-side hydration.
+- **Communication**: HTTP over Unix Domain Sockets (UDS).
 
-## 実装詳細
+### 2. "Use Hydration" Support
+- Components can be marked for client-side hydration by adding `"use hydration";` at the top of the file.
+- The Deno server (via esbuild plugin) automatically transforms these components during SSR to wrap them in an `<Island>` marker.
+- **v2.2 Update**: `sage/island.tsx` is now a virtual module embedded in `server.ts`, and the transformation logic correctly handles various `export default` patterns to prevent duplicate exports.
+- The client script (`client.js`) hydrates these islands automatically.
 
-### 1. 通信プロトコル (HTTP over UDS)
-*   **Unix Domain Socket (UDS)**: `tmp/sockets/sage_deno.sock` を介して通信。
-*   **Protocol**: 標準的なHTTP/1.1を使用。
-*   **Libraries**:
-    *   Ruby: `async-http`, `io-endpoint` (Falconエコシステム)
-    *   Deno: `Deno.serve` (標準ライブラリ)
+### 3. Asset Pipeline
+- Assets in `app/` are served via `/assets/`.
+- TypeScript/TSX is transpiled on-the-fly by Deno using esbuild.
+- `npm:` imports are supported and transformed to `esm.sh` URLs for browser compatibility.
 
-### 2. Ruby側 (Sage Core)
+### 4. Hot Reload (HMR)
+- Deno watches the file system and notifies Ruby via a private HTTP endpoint.
+- Ruby broadcasts reload events to the browser via Server-Sent Events (SSE).
 
-#### `Sage::Sidecar` (`lib/sage/sidecar.rb`)
-*   Denoプロセスのライフサイクル管理（起動、監視、停止）。
-*   RPCクライアントの実装。
-*   **自動シリアライズ**: `rpc` メソッド内で `params.as_json` を呼び出し、ActiveRecordオブジェクト等を自動的にJSON互換形式に変換してDenoに送信。
+### 5. Project Structure
+- `app/pages/`: Top-level pages (SSR entry points).
+- `app/components/`: Reusable components (can be islands).
+- `deno.json`: Manages frontend dependencies.
 
-#### `Sage::Middleware::AssetProxy` (`lib/sage/middleware/asset_proxy.rb`)
-*   `/assets/` で始まるリクエストをDenoにそのまま転送（ストリーミング）。
-*   Ruby側でのファイル探索や加工は一切行わない。
+## Debugging
+- Deno logs are piped to the Sage server output.
+- If Deno fails to start, check `tmp/sockets/sage_deno.sock` and `tmp/pids/sage_deno.pid`.
+- Ensure `deno` is in your PATH.
 
-#### `Sage::Context` (`lib/sage/context.rb`)
-*   `render(page, props)`: Denoに `render_page` RPCを送信。
-*   `component(path, props)`: Denoに `render_component` RPCを送信。
-*   `turbo_stream(action, target, component_path = nil, html: nil, **props)`: コンポーネントレンダリング結果をTurbo Stream形式でラップして返却。`props` はキーワード引数として受け取る。
+## Future Improvements
+- Production build step (AOT compilation).
+- More robust error handling for hydration failures.
+- Support for other frameworks (React, Vue) via adapter configuration.
 
-### 3. Deno側 (Adapter)
+### 6. Turbo & CDN
+- Turbo Drive is included by default for SPA-like navigation.
+- We use `esm.sh` as the CDN for Turbo and other browser dependencies to ensure compatibility and reliability.
 
-#### `adapter/server.ts`
-*   **RPC Server**:
-    *   `render_page`: ページコンポーネント (`app/pages/`) をSSRし、HTML全体（`<head>`含む）を生成。
-    *   `render_component`: UI部品 (`app/components/`) をSSR。
-*   **Asset Server**: `/assets/` リクエストを処理。esbuildを内蔵し、`.tsx` ファイルをオンデマンドで `.js` にコンパイルして配信。
-    *   `deno.json` の `imports` を動的に読み込み、バンドルから除外 (`external`) するため、ライブラリ追加時の設定変更は不要。
-    *   `npm:` 指定子をブラウザ向けに `https://esm.sh/` に自動変換してImport Mapを注入。
-*   **HMR**: 開発モード時にファイル変更を検知し、ブラウザをリロードさせるスクリプトを注入。
-
-#### `adapter/deno.json`
-*   Import Mapの管理（`preact`, `@preact/signals`, `@hotwired/turbo` 等）。
-*   JSX設定 (`react-jsx`, `preact`)。
-*   `esbuild` の依存関係を追加。
-
-### 4. ディレクトリ構造
-```text
-my_app/
-├── app/
-│   ├── pages/         # Full Page Components
-│   ├── components/    # Shared UI Components
-│   ├── islands/       # Interactive Islands
-│   ├── models/        # ActiveRecord Models
-│   └── resources/     # Sage Resources (Controllers)
-├── config/
-├── public/
-├── deno.json          # Config & Import Map
-└── Gemfile
-```
-
-Note: The Deno adapter implementation (`server.ts`, `client.ts`) is hidden within the Sage gem (`packages/sage/assets/adapter/`) to keep the user project clean. `deno.json` remains in the project root for managing dependencies.
-
-## 開発者体験 (DX) の向上
-*   **Zero Config JSON**: ユーザーは `render "Page", user: user` と書くだけ。`as_json` が自動適用されるため、シリアライザの明示的な呼び出しは不要。
-*   **APIレス**: フロントエンドのためのAPIエンドポイントを設計する必要がなく、RailsのViewを書く感覚でReact/Preactコンポーネントを利用可能。
-
-## Turbo Strategy (Sage流 Turboの扱い方)
-
-Sageでは、SPAのような部分更新をTurbo Streamsで実現します。
-
-### 1. View (Deno)
-更新対象の要素にユニークな `id` を付与します。`<turbo-frame>` は必須ではなく、通常の `div` でも動作します。フォームには特別な `data-turbo` 属性は不要です。
-
-```tsx
-// app/components/TodoItem.tsx
-export default function TodoItem({ todo }) {
-  return (
-    <div id={`todo_${todo.id}`}>
-      <form action={`/todos/${todo.id}/toggle`} method="post">
-        <button>Toggle</button>
-      </form>
-    </div>
-  );
-}
-```
-
-### 2. Controller (Ruby)
-処理完了後、`ctx.turbo_stream` を返します。
-
-```ruby
-post "/:id/toggle" do |ctx, id|
-  todo = Todo.find(id)
-  # ... update logic ...
-  
-  # Denoに "components/TodoItem" のレンダリングを依頼し、
-  # 結果のHTMLで id="todo_#{id}" の要素を置換する命令をブラウザに送る
-  ctx.turbo_stream("replace", "todo_#{id}", "components/TodoItem", todo: todo)
-end
-```
-
-### 3. 仕組み
-1.  ブラウザでフォーム送信（Turboがインターセプト）。
-2.  Rubyが処理し、`<turbo-stream action="replace" target="...">` を含むHTMLを返す。
-3.  Turboがレスポンスを受け取り、指定された `target` IDのDOM要素を更新する。
-
-## Islands Architecture
-
-Sage uses a simple Islands architecture for client-side interactivity.
-
-1.  **Server-Side Rendering**:
-    *   `Island` component (in `app/components/Island.tsx`) wraps the interactive component.
-    *   It renders a `div` with `data-island="ComponentName"` and `data-props="{...}"`.
-    *   The component itself is rendered to static HTML within this wrapper.
-
-2.  **Client-Side Hydration**:
-    *   `client.ts` (injected into every page) scans for `[data-island]` elements.
-    *   It dynamically imports the component from `/assets/app/islands/${name}.js`.
-    *   It hydrates the component using Preact's `hydrate` function.
-
-3.  **RPC**:
-    *   Islands can fetch data from the server using `fetch("/resource/rpc_name", { method: "POST" })`.
-    *   Resources define RPC endpoints using `rpc :name`.
+### 7. Automatic Hydration
+- The `client.js` script (served from `packages/sage/assets/adapter/sage/client.ts`) now includes automatic hydration logic.
+- It scans the DOM for elements with `data-sage-island` attributes.
+- It dynamically imports the corresponding component using the Import Map (`@/` alias).
+- It hydrates the component with the serialized props.

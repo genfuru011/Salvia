@@ -1,222 +1,273 @@
-import { renderToString } from "npm:preact-render-to-string@6.3.1";
-import { h } from "npm:preact@10.19.6";
+// v2.2 - Sage Native Adapter (Deno) with Virtual Modules & Robust Hydration
+import { renderToString } from "preact-render-to-string";
+import { h } from "preact";
 import * as esbuild from "https://deno.land/x/esbuild@v0.20.1/mod.js";
 import { denoPlugins } from "https://deno.land/x/esbuild_deno_loader@0.9.0/mod.ts";
-import { join, resolve } from "https://deno.land/std@0.213.0/path/mod.ts";
 
-const SOCKET_PATH = Deno.env.get("SOCKET_PATH") || "tmp/sockets/sage_deno.sock";
-const PROJECT_ROOT = Deno.cwd();
+const SOCKET_PATH = Deno.env.get("SALVIA_SOCKET_PATH");
+const PROJECT_ROOT = Deno.env.get("SALVIA_PROJECT_ROOT") || Deno.cwd();
+const ADAPTER_ROOT = new URL(".", import.meta.url).pathname;
 
-async function handleRpc(command: string, params: any) {
-  if (command === "render_page") {
-    const { page, props } = params;
-    try {
-      // Dynamic import using the import map defined in deno.json
-      // Add cache buster for dev mode
-      // We need to resolve the path relative to the project root
-      const pagePath = `file://${join(PROJECT_ROOT, "app", "pages", `${page}.tsx`)}?t=${Date.now()}`;
-      const mod = await import(pagePath);
-      const Page = mod.default;
+// Import Map for client-side
+const importMap = {
+  imports: {
+    "preact": "https://esm.sh/preact@10.19.6",
+    "preact/hooks": "https://esm.sh/preact@10.19.6/hooks",
+    "@/": "/assets/app/",
+    "sage/": "/assets/sage/"
+  }
+};
 
-      const body = renderToString(h(Page, props));
+// Virtual Module Content for sage/island.tsx
+const SAGE_ISLAND_CONTENT = `
+import { h } from "preact";
 
-      // Read import map to inject into HTML
-      const denoJson = JSON.parse(await Deno.readTextFile(join(PROJECT_ROOT, "deno.json")));
-      
-      // Transform npm: imports to esm.sh for browser
-      const browserImports: Record<string, string> = {};
-      for (const [key, value] of Object.entries(denoJson.imports)) {
-        if (typeof value === "string") {
-          if (value.startsWith("npm:")) {
-            browserImports[key] = `https://esm.sh/${value.slice(4)}`;
-          } else if (key !== "esbuild" && key !== "preact-render-to-string") {
-            browserImports[key] = value;
-          }
-        }
+export function Island({ path, props, children }) {
+  return (
+    <div
+      data-sage-island={path}
+      data-props={JSON.stringify(props)}
+      style={{ display: "contents" }}
+    >
+      {children}
+    </div>
+  );
+}
+`;
+
+// Esbuild Plugin for Sage (Hydration & Virtual Modules)
+const sagePlugin = {
+  name: 'sage-plugin',
+  setup(build: any) {
+    // 1. Resolve Virtual Modules
+    build.onResolve({ filter: /^sage\/island\.tsx$/ }, (args: any) => ({
+      path: args.path,
+      namespace: 'sage-virtual',
+    }));
+
+    build.onLoad({ filter: /.*/, namespace: 'sage-virtual' }, (args: any) => {
+      if (args.path === "sage/island.tsx") {
+        return { contents: SAGE_ISLAND_CONTENT, loader: 'tsx' };
       }
-      const importMap = JSON.stringify({ imports: browserImports });
+    });
 
-      // HMR Script (only in dev)
-      const hmrScript = `
-        <script>
-          (() => {
-            const es = new EventSource("/_sage/reload");
-            es.onmessage = () => {
-              console.log("🌿 Sage HMR: Reloading...");
-              location.reload();
-            };
-          })();
-        </script>
+    // 2. Transform "use hydration" components
+    build.onLoad({ filter: /\.tsx$/ }, async (args: any) => {
+      const text = await Deno.readTextFile(args.path);
+      if (!text.includes('"use hydration"') && !text.includes("'use hydration'")) {
+        return null;
+      }
+
+      const relativePath = args.path.replace(PROJECT_ROOT + '/app/', '');
+      
+      // Remove directive
+      let newText = text.replace(/["']use hydration["'];?/, "");
+      let componentName = "$$IslandComp";
+
+      // Handle export default
+      if (newText.match(/export\s+default\s+function\s+\w+/)) {
+         const match = newText.match(/export\s+default\s+function\s+(\w+)/);
+         if (match) {
+           componentName = match[1];
+           newText = newText.replace(/export\s+default\s+function/, "function");
+         }
+      } else if (newText.match(/export\s+default\s+class\s+\w+/)) {
+         const match = newText.match(/export\s+default\s+class\s+(\w+)/);
+         if (match) {
+           componentName = match[1];
+           newText = newText.replace(/export\s+default\s+class/, "class");
+         }
+      } else {
+         // export default expression
+         newText = newText.replace(/export\s+default/, `const ${componentName} =`);
+      }
+
+      // Append wrapper
+      newText += `
+        import { h } from "preact";
+        import { Island } from "sage/island.tsx";
+        
+        export default function(props) {
+          return h(Island, { path: "${relativePath}", props: props }, h(${componentName}, props));
+        }
       `;
 
-      const html = `<!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script type="importmap">
-      ${importMap}
-    </script>
-    <script type="module">
-      import * as Turbo from "@hotwired/turbo";
-      // Ensure Turbo is started
-      if (!window.Turbo) {
-        window.Turbo = Turbo;
-      }
-    </script>
-    <script type="module" src="/assets/sage/client.js"></script>
-    ${hmrScript}
-  </head>
-  <body>
-    ${body}
-  </body>
-</html>`;
+      return { contents: newText, loader: 'tsx' };
+    });
+  },
+};
 
-      return new Response(html, {
-        headers: { "Content-Type": "text/html" },
-      });
-    } catch (e) {
-      console.error(`Error rendering page ${page}:`, e);
+async function buildPage(pagePath: string) {
+  const result = await esbuild.build({
+    entryPoints: [pagePath],
+    bundle: true,
+    write: false,
+    format: 'esm',
+    platform: 'neutral',
+    plugins: [
+      sagePlugin,
+      ...denoPlugins({ configPath: `${PROJECT_ROOT}/deno.json` })
+    ],
+    external: ['preact', 'preact-render-to-string', 'preact/hooks'],
+    jsx: 'automatic',
+    jsxImportSource: 'preact'
+  });
+
+  return result.outputFiles[0].text;
+}
+
+async function handleRpc(req: Request) {
+  const url = new URL(req.url);
+  const command = url.pathname.replace("/rpc/", "");
+  const params = await req.json();
+  console.log("RPC params:", params);
+
+  if (command === "render_page") {
+    try {
+      const pagePath = `${PROJECT_ROOT}/app/pages/${params.page}.tsx`;
+      
+      // Build the page with hydration transformation
+      const code = await buildPage(pagePath);
+      
+      // Import the bundled code via data URI
+      const mod = await import(`data:text/javascript;base64,${btoa(code)}`);
+      const Page = mod.default;
+      
+      const body = renderToString(h(Page, params.props));
+      
       return new Response(`
+        <!DOCTYPE html>
         <html>
-          <head><title>Rendering Error</title></head>
+          <head>
+            <meta charset="utf-8">
+            <title>Sage App</title>
+            <script src="https://cdn.tailwindcss.com"></script>
+            <script type="importmap">${JSON.stringify(importMap)}</script>
+            <script type="module" src="/assets/sage/client.js"></script>
+            <script type="module" src="https://esm.sh/@hotwired/turbo@8.0.4"></script>
+          </head>
           <body>
-            <h1>Error rendering ${page}</h1>
-            <pre>${e instanceof Error ? e.stack : String(e)}</pre>
+            ${body}
           </body>
         </html>
-      `, {
-        status: 500,
-        headers: { "Content-Type": "text/html" },
-      });
+      `, { headers: { "Content-Type": "text/html" } });
+    } catch (e) {
+      console.error(e);
+      return new Response(`Error rendering page ${params.path}: ${e}`, { status: 500 });
     }
   }
-
+  
   if (command === "render_component") {
-    const { path, props } = params;
     try {
-      // Dynamic import
-      // Note: path should be relative to app/ e.g. "components/TodoItem"
-      const importPath = `file://${join(PROJECT_ROOT, "app", `${path}.tsx`)}?t=${Date.now()}`;
-      console.log(`Loading component: ${importPath}`);
-      const mod = await import(importPath);
+      const mod = await import(`${PROJECT_ROOT}/app/${params.path}.tsx`);
       const Component = mod.default;
-      
-      const html = renderToString(h(Component, props));
-      
-      return new Response(html, {
-        headers: { "Content-Type": "text/html" },
-      });
+      const body = renderToString(h(Component, params.props));
+      return new Response(body, { headers: { "Content-Type": "text/html" } });
     } catch (e) {
-      console.error(`Error rendering component ${path}:`, e);
-      return new Response(`<!-- Error rendering ${path}: ${e} -->`, {
-        status: 500,
-        headers: { "Content-Type": "text/html" },
-      });
+      console.error(e);
+      return new Response(`Error rendering component ${params.path}: ${e}`, { status: 500 });
     }
   }
 
   return new Response("Unknown RPC command", { status: 400 });
 }
 
-async function handleAsset(path: string) {
-  // /assets/app/components/TodoItem.js -> app/components/TodoItem.tsx
-  const relativePath = path.replace("/assets/", "");
+async function handleAsset(req: Request) {
+  const url = new URL(req.url);
+  let path = url.pathname.replace("/assets/", "");
   
-  // Special case for sage/client.js which might be in a different location or virtual
-  // For now, let's assume it maps to adapter/client.ts if requested as sage/client.js
-  let sourcePath;
-  if (relativePath === "sage/client.js") {
-    // Use import.meta.url to resolve relative to server.ts (which is in adapter/)
-    // We need to point to client.ts in the same directory as server.ts
-    sourcePath = new URL("./client.ts", import.meta.url).pathname;
+  // Map sage/ assets to adapter directory
+  let filePath;
+  if (path.startsWith("sage/")) {
+    // Remove "sage/" prefix to map to adapter root
+    const relativePath = path.replace(/^sage\//, "");
+    filePath = `${ADAPTER_ROOT}${relativePath}`;
   } else {
-    // Resolve absolute path for esbuild
-    // relativePath includes "app/...", so we join with PROJECT_ROOT's parent? No, relativePath is "app/components/..."
-    // Wait, path is "/assets/app/components/TodoItem.js"
-    // relativePath is "app/components/TodoItem.js"
-    // We want "PROJECT_ROOT/app/components/TodoItem.tsx"
-    sourcePath = join(PROJECT_ROOT, relativePath.replace(/\.js$/, ".tsx"));
+    // Handle app/ prefix if present (from import map)
+    if (path.startsWith("app/")) {
+      filePath = `${PROJECT_ROOT}/${path}`;
+    } else {
+      filePath = `${PROJECT_ROOT}/app/${path}`;
+    }
   }
-  
-  console.log(`Building asset: ${path} -> ${sourcePath}`);
 
-  // Read deno.json to get external dependencies and compiler options
-  const denoJson = JSON.parse(await Deno.readTextFile(join(PROJECT_ROOT, "deno.json")));
-  // Exclude local aliases like "@/" from externals, we want to bundle those
-  const external = Object.keys(denoJson.imports).filter(k => !k.startsWith("@/"));
-  const compilerOptions = denoJson.compilerOptions || {};
+  console.log(`[Asset] Request: ${path}, Resolved: ${filePath}`);
 
   try {
+    // Check if file exists, handling extension replacement
+    let finalPath = filePath;
+    try {
+      await Deno.stat(finalPath);
+    } catch {
+      // Try public/assets/ if not found in app/
+      if (!path.startsWith("sage/") && !path.startsWith("app/")) {
+        const publicPath = `${PROJECT_ROOT}/public/assets/${path}`;
+        try {
+          await Deno.stat(publicPath);
+          finalPath = publicPath;
+        } catch {
+          // Continue to extension checks
+        }
+      }
+
+      // Try .ts
+      if (finalPath.endsWith(".js")) {
+        const tsPath = finalPath.replace(/\.js$/, ".ts");
+        try {
+          await Deno.stat(tsPath);
+          finalPath = tsPath;
+        } catch {
+           // Try .tsx
+           const tsxPath = finalPath.replace(/\.js$/, ".tsx");
+           try {
+             await Deno.stat(tsxPath);
+             finalPath = tsxPath;
+           } catch {
+             throw new Error("File not found");
+           }
+        }
+      } else {
+        throw new Error("File not found");
+      }
+    }
+    
+    // Build with esbuild for browser
     const result = await esbuild.build({
-      plugins: [...denoPlugins({ configPath: join(PROJECT_ROOT, "deno.json") })],
-      entryPoints: [sourcePath],
-      write: false,
+      entryPoints: [finalPath],
       bundle: true,
-      format: "esm",
-      target: "es2022",
-      external: external, // Use dynamic externals from deno.json
-      jsx: compilerOptions.jsx === "react-jsx" ? "automatic" : "transform",
-      jsxImportSource: compilerOptions.jsxImportSource,
-      jsxFactory: compilerOptions.jsxFactory,
-      jsxFragment: compilerOptions.jsxFragmentFactory,
+      write: false,
+      format: 'esm',
+      platform: 'browser',
+      plugins: [
+        sagePlugin, // Use sagePlugin here too for virtual modules
+        ...denoPlugins({ configPath: `${PROJECT_ROOT}/deno.json` })
+      ],
+      external: ['preact', 'preact/hooks', '@/sage/*'], // Externalize dependencies
+      jsx: 'automatic',
+      jsxImportSource: 'preact'
     });
 
-    const code = result.outputFiles[0].text;
-
-    return new Response(code, {
-      headers: { "Content-Type": "application/javascript" },
+    return new Response(result.outputFiles[0].text, {
+      headers: { "Content-Type": "application/javascript" }
     });
   } catch (e) {
-    console.error("Build error:", e);
-    return new Response(`console.error("Build failed: ${e.message}")`, {
-      status: 500,
-      headers: { "Content-Type": "application/javascript" },
-    });
+    console.error(`Asset error for ${path}:`, e);
+    return new Response("Not Found", { status: 404 });
   }
 }
 
-if (import.meta.main) {
+if (SOCKET_PATH) {
   console.log(`🦕 Deno Adapter listening on ${SOCKET_PATH}`);
-
-  // Watch for changes in app directory
-  (async () => {
-    const watcher = Deno.watchFs(join(PROJECT_ROOT, "app"));
-    let timeout = null;
-    for await (const event of watcher) {
-      if (event.kind === "modify" || event.kind === "create" || event.kind === "remove") {
-        // Debounce
-        if (timeout) clearTimeout(timeout);
-        timeout = setTimeout(async () => {
-          console.log("♻️  File changed, notifying Sage...");
-          try {
-            await fetch("http://localhost:3000/_sage/notify", { method: "POST" });
-          } catch (e) {
-            // Ignore connection errors (Sage might be restarting)
-          }
-        }, 100);
-      }
-    }
-  })();
-  
   Deno.serve({ path: SOCKET_PATH }, async (req) => {
     const url = new URL(req.url);
-
     if (url.pathname.startsWith("/rpc/")) {
-      const command = url.pathname.replace("/rpc/", "");
-      try {
-        const params = await req.json();
-        return await handleRpc(command, params);
-      } catch (e) {
-        return new Response("Invalid JSON", { status: 400 });
-      }
+      return handleRpc(req);
+    } else if (url.pathname.startsWith("/assets/")) {
+      return handleAsset(req);
     }
-
-    if (url.pathname.startsWith("/assets/")) {
-      return await handleAsset(url.pathname);
-    }
-
     return new Response("Not Found", { status: 404 });
   });
+} else {
+  console.error("SALVIA_SOCKET_PATH not set");
+  Deno.exit(1);
 }

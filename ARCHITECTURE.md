@@ -109,3 +109,57 @@ Uses Server-Sent Events (SSE).
 - [x] **HMR**: Implement SSE logic.
 - [x] **esbuild**: Implement on-demand compilation in Deno.
 - [x] **npm: Support**: Implement automatic `npm:` to `esm.sh` transformation.
+- [x] **Islands Architecture**: Implement partial hydration and `sage/client`.
+- [x] **Turbo**: Integrate Hotwire/Turbo support.
+
+## 7. Turbo Strategy
+
+Sage uses Turbo Streams for SPA-like partial updates.
+
+### 1. View (Deno)
+Assign a unique `id` to the element you want to update. `<turbo-frame>` is not strictly required but recommended.
+
+```tsx
+// app/components/TodoItem.tsx
+export default function TodoItem({ todo }) {
+  return (
+    <div id={`todo_${todo.id}`}>
+      <form action={`/todos/${todo.id}/toggle`} method="post">
+        <button>Toggle</button>
+      </form>
+    </div>
+  );
+}
+```
+
+### 2. Controller (Ruby)
+Return `ctx.turbo_stream` after processing the action.
+
+```ruby
+post "/:id/toggle" do |ctx, id|
+  todo = Todo.find(id)
+  # ... update logic ...
+  
+  # Instructs the browser to replace the element with id="todo_#{id}"
+  # with the rendered result of "components/TodoItem"
+  ctx.turbo_stream("replace", "todo_#{id}", "components/TodoItem", todo: todo)
+end
+```
+
+## 8. Islands Architecture
+
+Sage uses a simple Islands architecture for client-side interactivity.
+
+1.  **Server-Side Rendering**:
+    *   Interactive components can be placed anywhere (e.g., `app/components/`).
+    *   Add `"use hydration";` at the top of the component file.
+    *   During SSR, the server automatically wraps these components in an `<Island>` marker.
+    *   The component is rendered to static HTML within this wrapper.
+
+2.  **Client-Side Hydration**:
+    *   `client.ts` (injected into every page) scans for `[data-island]` elements (or similar markers).
+    *   It dynamically imports the component code.
+    *   It hydrates the component using Preact's `hydrate` function.
+
+3.  **RPC**:
+    *   Islands can fetch data from the server using `fetch("/resource/rpc_name", { method: "POST" })` or the helper `rpc("resource", "action", params)`.

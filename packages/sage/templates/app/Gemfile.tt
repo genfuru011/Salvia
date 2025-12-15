@@ -1,9 +1,4 @@
 source "https://rubygems.org"
 
-gem "sage", path: "<%= File.expand_path('../..', __dir__) %>" # Local path for dev, change to version in real app
-gem "salvia", path: "<%= File.expand_path('../../../salvia', __dir__) %>"
-gem "falcon"
-gem "async"
-gem "activerecord"
-gem "sqlite3"
-gem "rake"
+gem "sage", "~> <%= Sage::VERSION %>"
+gem "puma" # Optional, if you want to use Puma instead of Falcon for some reason, but Sage uses Falcon by default. Wait, Sage depends on Falcon.

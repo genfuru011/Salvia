@@ -84,8 +84,8 @@ module Sage
         server_path = File.expand_path("../../assets/adapter/server.ts", __dir__)
 
         pid = spawn(
-          { "SOCKET_PATH" => SOCKET_PATH },
-          "deno run -A --unstable-net --config deno.json #{server_path}"
+          { "SALVIA_SOCKET_PATH" => SOCKET_PATH, "SALVIA_PROJECT_ROOT" => Dir.pwd },
+          "deno run -A --unstable-net --reload --config deno.json #{server_path}"
         )
         
         File.write(PID_FILE, pid)
@@ -93,7 +93,7 @@ module Sage
       end
 
       def wait_for_socket
-        10.times do
+        100.times do
           break if File.exist?(SOCKET_PATH)
           sleep 0.1
         end

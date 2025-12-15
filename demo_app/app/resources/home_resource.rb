@@ -1,5 +1,5 @@
 class HomeResource < Sage::Resource
-  get "/" do |ctx|
-    ctx.redirect "/todos"
+  def index
+    ctx.render "Home", title: "Welcome to Sage"
   end
 end

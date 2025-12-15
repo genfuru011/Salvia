@@ -2,6 +2,7 @@ PATH
   remote: packages/sage
   specs:
     sage (0.1.0)
+      activesupport
       async
       async-http
       falcon

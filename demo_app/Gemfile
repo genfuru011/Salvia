@@ -1,11 +1,4 @@
 source "https://rubygems.org"
 
 gem "sage", path: "../packages/sage"
-gem "falcon"
-gem "async"
-gem "activerecord"
-gem "sqlite3"
-gem "rake"
-gem "tailwindcss-ruby"
-
-gem 'tailwindcss-ruby'
+gem "puma" # Optional, if you want to use Puma instead of Falcon for some reason, but Sage uses Falcon by default. Wait, Sage depends on Falcon.
