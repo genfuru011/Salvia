@@ -1,40 +1,50 @@
 # Sage Framework 🌿
 
-**Sage** is a lightweight, high-performance full-stack framework for Ruby, built on **Falcon** and **Deno**.
+**Sage** は、RubyとDeno (Falcon) 上に構築された、軽量で高性能なフルスタックフレームワークです。
 
-It combines the elegance of Ruby (Backend) with the modern ecosystem of Deno (Frontend/SSR), providing a "Zero API" development experience similar to Rails but with native React/Preact support.
+Ruby (Backend) の優雅さと、Deno (Frontend/SSR) のモダンなエコシステムを融合させ、Railsのような開発体験とネイティブなReact/Preactサポートを提供します。
 
-## Features
+## 特徴
 
-*   **Sage Native Architecture**: Ruby acts as a "Dumb Pipe", delegating all rendering and asset serving to a Deno sidecar process.
-*   **Zero API**: Pass ActiveRecord objects directly to `ctx.render`. No serializers or API endpoints needed.
-*   **Deno SSR**: Server-Side Rendering of Preact components with zero configuration.
-*   **On-demand Compilation**: Built-in **esbuild** compiles `.tsx` files on the fly. No Webpack/Vite build steps required.
-*   **Turbo Stream Support**: Seamless partial page updates using Hotwire Turbo.
-*   **npm: Support**: Use any npm package in your frontend code via `deno.json`.
+*   **Sage Native Architecture**: Rubyは「土管 (Dumb Pipe)」として振る舞い、レンダリングとアセット配信をDenoサイドカープロセスに委譲します。
+*   **Zero API**: ActiveRecordオブジェクトを直接 `ctx.render` に渡すだけ。シリアライザやAPIエンドポイントは不要です。
+*   **Deno SSR**: 設定不要でPreactコンポーネントをサーバーサイドレンダリングします。
+*   **Islands Architecture**: `"use hydration";` を付けるだけで、特定の部分だけをクライアントサイドでインタラクティブにできます。
+*   **オンデマンドコンパイル**: 組み込みの **esbuild** が `.tsx` ファイルをオンザフライでコンパイルします。WebpackやViteは不要です。
+*   **npmサポート**: `deno.json` を通じて、あらゆるnpmパッケージをフロントエンドで使用できます。
 
-## Documentation
+## ドキュメント
 
-- [Reference Guide](packages/sage/docs/REFERENCE.md) - Detailed documentation on routing, resources, and frontend integration.
-- [Syntax Guide](packages/sage/docs/SYNTAX.md) - Quick reference for Sage syntax.
+詳細なドキュメントは [DOCUMENTATION.md](DOCUMENTATION.md) を参照してください。
 
-## Packages
+## クイックスタート
 
-*   **[Sage](packages/sage)**: The core framework.
-
-## Development
-
-This is a monorepo managed with Bundler.
+### インストール
 
 ```bash
-# Install dependencies
-$ bundle install
+gem install sage
 ```
 
-## Directory Structure
+### プロジェクトの作成
+
+```bash
+sage new my_app
+cd my_app
+bundle install
+```
+
+### 開発サーバーの起動
+
+```bash
+bundle exec sage dev
+```
+
+http://localhost:3000 にアクセスすると、Sageアプリケーションが動作していることを確認できます。
+
+## ディレクトリ構造
 
 ```
 packages/
-└── sage/    # The Sage Framework
-demo_app/    # Example application
+└── sage/    # Sageフレームワーク本体
+demo_app/    # デモアプリケーション
 ```
