@@ -3,21 +3,12 @@ PATH
   specs:
     sage (0.1.0)
       async
+      async-http
       falcon
       listen
       rack
-      salvia
       thor
       zeitwerk
-
-PATH
-  remote: packages/salvia
-  specs:
-    salvia (0.2.3)
-      quickjs (~> 0.1)
-      rack (~> 3.0)
-      thor (~> 1.3)
-      zeitwerk (~> 2.6)
 
 GEM
   remote: https://rubygems.org/
@@ -141,9 +132,6 @@ GEM
       protocol-http (~> 0.43)
       rack (>= 1.0)
     protocol-url (0.4.0)
-    quickjs (0.11.0)
-      json
-      securerandom
     rack (3.2.4)
     rack-test (2.2.0)
       rack (>= 1.3)
@@ -174,7 +162,6 @@ DEPENDENCIES
   rack-test
   rake
   sage!
-  salvia!
   sqlite3
 
 BUNDLED WITH

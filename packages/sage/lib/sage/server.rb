@@ -23,10 +23,12 @@ module Sage
         puts "⚠️  public/ directory not found, static files disabled"
       end
 
-      # Add Salvia DevServer if available (for on-the-fly compilation)
-      if defined?(Salvia::Server::DevServer) && (ENV["RACK_ENV"] == "development" || ENV["RAILS_ENV"] == "development")
-        puts "🌿 Salvia DevServer enabled"
-        app = Salvia::Server::DevServer.new(app)
+      # Add Sage Native Middlewares
+      app = Sage::Middleware::AssetProxy.new(app)
+      app = Sage::Middleware::SidecarManager.new(app)
+      
+      if ENV["RACK_ENV"] == "development"
+        app = Sage::Middleware::HMR.new(app)
       end
 
       app = Falcon::Server.middleware(app)

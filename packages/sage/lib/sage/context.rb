@@ -36,8 +36,31 @@ module Sage
     end
 
     def render(page, props = {})
-      # Placeholder for Salvia integration
-      html("<h1>Rendering #{page}</h1><pre>#{JSON.pretty_generate(props)}</pre>")
+      html_content = Sage::Sidecar.rpc("render_page", {
+        page: page,
+        props: props
+      })
+      html(html_content)
+    end
+
+    def component(path, props = {})
+      Sage::Sidecar.rpc("render_component", {
+        path: path,
+        props: props
+      })
+    end
+
+    def turbo_stream(action, target, component_path = nil, html: nil, **props)
+      content = html || (component_path ? component(component_path, props) : "")
+      
+      stream = <<~HTML
+        <turbo-stream action="#{action}" target="#{target}">
+          <template>#{content}</template>
+        </turbo-stream>
+      HTML
+      
+      @res.headers["Content-Type"] = "text/vnd.turbo-stream.html"
+      body(stream)
     end
 
     def redirect(path)

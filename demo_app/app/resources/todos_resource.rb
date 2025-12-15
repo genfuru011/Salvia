@@ -20,15 +20,7 @@ class TodosResource < Sage::Resource
       todo = Todo.create(title: title)
       
       # Return Turbo Stream using Salvia Component
-      html = ctx.salvia_component("components/TodoItem", todo: todo)
-      stream = <<~HTML
-        <turbo-stream action="prepend" target="todos-list">
-          <template>#{html}</template>
-        </turbo-stream>
-      HTML
-      
-      ctx.res.headers["Content-Type"] = "text/vnd.turbo-stream.html"
-      ctx.body stream
+      ctx.turbo_stream("prepend", "todos-list", "components/TodoItem", todo: todo)
     else
       ctx.status 422
       ctx.text "Title required"
@@ -40,15 +32,7 @@ class TodosResource < Sage::Resource
     todo = Todo.find(id)
     todo.update(completed: !todo.completed)
     
-    html = ctx.salvia_component("components/TodoItem", todo: todo)
-    stream = <<~HTML
-      <turbo-stream action="replace" target="todo_#{todo.id}">
-        <template>#{html}</template>
-      </turbo-stream>
-    HTML
-    
-    ctx.res.headers["Content-Type"] = "text/vnd.turbo-stream.html"
-    ctx.body stream
+    ctx.turbo_stream("replace", "todo_#{todo.id}", "components/TodoItem", todo: todo)
   end
 
   # Delete
@@ -56,11 +40,6 @@ class TodosResource < Sage::Resource
     todo = Todo.find(id)
     todo.destroy
     
-    stream = <<~HTML
-      <turbo-stream action="remove" target="todo_#{todo.id}"></turbo-stream>
-    HTML
-    
-    ctx.res.headers["Content-Type"] = "text/vnd.turbo-stream.html"
-    ctx.body stream
+    ctx.turbo_stream("remove", "todo_#{todo.id}")
   end
 end

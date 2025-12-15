@@ -1,6 +1,5 @@
 require "bundler/setup"
 require "sage"
-require "salvia"
 require "fileutils"
 
 require_relative "../config/database"
