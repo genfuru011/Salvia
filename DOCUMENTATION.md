@@ -36,7 +36,8 @@ my_app/
 ├── app/
 │   ├── models/        # ActiveRecordモデル
 │   ├── pages/         # ページコンポーネント (SSRのエントリーポイント)
-│   ├── components/    # 再利用可能なコンポーネント (Islands含む)
+│   ├── components/    # 再利用可能なコンポーネント
+│   ├── islands/       # クライアントサイドで動作するIslandsコンポーネント
 │   └── resources/     # リソース (コントローラー)
 ├── config/
 │   ├── application.rb # アプリケーション設定
@@ -99,7 +100,7 @@ Sageは **Islands Architecture** を採用しており、静的なHTMLの中に�
 ```tsx
 // app/pages/Home.tsx
 import { h } from "preact";
-import Counter from "../components/Counter.tsx";
+import Counter from "../islands/Counter.tsx";
 
 export default function Home() {
   return (
@@ -112,13 +113,12 @@ export default function Home() {
 }
 ```
 
-### Islands (`app/components/`)
+### Islands (`app/islands/`)
 
-クライアントサイドでJavaScriptとして実行されるインタラクティブなコンポーネントです。ファイルの先頭に `"use hydration";` を記述します。
+クライアントサイドでJavaScriptとして実行されるインタラクティブなコンポーネントです。`app/islands/` ディレクトリに配置するだけで自動的にIslandとして認識されます。
 
 ```tsx
-// app/components/Counter.tsx
-"use hydration";
+// app/islands/Counter.tsx
 import { h } from "preact";
 import { useState } from "preact/hooks";
 

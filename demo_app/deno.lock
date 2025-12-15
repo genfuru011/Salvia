@@ -1,5 +1,35 @@
 {
   "version": "5",
+  "specifiers": {
+    "npm:@preact/signals@1.2.2": "1.2.2_preact@10.19.6",
+    "npm:preact-render-to-string@6.3.1": "6.3.1_preact@10.19.6",
+    "npm:preact@10.19.6": "10.19.6"
+  },
+  "npm": {
+    "@preact/signals-core@1.12.1": {
+      "integrity": "sha512-BwbTXpj+9QutoZLQvbttRg5x3l5468qaV2kufh+51yha1c53ep5dY4kTuZR35+3pAZxpfQerGJiQqg34ZNZ6uA=="
+    },
+    "@preact/signals@1.2.2_preact@10.19.6": {
+      "integrity": "sha512-ColCqdo4cRP18bAuIR4Oik5rDpiyFtPIJIygaYPMEAwTnl4buWkBOflGBSzhYyPyJfKpkwlekrvK+1pzQ2ldWw==",
+      "dependencies": [
+        "@preact/signals-core",
+        "preact"
+      ]
+    },
+    "preact-render-to-string@6.3.1_preact@10.19.6": {
+      "integrity": "sha512-NQ28WrjLtWY6lKDlTxnFpKHZdpjfF+oE6V4tZ0rTrunHrtZp6Dm0oFrcJalt/5PNeqJz4j1DuZDS0Y6rCBoqDA==",
+      "dependencies": [
+        "preact",
+        "pretty-format"
+      ]
+    },
+    "preact@10.19.6": {
+      "integrity": "sha512-gympg+T2Z1fG1unB8NH29yHJwnEaCH37Z32diPDku316OTnRPeMbiRV9kTrfZpocXjdfnWuFUl/Mj4BHaf6gnw=="
+    },
+    "pretty-format@3.8.0": {
+      "integrity": "sha512-WuxUnVtlWL1OfZFQFuqvnvs6MiAGk9UNsBostyBOB0Is9wb5uRESevA6rnl/rkksXaGX3GzZhPup5d6Vp1nFew=="
+    }
+  },
   "remote": {
     "https://deno.land/std@0.140.0/_util/assert.ts": "e94f2eb37cebd7f199952e242c77654e43333c1ac4c5c700e929ea3aa5489f74",
     "https://deno.land/std@0.140.0/_util/os.ts": "3b4c6e27febd119d36a416d7a97bd3b0251b77c88942c8f16ee5953ea13e2e49",
@@ -158,5 +188,13 @@
     "https://esm.sh/preact@10.19.6/denonext/preact.mjs": "9a458831a9c1e81a529842752c1d17d4d74cf42483974b949c089aca22c85cc2",
     "https://esm.sh/preact@10.19.6/hooks": "310c8dc7d42ee3fe73a2f538af6cfbc99a0e221747cfbe12724687d1eb4d0df9",
     "https://esm.sh/preact@10.19.6/jsx-runtime": "e818ce449d5b732d384ffec64c1de2b542a5e01eade3d01de5c522ba1e7e8ad1"
+  },
+  "workspace": {
+    "dependencies": [
+      "npm:@hotwired/turbo@8.0.4",
+      "npm:@preact/signals@1.2.2",
+      "npm:preact-render-to-string@6.3.1",
+      "npm:preact@10.19.6"
+    ]
   }
 }
