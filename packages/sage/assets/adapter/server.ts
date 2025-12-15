@@ -242,7 +242,7 @@ async function handleAsset(req: Request) {
         sagePlugin, // Use sagePlugin here too for virtual modules
         ...denoPlugins({ configPath: `${PROJECT_ROOT}/deno.json` })
       ],
-      external: ['preact', 'preact/hooks', '@/sage/*'], // Externalize dependencies
+      external: ['preact', 'preact/hooks', '@/sage/*', '@/*'], // Externalize dependencies
       jsx: 'automatic',
       jsxImportSource: 'preact'
     });

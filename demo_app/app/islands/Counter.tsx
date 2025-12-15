@@ -1,3 +1,4 @@
+"use hydration";
 import { useSignal } from "@preact/signals";
 
 export default function Counter() {
