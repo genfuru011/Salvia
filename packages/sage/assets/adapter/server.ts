@@ -12,6 +12,7 @@ const ADAPTER_ROOT = new URL(".", import.meta.url).pathname;
 const importMap = {
   imports: {
     "preact": "https://esm.sh/preact@10.19.6",
+    "preact/jsx-runtime": "https://esm.sh/preact@10.19.6/jsx-runtime",
     "preact/hooks": "https://esm.sh/preact@10.19.6/hooks",
     "@/": "/assets/app/",
     "sage/": "/assets/sage/"
@@ -242,7 +243,7 @@ async function handleAsset(req: Request) {
         sagePlugin, // Use sagePlugin here too for virtual modules
         ...denoPlugins({ configPath: `${PROJECT_ROOT}/deno.json` })
       ],
-      external: ['preact', 'preact/hooks', '@/sage/*', '@/*'], // Externalize dependencies
+      external: ['preact', 'preact/hooks', 'preact/jsx-runtime', '@/sage/*', '@/*'], // Externalize dependencies
       jsx: 'automatic',
       jsxImportSource: 'preact'
     });
