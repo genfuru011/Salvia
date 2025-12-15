@@ -23,7 +23,11 @@ module Sage
         wrapper = proc do |ctx|
           # Parse JSON body
           body_params = begin
-            JSON.parse(ctx.req.body.read, symbolize_names: true)
+            if ctx.req.body
+              JSON.parse(ctx.req.body.read, symbolize_names: true)
+            else
+              {}
+            end
           rescue JSON::ParserError
             {}
           end

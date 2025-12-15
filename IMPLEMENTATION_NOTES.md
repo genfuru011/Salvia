@@ -59,9 +59,6 @@ Browser  <-->  [Sage Middleware]  <-->  (HTTP over UDS)  <-->  [Deno Sidecar]
 ### 4. ディレクトリ構造
 ```text
 my_app/
-├── adapter/           # Deno Sidecar Implementation
-│   ├── server.ts      # Entry point
-│   └── deno.json      # Config & Import Map
 ├── app/
 │   ├── pages/         # Full Page Components
 │   ├── components/    # Shared UI Components
@@ -70,8 +67,11 @@ my_app/
 │   └── resources/     # Sage Resources (Controllers)
 ├── config/
 ├── public/
+├── deno.json          # Config & Import Map
 └── Gemfile
 ```
+
+Note: The Deno adapter implementation (`server.ts`, `client.ts`) is hidden within the Sage gem (`packages/sage/assets/adapter/`) to keep the user project clean. `deno.json` remains in the project root for managing dependencies.
 
 ## 開発者体験 (DX) の向上
 *   **Zero Config JSON**: ユーザーは `render "Page", user: user` と書くだけ。`as_json` が自動適用されるため、シリアライザの明示的な呼び出しは不要。
@@ -115,3 +115,21 @@ end
 1.  ブラウザでフォーム送信（Turboがインターセプト）。
 2.  Rubyが処理し、`<turbo-stream action="replace" target="...">` を含むHTMLを返す。
 3.  Turboがレスポンスを受け取り、指定された `target` IDのDOM要素を更新する。
+
+## Islands Architecture
+
+Sage uses a simple Islands architecture for client-side interactivity.
+
+1.  **Server-Side Rendering**:
+    *   `Island` component (in `app/components/Island.tsx`) wraps the interactive component.
+    *   It renders a `div` with `data-island="ComponentName"` and `data-props="{...}"`.
+    *   The component itself is rendered to static HTML within this wrapper.
+
+2.  **Client-Side Hydration**:
+    *   `client.ts` (injected into every page) scans for `[data-island]` elements.
+    *   It dynamically imports the component from `/assets/app/islands/${name}.js`.
+    *   It hydrates the component using Preact's `hydrate` function.
+
+3.  **RPC**:
+    *   Islands can fetch data from the server using `fetch("/resource/rpc_name", { method: "POST" })`.
+    *   Resources define RPC endpoints using `rpc :name`.

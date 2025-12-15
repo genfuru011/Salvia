@@ -8,7 +8,7 @@ export default function Stats() {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const response = await fetch("/todos/stats");
+        const response = await fetch("/todos/stats", { method: "POST" });
         const data = await response.json();
         stats.value = data;
       } catch (e) {
