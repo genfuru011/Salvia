@@ -1,4 +1,4 @@
-# Sage Framework 🌿
+# Sage Framework ⚠️discontinued　🌿
 
 **Sage** は、RubyとDeno (Falcon) 上に構築された、軽量で高性能なフルスタックフレームワークです。
 
